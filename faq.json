@@ -3,7 +3,7 @@
   "title": "DSE ICT FAQ — common questions & marking-scheme keywords",
   "version": 2,
   "generatedFrom": "question-bank.json (live bank)",
-  "notes": "Each pair is condensed faithfully from the official marking scheme of at least one extracted past paper in the live question bank; sources cite question id + part label (e.g. 2021-P1B-Q1(d)(ii)). Where a scheme credits 'any two of' a list, the answer says so and reproduces the credited list. Answers flagged NOT accepted in a scheme are recorded as warnings where relevant. Keywords are the load-bearing terms markers look for, kept tight for reuse in flashcards and matching games. Version 2 (2026-10-21): second mining pass added faq-061 to faq-087 using two lenses. (1) Candidate-performance lens: pairs built from the official Candidates' Performance reports (per-question commentary, common errors and option statistics in the bank, plus per-part performance comments in the per-paper files) — the performance material shows where students fail (e.g. 7% correct on the 2022 storage-capacity item), and each pair states the credited answer with the NOT-accepted phrasing kept as an explicit warning; answers still reproduce only content credited in an official marking scheme. (2) Coverage-gap lens: extra standard formulations for the areas thinnest in version 1 (Elective D — Software Development, Core D — Basic Programming Concepts, Core A — Information Processing, Elective A — Databases), each confirmed by an extracted scheme in the bank. 2019 pass (2026-10-21): mined the 2019 papers (2019_ans.pdf schemes) and 2019_per.pdf candidate performance; 20 pairs added and 17 existing pairs gained 2019 citations, including performance-lens pairs from the 2019 P1A commentary (memory data-transfer-rate order, 38% correct; leased line vs broadband, with the 'lower cost' trap). 2018 pass (2026-10-21): 20 pairs added (faq-125 to faq-144) and 31 citations merged into 25 existing pairs, mined from the 2018 papers' official schemes (2018_ans.pdf) and the NOT-accepted phrasings in those schemes; performance-lens pair faq-144 comes from the 2018 Candidates' Performance commentary on P1A Q.15. 2018 P1A Q.40 was a deleted exam item and was deliberately not used. 2017 pass (2026-10-22): mined the 2017 papers (2017_ans.pdf schemes) and 2017_per.pdf candidate performance; 21 pairs added (faq-145 to faq-165) and 34 citations merged into 30 existing pairs. Performance-lens pair faq-146 comes from 2017 P1A Q.26 (domain-name registration, only 36% correct). The classic LAN vs WAN pair (faq-145) and the circuit-switching pair (faq-157) are now sourced from the 2017 schemes. No deleted item arises in the 2017 papers used."
+  "notes": "Each pair is condensed faithfully from the official marking scheme of at least one extracted past paper in the live question bank; sources cite question id + part label (e.g. 2021-P1B-Q1(d)(ii)). Where a scheme credits 'any two of' a list, the answer says so and reproduces the credited list. Answers flagged NOT accepted in a scheme are recorded as warnings where relevant. Keywords are the load-bearing terms markers look for, kept tight for reuse in flashcards and matching games. Version 2 (2026-10-21): second mining pass added faq-061 to faq-087 using two lenses. (1) Candidate-performance lens: pairs built from the official Candidates' Performance reports (per-question commentary, common errors and option statistics in the bank, plus per-part performance comments in the per-paper files) — the performance material shows where students fail (e.g. 7% correct on the 2022 storage-capacity item), and each pair states the credited answer with the NOT-accepted phrasing kept as an explicit warning; answers still reproduce only content credited in an official marking scheme. (2) Coverage-gap lens: extra standard formulations for the areas thinnest in version 1 (Elective D — Software Development, Core D — Basic Programming Concepts, Core A — Information Processing, Elective A — Databases), each confirmed by an extracted scheme in the bank. 2019 pass (2026-10-21): mined the 2019 papers (2019_ans.pdf schemes) and 2019_per.pdf candidate performance; 20 pairs added and 17 existing pairs gained 2019 citations, including performance-lens pairs from the 2019 P1A commentary (memory data-transfer-rate order, 38% correct; leased line vs broadband, with the 'lower cost' trap). 2018 pass (2026-10-21): 20 pairs added (faq-125 to faq-144) and 31 citations merged into 25 existing pairs, mined from the 2018 papers' official schemes (2018_ans.pdf) and the NOT-accepted phrasings in those schemes; performance-lens pair faq-144 comes from the 2018 Candidates' Performance commentary on P1A Q.15. 2018 P1A Q.40 was a deleted exam item and was deliberately not used. 2017 pass (2026-10-22): mined the 2017 papers (2017_ans.pdf schemes) and 2017_per.pdf candidate performance; 21 pairs added (faq-145 to faq-165) and 34 citations merged into 30 existing pairs. Performance-lens pair faq-146 comes from 2017 P1A Q.26 (domain-name registration, only 36% correct). The classic LAN vs WAN pair (faq-145) and the circuit-switching pair (faq-157) are now sourced from the 2017 schemes. No deleted item arises in the 2017 papers used. 2016 pass (2026-10-22): mined the 2016 papers (2016_ans.pdf schemes) and 2016_per.pdf candidate performance; 20 pairs added (faq-166 to faq-185) and 23 citations merged into 21 existing pairs. Performance-lens pairs faq-183 to faq-185 come from the 2016 P1A commentary (spreadsheet text format for leading-zero membership numbers, 37% correct; byte size of the string 'HKDSE5', 18% correct; two's complement 1111 1111 = -1, 39% correct). 2016 P1A Q.19 and Q.35 are key-vs-content conflicts (the printed key governed in the bank) and were deliberately not used."
  },
  "faqs": [
   {
@@ -21,7 +21,8 @@
    "sources": [
     "2023-P1B-Q2(a)",
     "2022-P1B-Q2(b)",
-    "2018-P1B-Q4(d)(ii)"
+    "2018-P1B-Q4(d)(ii)",
+    "2016-P1B-Q4(b)(i)"
    ]
   },
   {
@@ -222,7 +223,8 @@
     "2022-P2B-Q2(a)(i)",
     "2022-P1B-Q3(d)",
     "2019-P2B-Q3(d)",
-    "2017-P2B-Q1(b)(ii)"
+    "2017-P2B-Q1(b)(ii)",
+    "2016-P2B-Q2(c)(i)"
    ]
   },
   {
@@ -443,7 +445,8 @@
     "personal information leakage"
    ],
    "sources": [
-    "2023-P1B-Q5(d)"
+    "2023-P1B-Q5(d)",
+    "2016-P1B-Q2(c)"
    ]
   },
   {
@@ -614,7 +617,8 @@
     "2023-P2A-Q4(c)",
     "2022-P2A-Q4(b)",
     "2018-P2A-Q1(b)(ii)",
-    "2017-P2A-Q1(c)(ii)"
+    "2017-P2A-Q1(c)(ii)",
+    "2016-P2A-Q3(d)(ii)"
    ]
   },
   {
@@ -720,7 +724,8 @@
     "2022-P2B-Q1(a)(ii)",
     "2020-P2B-Q3(e)",
     "2019-P2B-Q2(b)(i)",
-    "2018-P2B-Q4(b)(i)"
+    "2018-P2B-Q4(b)(i)",
+    "2016-P2B-Q4(a)"
    ]
   },
   {
@@ -738,7 +743,8 @@
     "2022-P2B-Q2(b)(i)",
     "2020-P2B-Q1(d)",
     "2019-P2B-Q3(e)(ii)",
-    "2017-P2B-Q1(e)(i)"
+    "2017-P2B-Q1(e)(i)",
+    "2016-P2B-Q2(c)(iii)"
    ]
   },
   {
@@ -863,7 +869,8 @@
     "2021-P2B-Q2(b)",
     "2023-P2B-Q4(a)",
     "2018-P2B-Q2(b)(i)",
-    "2018-P2B-Q2(b)(iii)"
+    "2018-P2B-Q2(b)(iii)",
+    "2016-P1B-Q5(a)(ii)"
    ]
   },
   {
@@ -936,7 +943,8 @@
     "2021-P2C-Q3(c)(i)",
     "2020-P2C-Q1(a)(ii)",
     "2018-P2C-Q3(b)(iii)",
-    "2017-P2C-Q2(a)"
+    "2017-P2C-Q2(a)",
+    "2016-P2C-Q4(c)(i)"
    ]
   },
   {
@@ -970,7 +978,9 @@
    "sources": [
     "2023-P2C-Q4(a)",
     "2017-P2C-Q3(b)(i)",
-    "2017-P2C-Q3(b)(ii)"
+    "2017-P2C-Q3(b)(ii)",
+    "2016-P2C-Q2(a)(i)",
+    "2016-P2C-Q2(a)(ii)"
    ]
   },
   {
@@ -1021,7 +1031,8 @@
    ],
    "sources": [
     "2023-P2D-Q3(a)(i)",
-    "2021-P2D-Q4(d)"
+    "2021-P2D-Q4(d)",
+    "2016-P2D-Q1(a)(i)"
    ]
   },
   {
@@ -1116,7 +1127,8 @@
    "sources": [
     "2020-P1B-Q3(a)(ii)",
     "2022-P1A-Q20",
-    "2017-P1B-Q2(b)"
+    "2017-P1B-Q2(b)",
+    "2016-P1B-Q5(b)(i)"
    ]
   },
   {
@@ -1360,7 +1372,8 @@
     "2021-P2A-Q2(b)(ii)",
     "2019-P2A-Q2(b)",
     "2017-P2A-Q1(b)(i)",
-    "2017-P2A-Q1(b)(ii)"
+    "2017-P2A-Q1(b)(ii)",
+    "2016-P2A-Q3(a)(ii)"
    ]
   },
   {
@@ -1428,7 +1441,8 @@
     "executable code"
    ],
    "sources": [
-    "2023-P2D-Q2(c)(ii)"
+    "2023-P2D-Q2(c)(ii)",
+    "2016-P2D-Q1(b)"
    ]
   },
   {
@@ -1634,7 +1648,8 @@
    ],
    "sources": [
     "2020-P2B-Q2(a)(ii)",
-    "2018-P2B-Q1(d)"
+    "2018-P2B-Q1(d)",
+    "2016-P2B-Q1(d)(ii)"
    ]
   },
   {
@@ -1651,7 +1666,8 @@
    ],
    "sources": [
     "2020-P2B-Q2(a)(i)",
-    "2019-P2B-Q1(b)(iii)"
+    "2019-P2B-Q1(b)(iii)",
+    "2016-P2B-Q3(b)(iii)"
    ]
   },
   {
@@ -2136,7 +2152,8 @@
    ],
    "sources": [
     "2018-P1B-Q3(d)",
-    "2017-P1B-Q2(c)(i)"
+    "2017-P1B-Q2(c)(i)",
+    "2016-P2C-Q1(d)(iii)"
    ]
   },
   {
@@ -2212,7 +2229,8 @@
     "identify a record"
    ],
    "sources": [
-    "2018-P1B-Q4(a)"
+    "2018-P1B-Q4(a)",
+    "2016-P1B-Q5(b)(ii)"
    ]
   },
   {
@@ -2302,7 +2320,8 @@
     "single point of failure"
    ],
    "sources": [
-    "2018-P2B-Q4(c)"
+    "2018-P2B-Q4(c)",
+    "2016-P2B-Q3(c)(i)"
    ]
   },
   {
@@ -2620,7 +2639,8 @@
     "sales strategies"
    ],
    "sources": [
-    "2017-P2A-Q2(e)"
+    "2017-P2A-Q2(e)",
+    "2016-P2A-Q4(e)(ii)"
    ]
   },
   {
@@ -2635,7 +2655,8 @@
     "security settings"
    ],
    "sources": [
-    "2017-P2B-Q1(d)"
+    "2017-P2B-Q1(d)",
+    "2016-P2B-Q1(b)(iii)"
    ]
   },
   {
@@ -2650,7 +2671,9 @@
     "Internet"
    ],
    "sources": [
-    "2017-P2B-Q2(c)(i)"
+    "2017-P2B-Q2(c)(i)",
+    "2016-P2B-Q3(a)(i)",
+    "2016-P2B-Q3(a)(ii)"
    ]
   },
   {
@@ -2698,6 +2721,311 @@
    "sources": [
     "2017-P2C-Q1(f)(i)",
     "2017-P2C-Q1(f)(ii)"
+   ]
+  },
+  {
+   "id": "faq-166",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give two email protocols used for receiving emails, and state the major difference between them.",
+   "answer": "POP3 and IMAP. The credited major difference concerns IMAP: with IMAP the emails stay on the server, so the user can synchronise email across different devices and re-organise emails into folders. WARNING: stating only that POP3 downloads emails to a single computer and then removes them from the server (to save storage space) is NOT accepted as the major difference.",
+   "keywords": [
+    "POP3",
+    "IMAP",
+    "emails stay on server",
+    "synchronise devices",
+    "folders"
+   ],
+   "sources": [
+    "2016-P1B-Q2(a)"
+   ]
+  },
+  {
+   "id": "faq-167",
+   "topic": "Core C — Internet & its Applications",
+   "question": "When a user clicks on a URL in an email, what does the DNS do?",
+   "answer": "The DNS translates the domain name in the URL into its corresponding IP address, so that the user's computer can connect to the correct server.",
+   "keywords": [
+    "DNS",
+    "domain name",
+    "IP address",
+    "translate"
+   ],
+   "sources": [
+    "2016-P1B-Q2(b)"
+   ]
+  },
+  {
+   "id": "faq-168",
+   "topic": "Core D — Basic Programming Concepts",
+   "question": "Two linear search algorithms look for a target string in an array: ALG1 always scans all N strings, while ALG2 stops as soon as the target is found. If the target is the 2nd string in the array, which algorithm is more efficient, and why?",
+   "answer": "ALG2 is more efficient: it terminates as soon as the string is found instead of going through all the strings in the array, whereas ALG1 always scans all N strings.",
+   "keywords": [
+    "linear search",
+    "early exit",
+    "stops when found",
+    "scans all"
+   ],
+   "sources": [
+    "2016-P1B-Q2(d)(iii)"
+   ]
+  },
+  {
+   "id": "faq-169",
+   "topic": "Elective C — Multimedia",
+   "question": "Give one advantage of JPG over BMP, and one advantage of JPG over GIF.",
+   "answer": "Over BMP: the file size is smaller because JPG supports compression. Over GIF: JPG displays more colours, so it has higher quality in terms of the number of colours displayed.",
+   "keywords": [
+    "JPG",
+    "BMP",
+    "GIF",
+    "compression",
+    "smaller file size",
+    "more colours"
+   ],
+   "sources": [
+    "2016-P1B-Q1(b)(i)",
+    "2016-P1B-Q1(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-170",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "A company can buy and install standalone accounting software (Solution P), or subscribe to the cloud service of an accounting software provider (Solution Q). Give two benefits of each solution.",
+   "answer": "Solution P (any two): it does not depend on the Internet connection; the response time of the software is faster; it has better security control. Solution Q (any two): the installation is simple (no installation); it can provide up-to-date functions; it provides a backup service.",
+   "keywords": [
+    "standalone software",
+    "cloud service",
+    "Internet dependence",
+    "up-to-date functions",
+    "backup service",
+    "security control"
+   ],
+   "sources": [
+    "2016-P1B-Q3(a)"
+   ]
+  },
+  {
+   "id": "faq-171",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "What is the function of the memory cache in a server?",
+   "answer": "The memory cache stores frequently-used program instructions and data (for quick access by the CPU).",
+   "keywords": [
+    "memory cache",
+    "frequently-used instructions/data",
+    "quick access"
+   ],
+   "sources": [
+    "2016-P1B-Q3(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-172",
+   "topic": "Elective A — Databases",
+   "question": "Why should a VIEW be used to let users work with data combined from several database tables?",
+   "answer": "A view lets users who do not have the access rights to execute the SELECT command on the underlying database tables see the combined data, while the existing access rights protecting the tables are maintained. WARNING: mentioning only quick querying is NOT accepted.",
+   "keywords": [
+    "view",
+    "access rights",
+    "SELECT",
+    "underlying tables"
+   ],
+   "sources": [
+    "2016-P2A-Q2(b)(iii)"
+   ]
+  },
+  {
+   "id": "faq-173",
+   "topic": "Elective A — Databases",
+   "question": "Give two disadvantages of storing a derived attribute (such as PRICE, calculated from other attributes) in a database table.",
+   "answer": "Any two of: it requires more storage space; it requires overheads on updating; it may lead to data inconsistency.",
+   "keywords": [
+    "derived attribute",
+    "storage space",
+    "updating overhead",
+    "data inconsistency"
+   ],
+   "sources": [
+    "2016-P2A-Q3(a)(i)"
+   ]
+  },
+  {
+   "id": "faq-174",
+   "topic": "Elective A — Databases",
+   "question": "When designing a database for a shopping mall web page, which field is a good choice for creating an index, and why?",
+   "answer": "A field that is frequently used by users, such as Preference: because it is frequently used, an index on it makes the queries on the field execute faster.",
+   "keywords": [
+    "index",
+    "frequently used field",
+    "faster queries"
+   ],
+   "sources": [
+    "2016-P2A-Q4(e)(i)"
+   ]
+  },
+  {
+   "id": "faq-175",
+   "topic": "Elective B — Networking",
+   "question": "Why is CSMA/CD not suitable for wireless networks?",
+   "answer": "Collisions cannot be detected in a wireless environment, so CSMA/CD does not work; wireless networks use CSMA/CA, which avoids collisions instead of detecting them.",
+   "keywords": [
+    "CSMA/CD",
+    "collisions cannot be detected",
+    "wireless environment",
+    "CSMA/CA"
+   ],
+   "sources": [
+    "2016-P2B-Q1(d)(i)"
+   ]
+  },
+  {
+   "id": "faq-176",
+   "topic": "Elective B — Networking",
+   "question": "Why is WPA2 used instead of WEP to protect a Wi-Fi network?",
+   "answer": "WEP has lower security than WPA2. WARNING: answering only that 'WEP is an outdated technology' is NOT accepted.",
+   "keywords": [
+    "WPA2",
+    "WEP",
+    "lower security"
+   ],
+   "sources": [
+    "2016-P2B-Q1(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-177",
+   "topic": "Elective B — Networking",
+   "question": "In a disaster recovery plan for a database server, why should the backup files be stored in a remote location?",
+   "answer": "If the backups were kept with the database, the backup may be destroyed together with the database in a disaster (such as a fire); storing them remotely keeps a copy available for recovery.",
+   "keywords": [
+    "backup",
+    "remote location",
+    "disaster",
+    "destroyed together"
+   ],
+   "sources": [
+    "2016-P2B-Q2(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-178",
+   "topic": "Elective B — Networking",
+   "question": "What is the 'Gateway' in a computer network?",
+   "answer": "The gateway is the networking device that connects different subnets and the Internet (WAN). WARNING: simply mentioning router functions is NOT accepted.",
+   "keywords": [
+    "gateway",
+    "connects subnets",
+    "Internet (WAN)"
+   ],
+   "sources": [
+    "2016-P2B-Q3(c)(iii)"
+   ]
+  },
+  {
+   "id": "faq-179",
+   "topic": "Elective C — Multimedia",
+   "question": "How is the file size of an uncompressed video calculated? Work out the file size of a 20-second video with frame rate 30 fps, frame size 1920 x 1080 and colour depth 10 bits.",
+   "answer": "File size = duration x frame rate x frame size x colour depth / 8. Here: 20 x 30 x 1920 x 1080 x 10 / 8 = 1,555,200,000 bytes, which is approximately 1483 MB.",
+   "keywords": [
+    "video file size",
+    "frame rate",
+    "frame size",
+    "colour depth",
+    "duration"
+   ],
+   "sources": [
+    "2016-P2C-Q1(d)(i)"
+   ]
+  },
+  {
+   "id": "faq-180",
+   "topic": "Elective C — Multimedia",
+   "question": "Give three considerations that should be taken into account when building a mobile version of a web site.",
+   "answer": "Any three of: users can view important information without scrolling; simpler content layout; limited word count on a page; less graphics / simpler typography / larger font size; devices vary in operating systems, screen sizes/resolutions and input methods; mobile devices have limited bandwidth and processing power. WARNING: battery usage, browser versions and background colour are NOT accepted.",
+   "keywords": [
+    "mobile web site",
+    "without scrolling",
+    "simple layout",
+    "screen sizes",
+    "limited bandwidth"
+   ],
+   "sources": [
+    "2016-P2C-Q3(a)"
+   ]
+  },
+  {
+   "id": "faq-181",
+   "topic": "Elective D — Software Development",
+   "question": "Give one limitation of Rapid Application Development (RAD).",
+   "answer": "Any one of: RAD requires sufficient resources (highly skilled developers) to create the right number of RAD teams; if the system cannot be properly modularised, building components for RAD is problematic; RAD requires user involvement during implementation; it has low program re-usability. WARNING: 'unclear requirements' is NOT accepted.",
+   "keywords": [
+    "RAD",
+    "highly skilled developers",
+    "modularised",
+    "user involvement",
+    "re-usability"
+   ],
+   "sources": [
+    "2016-P2D-Q1(a)(iv)"
+   ]
+  },
+  {
+   "id": "faq-182",
+   "topic": "Elective D — Software Development",
+   "question": "After a program has been compiled, what is the function of a loader?",
+   "answer": "A loader is a utility program that loads an executable file into memory. It is usually a part of the operating system, loaded when the computer is booted and residing in memory.",
+   "keywords": [
+    "loader",
+    "executable file",
+    "loads into memory",
+    "operating system"
+   ],
+   "sources": [
+    "2016-P2D-Q1(b)"
+   ]
+  },
+  {
+   "id": "faq-183",
+   "topic": "Core A — Information Processing",
+   "question": "In a spreadsheet, 5-digit membership numbers for a sports club, 00001, 00002, ..., 99999, are entered in some cells. Which cell format should be used?",
+   "answer": "Text format, so that the leading zeros of the membership numbers are kept. In 2016 only 37% of candidates answered correctly; 51% wrongly chose Number format (performance lens).",
+   "keywords": [
+    "text format",
+    "leading zeros",
+    "membership numbers",
+    "cell format"
+   ],
+   "sources": [
+    "2016-P1A-Q1"
+   ]
+  },
+  {
+   "id": "faq-184",
+   "topic": "Core A — Information Processing",
+   "question": "In a device, 8 bits are used to store a character and 16 bits are used to store an integer. How many bytes are required to store the string 'HKDSE5'?",
+   "answer": "6 bytes. Every character in a string is stored as a character (8 bits each), including the digit '5': 6 x 8 bits = 48 bits = 6 bytes. In 2016 only 18% of candidates answered correctly; about half wrongly treated '5' in the string as an integer value (performance lens).",
+   "keywords": [
+    "string storage",
+    "character",
+    "8 bits",
+    "digit in a string"
+   ],
+   "sources": [
+    "2016-P1A-Q2"
+   ]
+  },
+  {
+   "id": "faq-185",
+   "topic": "Core A — Information Processing",
+   "question": "1111 1111 is an 8-bit number using two's complement representation. What is its decimal value?",
+   "answer": "-1. In two's complement the all-ones pattern 1111 1111 represents -1. In 2016 only 39% of candidates answered correctly, although two's complement is a popular examination topic (performance lens).",
+   "keywords": [
+    "two's complement",
+    "1111 1111",
+    "-1",
+    "8-bit"
+   ],
+   "sources": [
+    "2016-P1A-Q8"
    ]
   }
  ]
