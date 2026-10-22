@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DSE ICT Question Bank — data status</title></head>
+<body style="font-family:system-ui,sans-serif;margin:2rem;max-width:40rem">
+<h1>DSE ICT Past-Paper Question Bank</h1>
+<p>This repository hosts the data files for the drilling platform.</p>
+<ul>
+<li><a href="question-bank.json">question-bank.json</a> — <span id="qb">loading…</span></li>
+<li><a href="faq.json">faq.json</a> — <span id="fq">loading…</span></li>
+</ul>
+<script>
+fetch('question-bank.json').then(r=>r.json()).then(d=>{document.getElementById('qb').textContent = (Array.isArray(d)? d.length : d.questions.length) + ' questions';}).catch(e=>{document.getElementById('qb').textContent='unavailable';});
+fetch('faq.json').then(r=>r.json()).then(d=>{document.getElementById('fq').textContent = d.faqs.length + ' FAQ pairs';}).catch(e=>{document.getElementById('fq').textContent='unavailable';});
+</script>
+</body></html>

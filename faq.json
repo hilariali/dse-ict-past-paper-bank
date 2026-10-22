@@ -1,0 +1,2338 @@
+{
+ "meta": {
+  "title": "DSE ICT FAQ — common questions & marking-scheme keywords",
+  "version": 2,
+  "generatedFrom": "question-bank.json (live bank)",
+  "notes": "Each pair is condensed faithfully from the official marking scheme of at least one extracted past paper in the live question bank; sources cite question id + part label (e.g. 2021-P1B-Q1(d)(ii)). Where a scheme credits 'any two of' a list, the answer says so and reproduces the credited list. Answers flagged NOT accepted in a scheme are recorded as warnings where relevant. Keywords are the load-bearing terms markers look for, kept tight for reuse in flashcards and matching games. Version 2 (2026-10-21): second mining pass added faq-061 to faq-087 using two lenses. (1) Candidate-performance lens: pairs built from the official Candidates' Performance reports (per-question commentary, common errors and option statistics in the bank, plus per-part performance comments in the per-paper files) — the performance material shows where students fail (e.g. 7% correct on the 2022 storage-capacity item), and each pair states the credited answer with the NOT-accepted phrasing kept as an explicit warning; answers still reproduce only content credited in an official marking scheme. (2) Coverage-gap lens: extra standard formulations for the areas thinnest in version 1 (Elective D — Software Development, Core D — Basic Programming Concepts, Core A — Information Processing, Elective A — Databases), each confirmed by an extracted scheme in the bank. 2019 pass (2026-10-21): mined the 2019 papers (2019_ans.pdf schemes) and 2019_per.pdf candidate performance; 20 pairs added and 17 existing pairs gained 2019 citations, including performance-lens pairs from the 2019 P1A commentary (memory data-transfer-rate order, 38% correct; leased line vs broadband, with the 'lower cost' trap). 2018 pass (2026-10-21): 20 pairs added (faq-125 to faq-144) and 31 citations merged into 25 existing pairs, mined from the 2018 papers' official schemes (2018_ans.pdf) and the NOT-accepted phrasings in those schemes; performance-lens pair faq-144 comes from the 2018 Candidates' Performance commentary on P1A Q.15. 2018 P1A Q.40 was a deleted exam item and was deliberately not used."
+ },
+ "faqs": [
+  {
+   "id": "faq-001",
+   "topic": "Core A — Information Processing",
+   "question": "When a spreadsheet formula is copied to other cells, why are absolute references ($) needed, and how are they written?",
+   "answer": "Use an absolute (or mixed) reference for any cell or range that must NOT shift when the formula is copied, e.g. the cut-off cell in =IF(C2<=$C$102,1,0) and the lookup range in =VLOOKUP($A2,Sheet1!$A$2:$B$5,2,FALSE). References without $ are relative and change row/column as the formula is copied, which gives wrong results.",
+   "keywords": [
+    "absolute reference",
+    "$ sign",
+    "relative reference",
+    "copied formula",
+    "VLOOKUP range"
+   ],
+   "sources": [
+    "2023-P1B-Q2(a)",
+    "2022-P1B-Q2(b)",
+    "2018-P1B-Q4(d)(ii)"
+   ]
+  },
+  {
+   "id": "faq-002",
+   "topic": "Core A — Information Processing",
+   "question": "How can COUNTIF be used to find the rank of each value within its group in a spreadsheet?",
+   "answer": "Sort the data by group then by value, and count how many values in the group so far are equal to the current one, e.g. =COUNTIF(D$2:D4,D4) gives 3 for the third identical value — the expanding range with a fixed start row (D$2) makes the count work as a rank when copied down.",
+   "keywords": [
+    "COUNTIF",
+    "criteria",
+    "expanding range",
+    "mixed reference",
+    "rank"
+   ],
+   "sources": [
+    "2021-P1B-Q4(d)"
+   ]
+  },
+  {
+   "id": "faq-003",
+   "topic": "Core A — Information Processing",
+   "question": "What is the difference between verification and validation in data entry?",
+   "answer": "Verification checks that data has been copied/transferred correctly, e.g. double entry — the same data entered twice (or by two different people) and compared, or printing out for checking. Validation checks that entered data is reasonable and follows rules, e.g. a check digit, a data range or a data type check.",
+   "keywords": [
+    "verification",
+    "double entry",
+    "validation",
+    "check digit",
+    "data range"
+   ],
+   "sources": [
+    "2021-P1B-Q4(b)(ii)",
+    "2021-P1B-Q4(b)(i)",
+    "2018-P1B-Q4(c)(ii)",
+    "2018-P1B-Q4(c)(iii)"
+   ]
+  },
+  {
+   "id": "faq-004",
+   "topic": "Core A — Information Processing",
+   "question": "Why are drop-down lists, radio buttons and check boxes preferred to free text boxes in a data-entry form?",
+   "answer": "They limit users to valid choices, so input errors are reduced: a drop-down list allows a single selection and occupies little screen space, radio buttons give a single choice (e.g. Yes/No), and check boxes allow multiple selections. A well-designed form matches a different, appropriate control type to each criterion.",
+   "keywords": [
+    "drop-down list",
+    "radio button",
+    "check box",
+    "input control",
+    "reduce input errors"
+   ],
+   "sources": [
+    "2025-P2B-Q6(a)",
+    "2022-P2C-Q4(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-005",
+   "topic": "Core A — Information Processing",
+   "question": "Browser-based (online) software vs installed software: give one benefit of each.",
+   "answer": "Browser-based: no installation is required, updated functions are provided automatically, and it can be used on any other computer. Installed: no Internet connection is required and more functions can be provided. (Installation can fail if the software is not compatible with the operating system or there is not enough storage space.)",
+   "keywords": [
+    "browser-based software",
+    "installed software",
+    "no installation",
+    "no Internet connection",
+    "compatibility"
+   ],
+   "sources": [
+    "2023-P1B-Q1(c)(i)",
+    "2023-P1B-Q1(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-006",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "In a CPU specification such as '5 GHz, 10 cores', what do the two figures represent?",
+   "answer": "5 GHz is the clock rate of the CPU — the number of operations/cycles it can carry out per second. 10 cores means there are 10 processing units within the CPU, which can process tasks in parallel.",
+   "keywords": [
+    "clock rate",
+    "GHz",
+    "cores",
+    "processing units"
+   ],
+   "sources": [
+    "2021-P1B-Q2(c)"
+   ]
+  },
+  {
+   "id": "faq-007",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "What is the main function of RAM, and why does increasing its size enhance performance?",
+   "answer": "RAM temporarily stores the user programs and data currently in use. Increasing the size of RAM decreases the time needed to access the (much slower) secondary storage devices, so computational power/performance is enhanced.",
+   "keywords": [
+    "RAM",
+    "temporary storage",
+    "programs and data",
+    "secondary storage access"
+   ],
+   "sources": [
+    "2023-P1B-Q1(b)"
+   ]
+  },
+  {
+   "id": "faq-008",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "Describe the differences in characteristics between RAM and SSD. (Any two)",
+   "answer": "Any two contrasting differences: RAM is volatile while SSD is non-volatile; RAM has a higher data transfer rate while SSD has a lower one; RAM has a smaller storage size while SSD has a larger one; the CPU can access RAM directly while SSD is secondary storage.",
+   "keywords": [
+    "volatile",
+    "non-volatile",
+    "data transfer rate",
+    "storage size",
+    "RAM vs SSD"
+   ],
+   "sources": [
+    "2021-P1B-Q2(b)"
+   ]
+  },
+  {
+   "id": "faq-009",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "Give two benefits of replacing a hard disk with an SSD.",
+   "answer": "Any two of: faster seek time (faster access), shock resistance, lighter in weight, less heat produced during operation, less power consumption, smaller in size.",
+   "keywords": [
+    "SSD",
+    "faster seek time",
+    "shock resistance",
+    "less power consumption"
+   ],
+   "sources": [
+    "2023-P1B-Q1(a)"
+   ]
+  },
+  {
+   "id": "faq-010",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "List common functions of an operating system. (Any two, other than file management)",
+   "answer": "Any two of: process management; resource management (memory management / network management / device management); providing a user interface. File management is the other standard function.",
+   "keywords": [
+    "operating system",
+    "process management",
+    "resource management",
+    "user interface",
+    "file management"
+   ],
+   "sources": [
+    "2022-P1B-Q1(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-011",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "What is batch processing? Give an example.",
+   "answer": "In batch processing, data is collected over a period of time and processed together at one go, not immediately — e.g. devices record heartbeat rates continuously and the data file is uploaded every 5 minutes, so the data processed is not up-to-date.",
+   "keywords": [
+    "batch processing",
+    "collected over a period",
+    "periodic upload",
+    "not immediate"
+   ],
+   "sources": [
+    "2023-P1B-Q5(b)(i)",
+    "2018-P1B-Q2(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-012",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "Compare a smart card, a QR code and a mobile app for member identification.",
+   "answer": "Smart card over QR code: more secure — a smart card is harder to replicate while a QR code can be replicated easily. QR code over smart card: cheaper (lower cost) and easier to implement/manufacture. Mobile app over both: more additional functions can be provided (view profile, usage records, amend personal data) and there is no need to carry a card.",
+   "keywords": [
+    "smart card",
+    "QR code",
+    "mobile app",
+    "harder to replicate",
+    "lower cost"
+   ],
+   "sources": [
+    "2023-P1B-Q5(a)(i)",
+    "2023-P1B-Q5(a)(ii)",
+    "2023-P1B-Q5(a)(iii)"
+   ]
+  },
+  {
+   "id": "faq-013",
+   "topic": "Core C — Internet & its Applications",
+   "question": "What does a firewall do to secure an online service?",
+   "answer": "A firewall filters network traffic and blocks unauthorised access to the server: it permits or blocks data packets based on a set of security rules, closing unnecessary ports, filtering intruders/suspicious connections (access control list), and preventing hacking and information leakage. Note: 'prevent virus' alone is NOT accepted by markers.",
+   "keywords": [
+    "firewall",
+    "filter traffic",
+    "block unauthorised access",
+    "security rules",
+    "close ports",
+    "access control list"
+   ],
+   "sources": [
+    "2021-P1B-Q1(d)(i)",
+    "2022-P2B-Q2(a)(i)",
+    "2022-P1B-Q3(d)",
+    "2019-P2B-Q3(d)"
+   ]
+  },
+  {
+   "id": "faq-014",
+   "topic": "Core C — Internet & its Applications",
+   "question": "How does SSL / HTTPS secure data transfer?",
+   "answer": "SSL encrypts the information — sensitive data such as usernames and passwords and credit card information — transmitted between the customer and the web site, so it cannot be read if intercepted. With HTTPS the web site's identity is also authenticated by a CA (certificate authority), so the identity of the web site is real and can be verified.",
+   "keywords": [
+    "SSL",
+    "encryption",
+    "sensitive data",
+    "HTTPS",
+    "authentication",
+    "CA"
+   ],
+   "sources": [
+    "2021-P1B-Q1(d)(ii)",
+    "2023-P2C-Q3(c)(i)",
+    "2020-P2C-Q3(d)(i)"
+   ]
+  },
+  {
+   "id": "faq-015",
+   "topic": "Core C — Internet & its Applications",
+   "question": "What must a web site owner obtain before providing an HTTPS connection?",
+   "answer": "A digital certificate (SSL/TLS certificate / e-cert). ('Domain name' is explicitly NOT accepted.)",
+   "keywords": [
+    "digital certificate",
+    "SSL/TLS certificate",
+    "e-cert",
+    "HTTPS"
+   ],
+   "sources": [
+    "2023-P1B-Q4(c)(i)",
+    "2020-P2C-Q3(d)(ii)"
+   ]
+  },
+  {
+   "id": "faq-016",
+   "topic": "Core C — Internet & its Applications",
+   "question": "In a public/private key encryption system on a web site, who uses the public key and who uses the private key?",
+   "answer": "The public key is used by the customers/users (to encrypt data sent to the site); the private key is kept and used by the web site owner (David, the shop) to decrypt it.",
+   "keywords": [
+    "public key",
+    "private key",
+    "customers",
+    "web site owner",
+    "encryption"
+   ],
+   "sources": [
+    "2023-P1B-Q4(c)(ii)",
+    "2018-P1B-Q3(e)",
+    "2018-P2B-Q3(d)(i)"
+   ]
+  },
+  {
+   "id": "faq-017",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Must a school install its own DNS server for its web server to be accessed by the public?",
+   "answer": "No. A DNS server translates domain names into IP addresses, but the public can access the web server using its IP address directly, or use a DNS provided elsewhere (e.g. by the ISP).",
+   "keywords": [
+    "DNS",
+    "domain name",
+    "IP address",
+    "ISP"
+   ],
+   "sources": [
+    "2022-P1B-Q3(c)"
+   ]
+  },
+  {
+   "id": "faq-018",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Describe how a file is transmitted over the Internet in packets.",
+   "answer": "The file is broken into packets; the packets are sent out and transmitted through the Internet via different routes; the completion of the transmission of all packets is ensured; finally the packets are reassembled at the destination computer.",
+   "keywords": [
+    "packets",
+    "broken into packets",
+    "different routes",
+    "reassembled"
+   ],
+   "sources": [
+    "2022-P1B-Q3(b)",
+    "2020-P1B-Q3(a)(iii)",
+    "2019-P1B-Q4(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-019",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Why can files be transferred between computers running different operating systems?",
+   "answer": "Because the devices use the same communication protocol for data communication (specific examples accepted: FTP, TCP/IP), files can be transferred successfully regardless of the operating system.",
+   "keywords": [
+    "communication protocol",
+    "FTP",
+    "TCP/IP",
+    "different operating systems"
+   ],
+   "sources": [
+    "2021-P1B-Q2(f)"
+   ]
+  },
+  {
+   "id": "faq-020",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give two benefits of using a wireless network instead of a wired network.",
+   "answer": "Any two of: users can access network services anywhere within coverage without the limitation of cable connection; the number of network connections can be flexible; WiFi-only devices can access network services; it is easy to set up as no wiring is required and mobility is higher.",
+   "keywords": [
+    "wireless network",
+    "no cable limitation",
+    "flexible connections",
+    "mobility",
+    "no wiring"
+   ],
+   "sources": [
+    "2021-P1B-Q2(a)",
+    "2022-P2B-Q4(a)"
+   ]
+  },
+  {
+   "id": "faq-021",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give a reason to support the use of cookies, for users and for the web site owner respectively.",
+   "answer": "For users: cookies store user preferences / colour schemes / username and password, or restore where a video was paused last time. For the web site owner: cookies keep track of users' activities and web surfing behaviour, e.g. which types of videos are most visited.",
+   "keywords": [
+    "cookies",
+    "user preferences",
+    "track activities",
+    "surfing behaviour"
+   ],
+   "sources": [
+    "2022-P2C-Q3(e)",
+    "2020-P2C-Q1(c)(iii)"
+   ]
+  },
+  {
+   "id": "faq-022",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Suggest two web design features that improve web accessibility.",
+   "answer": "Any two of: allow changing the font size; allow changing the colour scheme; add subtitles to videos; add alt text to images.",
+   "keywords": [
+    "web accessibility",
+    "font size",
+    "colour scheme",
+    "subtitles",
+    "alt text"
+   ],
+   "sources": [
+    "2022-P2C-Q3(d)(ii)",
+    "2020-P2C-Q4(b)(ii)",
+    "2020-P2C-Q4(c)(i)",
+    "2019-P1B-Q1(b)",
+    "2019-P2C-Q1(b)",
+    "2018-P2C-Q1(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-023",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Other than security tokens, suggest two methods of making secure electronic transactions.",
+   "answer": "Any two of: SSL encryption; two-factor authentication; biometric authentication; one-time password via SMS/email; smartcard; digital certificates; using a private key to verify user identity. (Simply 'set a login name and password' or 'use a stronger password' is NOT accepted.)",
+   "keywords": [
+    "SSL encryption",
+    "two-factor authentication",
+    "biometric authentication",
+    "one-time password",
+    "digital certificates"
+   ],
+   "sources": [
+    "2022-P1B-Q3(e)"
+   ]
+  },
+  {
+   "id": "faq-024",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give two good practices when setting a password, other than making it long.",
+   "answer": "Any two of: use meaningless words; use randomised numbers; use different passwords for different systems. (A strong password itself combines length with uppercase and lowercase letters, digits and symbols.)",
+   "keywords": [
+    "password",
+    "meaningless words",
+    "randomised numbers",
+    "different passwords for different systems"
+   ],
+   "sources": [
+    "2022-P1B-Q4(c)(i)",
+    "2019-P1B-Q2(a)(i)"
+   ]
+  },
+  {
+   "id": "faq-025",
+   "topic": "Core C — Internet & its Applications",
+   "question": "How does CAPTCHA enhance the security of a login page?",
+   "answer": "CAPTCHA requires users to read and input characters that a software bot cannot read, so automated (bot) logins are blocked.",
+   "keywords": [
+    "CAPTCHA",
+    "software bot",
+    "characters",
+    "login security"
+   ],
+   "sources": [
+    "2022-P1B-Q4(c)(ii)",
+    "2020-P2C-Q4(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-026",
+   "topic": "Core E — Social Implications",
+   "question": "How can you tell an email is probably a phishing/scam email, and what may happen if you click its link?",
+   "answer": "Warning sign: the sender address uses a commercial .com domain (survey@HKSAR.com.hk) although it claims to be from the government, which would use a .gov domain. Clicking may direct you to a phishing web site or trigger malware download/installation, leading to leakage of personal information, ransomware or virus infection.",
+   "keywords": [
+    "phishing",
+    ".com domain",
+    ".gov domain",
+    "malware",
+    "personal information leakage"
+   ],
+   "sources": [
+    "2023-P1B-Q5(d)"
+   ]
+  },
+  {
+   "id": "faq-027",
+   "topic": "Core E — Social Implications",
+   "question": "What health hazard is caused by prolonged use of a mouse, and what product reduces it?",
+   "answer": "Repetitive strain: repetitive use of the wrist/finger/muscles/tendons of the arm for data entry. It can be reduced by a wrist rest or a mouse with an ergonomic design.",
+   "keywords": [
+    "repetitive strain",
+    "wrist",
+    "ergonomic design",
+    "wrist rest"
+   ],
+   "sources": [
+    "2021-P1B-Q1(b)(i)",
+    "2021-P1B-Q1(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-028",
+   "topic": "Core E — Social Implications",
+   "question": "Give two limitations of e-learning activities in society.",
+   "answer": "People may not easily access the Internet (Internet access/hardware problems), and people may find it difficult to operate electronic devices to learn the online materials — the digital divide / digital literacy problem.",
+   "keywords": [
+    "e-learning limitations",
+    "Internet access",
+    "digital divide",
+    "digital literacy"
+   ],
+   "sources": [
+    "2021-P1B-Q3(c)"
+   ]
+  },
+  {
+   "id": "faq-029",
+   "topic": "Core E — Social Implications",
+   "question": "In terms of copyright, what should you do before using images found on the Internet in a project? (Any two)",
+   "answer": "Any two of: acknowledge/identify/label the source; get consent from the copyright holder; pay for the usage; use Open Source, copyleft or Creative Commons (CC) information and images.",
+   "keywords": [
+    "copyright",
+    "acknowledge the source",
+    "consent",
+    "Creative Commons",
+    "pay for usage"
+   ],
+   "sources": [
+    "2023-P1B-Q1(d)(ii)",
+    "2019-P1B-Q2(b)(iii)"
+   ]
+  },
+  {
+   "id": "faq-030",
+   "topic": "Core E — Social Implications",
+   "question": "Suggest two ways of validating whether information found on the Internet is reliable.",
+   "answer": "Any two of: cross-check with different sources; check from authoritative sources; check the date/time of publication.",
+   "keywords": [
+    "reliability",
+    "cross-check sources",
+    "authoritative sources",
+    "date of publication"
+   ],
+   "sources": [
+    "2023-P1B-Q1(d)(i)"
+   ]
+  },
+  {
+   "id": "faq-031",
+   "topic": "Core D — Basic Programming Concepts",
+   "question": "Why can binary search not be used on every data set, and how does it work?",
+   "answer": "Binary search requires the data to be ordered (sorted) — it cannot be used when values are not arranged in order. It repeatedly compares the target with the middle element (the integral part of (left + right)/2): if the target is smaller, continue with right = middle − 1; if larger, left = middle + 1.",
+   "keywords": [
+    "binary search",
+    "ordered data",
+    "middle element",
+    "left and right"
+   ],
+   "sources": [
+    "2022-P2D-Q3(d)(iii)",
+    "2025-P2C-Q11(b)",
+    "2018-P2D-Q3(e)"
+   ]
+  },
+  {
+   "id": "faq-032",
+   "topic": "Core D — Basic Programming Concepts",
+   "question": "Give a reason for using a compiler instead of an interpreter.",
+   "answer": "Efficiency: with a compiler the whole program is translated once and the machine code is saved (in an object file) for multiple executions, so execution time is shorter — there is no need to translate again during execution. Compiled code also protects the source code.",
+   "keywords": [
+    "compiler",
+    "interpreter",
+    "machine code",
+    "object file",
+    "execution time"
+   ],
+   "sources": [
+    "2023-P2D-Q4(d)",
+    "2018-P2D-Q2(e)(iii)"
+   ]
+  },
+  {
+   "id": "faq-033",
+   "topic": "Core D — Basic Programming Concepts",
+   "question": "Give two characteristics of an object-oriented programming language, other than the concept of an object.",
+   "answer": "Any two of: attributes and methods; data abstraction; class (modularity and reusability); encapsulation; information hiding; inheritance.",
+   "keywords": [
+    "object-oriented",
+    "encapsulation",
+    "inheritance",
+    "data abstraction",
+    "class",
+    "information hiding"
+   ],
+   "sources": [
+    "2022-P2D-Q4(c)(ii)",
+    "2020-P2D-Q4(a)(i)",
+    "2018-P2D-Q2(e)(i)"
+   ]
+  },
+  {
+   "id": "faq-034",
+   "topic": "Core D — Basic Programming Concepts",
+   "question": "Give two advantages of using program libraries.",
+   "answer": "Any two of: time saving (shorter development time); reusability (less redundant code); functionality (ready to use, no need to develop); reliability (fewer bugs); community support (keeping up-to-date).",
+   "keywords": [
+    "libraries",
+    "reusability",
+    "time saving",
+    "reliability",
+    "ready to use"
+   ],
+   "sources": [
+    "2023-P2D-Q4(e)",
+    "2018-P2D-Q2(e)(ii)"
+   ]
+  },
+  {
+   "id": "faq-035",
+   "topic": "Elective A — Databases",
+   "question": "What is a composite primary key? Give an example.",
+   "answer": "A composite primary key uses two or more fields together to identify a record uniquely, when no single field is unique — e.g. in SCORE, IDNO + SUBJECT is the primary key because one student has records in several subjects.",
+   "keywords": [
+    "composite primary key",
+    "IDNO + SUBJECT",
+    "unique identification"
+   ],
+   "sources": [
+    "2021-P1B-Q4(c)(i)",
+    "2020-P2A-Q1(a)"
+   ]
+  },
+  {
+   "id": "faq-036",
+   "topic": "Elective A — Databases",
+   "question": "How is a table normalised to Third Normal Form (3NF)?",
+   "answer": "Decompose the table into several tables so that each table has its own primary key and the attributes grouped by what they depend on — attributes depending on only part of a composite key, or on another non-key attribute, are moved into their own table — then state each primary key and the foreign keys linking the tables, e.g. MOVIE(MID, MNAME), CINEMA(CID, CTYPE, TN) PK CID, TICKET(MID, MTIME, CID, SNO) with FK CID references CID of CINEMA.",
+   "keywords": [
+    "third normal form",
+    "decompose",
+    "primary key",
+    "foreign key",
+    "functional dependency"
+   ],
+   "sources": [
+    "2023-P2A-Q4(c)",
+    "2022-P2A-Q4(b)",
+    "2018-P2A-Q1(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-037",
+   "topic": "Elective A — Databases",
+   "question": "What are the benefits of normalising a database / using a well-structured table design?",
+   "answer": "It avoids data redundancy and inconsistency: there are no repeated fields and no fields left without values, and when a value (e.g. FID) is updated it only has to be changed in one place.",
+   "keywords": [
+    "normalisation",
+    "data redundancy",
+    "data inconsistency",
+    "no repeated fields"
+   ],
+   "sources": [
+    "2021-P2A-Q3(c)(ii)",
+    "2022-P2A-Q3(c)",
+    "2019-P2A-Q2(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-038",
+   "topic": "Elective A — Databases",
+   "question": "Which data type should be used for an identity code such as GID 00018 or FID 0059, and why?",
+   "answer": "Character (text) type. The code contains leading zeros, which an integer/numeric type would drop, corrupting the code.",
+   "keywords": [
+    "character type",
+    "leading zeros",
+    "integer type",
+    "identity code"
+   ],
+   "sources": [
+    "2025-P2A-Q5(a)",
+    "2022-P2A-Q3(a)(i)",
+    "2019-P1A-Q6"
+   ]
+  },
+  {
+   "id": "faq-039",
+   "topic": "Elective A — Databases",
+   "question": "State one advantage and one disadvantage of a NOT NULL constraint on a field.",
+   "answer": "Advantage: no fields will be left blank — there is no missing value (e.g. no missing mark). Disadvantage: a value is forced to be entered even when it may not be feasible, e.g. absence or disqualification, or no marks before the contest.",
+   "keywords": [
+    "NOT NULL",
+    "no missing value",
+    "forced entry"
+   ],
+   "sources": [
+    "2021-P2A-Q3(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-040",
+   "topic": "Elective B — Networking",
+   "question": "Compare TCP and UDP, and state a suitable application of each.",
+   "answer": "TCP is used for sending (event) results to a file server because it ensures there is no data packet loss during transmission and that all received packets can be reassembled in order. UDP is used for video live streaming because it has a simpler header with less overhead and requires no acknowledgement, making it faster and more suitable for real-time applications.",
+   "keywords": [
+    "TCP",
+    "UDP",
+    "no packet loss",
+    "reassembled in order",
+    "less overhead",
+    "no acknowledgement",
+    "real-time"
+   ],
+   "sources": [
+    "2022-P2B-Q3(c)"
+   ]
+  },
+  {
+   "id": "faq-041",
+   "topic": "Elective B — Networking",
+   "question": "Distinguish simplex and duplex communication modes, with an application of each.",
+   "answer": "Simplex: data is transferred in a single direction only, e.g. sound data from a microphone to a receiver/speaker. Duplex: data can be transferred in both directions, e.g. tablet computers send commands for choosing music videos and receive the selected playlists.",
+   "keywords": [
+    "simplex",
+    "duplex",
+    "single direction",
+    "both directions"
+   ],
+   "sources": [
+    "2021-P2B-Q2(c)",
+    "2020-P2B-Q3(a)",
+    "2019-P2B-Q4(b)",
+    "2018-P2B-Q1(b)(i)",
+    "2018-P2B-Q1(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-042",
+   "topic": "Elective B — Networking",
+   "question": "Give two reasons for dividing a network into subnets.",
+   "answer": "To decrease the size of a collision/broadcast domain so as to minimise network jam due to broadcasting; and to increase network security / allow bandwidth control.",
+   "keywords": [
+    "subnet",
+    "collision domain",
+    "broadcast",
+    "network security",
+    "bandwidth control"
+   ],
+   "sources": [
+    "2022-P2B-Q1(a)(ii)",
+    "2020-P2B-Q3(e)",
+    "2019-P2B-Q2(b)(i)",
+    "2018-P2B-Q4(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-043",
+   "topic": "Elective B — Networking",
+   "question": "What is the function of a UPS for a server?",
+   "answer": "In case of power failure or unstable power supply, the UPS acts as emergency backup power, allowing any unsaved data to be saved and the server to be shut down normally.",
+   "keywords": [
+    "UPS",
+    "power failure",
+    "emergency backup power",
+    "normal shutdown"
+   ],
+   "sources": [
+    "2022-P2B-Q2(b)(i)",
+    "2020-P2B-Q1(d)",
+    "2019-P2B-Q3(e)(ii)"
+   ]
+  },
+  {
+   "id": "faq-044",
+   "topic": "Elective B — Networking",
+   "question": "Compare RAID-0 and RAID-5.",
+   "answer": "RAID-0 connects two or more hard disks and stores data separately (striping); as data I/O can be performed simultaneously, data access speed is raised, but there is no redundancy. RAID-5 uses 3 or more hard disks, with one disk's worth of space storing the parity data of the other disks for checksum purposes; if one hard disk corrupts, data can be recovered from the data in the other disks.",
+   "keywords": [
+    "RAID-0",
+    "RAID-5",
+    "striping",
+    "parity data",
+    "data recovery",
+    "access speed"
+   ],
+   "sources": [
+    "2021-P2B-Q3(d)(iii)"
+   ]
+  },
+  {
+   "id": "faq-045",
+   "topic": "Elective B — Networking",
+   "question": "Other than web filtering, give a function of a proxy server and describe how it works.",
+   "answer": "Caching: the proxy server caches the web pages accessed by users, which speeds up web browsing — when other users access the same web pages, they retrieve them directly from the proxy server without re-downloading them from the web servers on the Internet.",
+   "keywords": [
+    "proxy server",
+    "caching",
+    "speed up browsing",
+    "retrieve from proxy"
+   ],
+   "sources": [
+    "2022-P2B-Q2(c)(iv)",
+    "2018-P2B-Q3(b)(iii)"
+   ]
+  },
+  {
+   "id": "faq-046",
+   "topic": "Elective B — Networking",
+   "question": "State two functions of a domain controller.",
+   "answer": "Any two of: login authentication; user rights control; enforcing security policy.",
+   "keywords": [
+    "domain controller",
+    "login authentication",
+    "user rights control",
+    "security policy"
+   ],
+   "sources": [
+    "2021-P2B-Q3(c)",
+    "2019-P2B-Q1(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-047",
+   "topic": "Elective B — Networking",
+   "question": "A staff computer's network card is replaced but it cannot reconnect to the staff network although all settings are unchanged. Why?",
+   "answer": "The new network interface card has a different MAC address, and the MAC address must be registered again with the access point because MAC filtering is enabled on the staff network.",
+   "keywords": [
+    "MAC address",
+    "MAC filtering",
+    "network interface card",
+    "register with AP"
+   ],
+   "sources": [
+    "2022-P2B-Q4(d)"
+   ]
+  },
+  {
+   "id": "faq-048",
+   "topic": "Elective B — Networking",
+   "question": "Compare parity checking and checksum for error detection.",
+   "answer": "A parity check adds a parity bit so the number of 1s is even (or odd); its disadvantage is that it cannot detect errors when the number of error bits is even, and it cannot locate/correct errors. A checksum is calculated by adding groups of the data and taking the one's complement; its advantage over parity checking is that it can still detect errors when the data contains multiple error bits.",
+   "keywords": [
+    "parity bit",
+    "even parity",
+    "cannot detect even number of errors",
+    "checksum",
+    "one's complement",
+    "multiple error bits"
+   ],
+   "sources": [
+    "2023-P2B-Q4(b)(ii)",
+    "2023-P2B-Q4(b)(iii)",
+    "2023-P2B-Q4(b)(iv)",
+    "2019-P2B-Q4(e)(ii)",
+    "2018-P2B-Q1(c)(ii)",
+    "2018-P2B-Q1(c)(iii)"
+   ]
+  },
+  {
+   "id": "faq-049",
+   "topic": "Elective B — Networking",
+   "question": "What is the difference between incremental and differential backup, and which saves more storage?",
+   "answer": "Incremental backup (Method 1 in the scheme) backs up only the data changed since the last backup; differential backup (Method 2) backs up all data changed since the last full backup. Incremental backup saves storage space and reduces backup time, because each backup only stores that period's changes, not all changes since the full backup.",
+   "keywords": [
+    "incremental backup",
+    "differential backup",
+    "full backup",
+    "saves storage",
+    "backup time"
+   ],
+   "sources": [
+    "2023-P2B-Q3(e)(i)",
+    "2023-P2B-Q3(e)(ii)"
+   ]
+  },
+  {
+   "id": "faq-050",
+   "topic": "Elective B — Networking",
+   "question": "Give two advantages of WiFi over Bluetooth, and two advantages of Bluetooth.",
+   "answer": "WiFi over Bluetooth (any two): higher data transfer rate; longer connection distance; higher security level. Bluetooth (any two): lower power consumption; lower interference; easier connectivity; certified/standardised.",
+   "keywords": [
+    "WiFi",
+    "Bluetooth",
+    "data transfer rate",
+    "connection distance",
+    "lower power consumption"
+   ],
+   "sources": [
+    "2021-P2B-Q2(b)",
+    "2023-P2B-Q4(a)",
+    "2018-P2B-Q2(b)(i)",
+    "2018-P2B-Q2(b)(iii)"
+   ]
+  },
+  {
+   "id": "faq-051",
+   "topic": "Elective B — Networking",
+   "question": "Should 2.4 GHz or 5 GHz WiFi be used for (a) streaming live video in a room and (b) instant messaging while moving around a restaurant?",
+   "answer": "(a) 5 GHz — streaming video needs a higher data transmission speed. (b) 2.4 GHz — it has higher penetration power and larger coverage, so the connection is not affected even if the customer occasionally leaves the room.",
+   "keywords": [
+    "2.4 GHz",
+    "5 GHz",
+    "penetration power",
+    "transmission speed",
+    "coverage"
+   ],
+   "sources": [
+    "2021-P2B-Q2(e)",
+    "2019-P2B-Q1(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-052",
+   "topic": "Elective C — Multimedia",
+   "question": "Give an advantage of lossy compression and of lossless compression.",
+   "answer": "Lossy compression: smaller file size (some data is removed, which is also why its compression ratio is usually higher than lossless). Lossless compression: better quality — the file can be converted back to the original file exactly.",
+   "keywords": [
+    "lossy compression",
+    "lossless compression",
+    "smaller file size",
+    "original quality",
+    "data removed"
+   ],
+   "sources": [
+    "2021-P2C-Q3(b)(ii)",
+    "2023-P2C-Q1(c)(i)",
+    "2019-P2C-Q1(c)(iii)"
+   ]
+  },
+  {
+   "id": "faq-053",
+   "topic": "Elective C — Multimedia",
+   "question": "Give an advantage and a disadvantage of bitmap graphics, and a case where vector graphics are preferred.",
+   "answer": "Bitmap advantage: able to capture a wide range of colours and gradients, simple to edit by changing pixels, good for storing high-quality images. Bitmap disadvantage: larger file size and poor scalability. Vector graphics are preferred for line art such as logos, icons and typography that must be resized (scalable) without losing quality.",
+   "keywords": [
+    "bitmap",
+    "vector",
+    "pixels",
+    "scalability",
+    "colours and gradients",
+    "larger file size"
+   ],
+   "sources": [
+    "2023-P2C-Q1(a)(i)",
+    "2023-P2C-Q1(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-054",
+   "topic": "Elective C — Multimedia",
+   "question": "How is the file size of uncompressed digital audio calculated?",
+   "answer": "File size = sampling rate × sample size × number of channels × duration (in seconds), converted from bits to bytes/MB — e.g. 44.1 kHz × 16 bits × 4 channels × 180 s ≈ 61 MB. (The bitrate setting is irrelevant for uncompressed audio.)",
+   "keywords": [
+    "sampling rate",
+    "sample size",
+    "channels",
+    "duration",
+    "uncompressed audio file size"
+   ],
+   "sources": [
+    "2023-P2C-Q2(b)",
+    "2021-P2C-Q3(c)(i)",
+    "2020-P2C-Q1(a)(ii)",
+    "2018-P2C-Q3(b)(iii)"
+   ]
+  },
+  {
+   "id": "faq-055",
+   "topic": "Elective C — Multimedia",
+   "question": "What is (motion) tweening in animation?",
+   "answer": "In motion/classic tweening, the animator sets key frames for the object's positions (e.g. 3 key frames for start, top-right and bottom-middle), and the frames in between two key frames are generated automatically by algorithms (auto-tweening) — no change in size or shape occurs unless set.",
+   "keywords": [
+    "tweening",
+    "key frames",
+    "in-between frames",
+    "auto-generated",
+    "motion tween"
+   ],
+   "sources": [
+    "2023-P2C-Q4(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-056",
+   "topic": "Elective C — Multimedia",
+   "question": "Distinguish client-side scripts from server-side scripts in a web application.",
+   "answer": "Client-side scripts run in the user's browser: the effect is instant (e.g. the like icon changes when toggled) and no further action is required on the server side. Server-side scripts run on the server: the action is sent to the server to be stored, and the server pushes the update (e.g. the number of likes) to all clients.",
+   "keywords": [
+    "client-side script",
+    "server-side script",
+    "instant",
+    "stored on server",
+    "update all clients"
+   ],
+   "sources": [
+    "2023-P2C-Q4(a)"
+   ]
+  },
+  {
+   "id": "faq-057",
+   "topic": "Elective B (2025) — Web Application Development",
+   "question": "Compare external CSS and inline CSS: give a reason to use each.",
+   "answer": "External CSS: styles in multiple HTML pages can be consistent, simplifying updates and reducing redundancy. Inline CSS: it applies to individual cases — it styles one specific element/page without affecting others.",
+   "keywords": [
+    "external CSS",
+    "inline CSS",
+    "consistent styles",
+    "specific element",
+    "reduce redundancy"
+   ],
+   "sources": [
+    "2025-P2B-Q6(b)(i)",
+    "2025-P2B-Q6(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-058",
+   "topic": "Elective C (2025) — Algorithm & Programming",
+   "question": "Name two sensors that can be used to estimate the number of seats occupied, and state how one works.",
+   "answer": "Any two of: ultrasonic sensor (detects the change of distance/presence above a seat), light sensor, infrared sensor, motion sensor, force/pressure sensor (under the seat cushion), touch sensor, temperature sensor — with the use of the chosen sensor described.",
+   "keywords": [
+    "ultrasonic sensor",
+    "infrared sensor",
+    "motion sensor",
+    "pressure sensor",
+    "occupancy"
+   ],
+   "sources": [
+    "2025-P2C-Q13(d)"
+   ]
+  },
+  {
+   "id": "faq-059",
+   "topic": "Elective D — Software Development",
+   "question": "State the five phases of the Waterfall model in order.",
+   "answer": "System analysis → System design → System implementation → System conversion → System maintenance. (In the applied version: analysis collects user requirements; design covers flowcharts and user interface; implementation is writing the program source code; testing includes user acceptance test; a feedback arrow returns from testing to an earlier stage for debugging.)",
+   "keywords": [
+    "waterfall model",
+    "system analysis",
+    "system design",
+    "system implementation",
+    "system conversion",
+    "system maintenance"
+   ],
+   "sources": [
+    "2023-P2D-Q3(a)(i)",
+    "2021-P2D-Q4(d)"
+   ]
+  },
+  {
+   "id": "faq-060",
+   "topic": "Elective D — Software Development",
+   "question": "Why is a user acceptance test still needed after the system test?",
+   "answer": "A system test is done by developers, while a user acceptance test involves the ultimate (end) users testing the system with authentic data, to ensure the system meets/fulfils the user requirements.",
+   "keywords": [
+    "user acceptance test",
+    "system test",
+    "end users",
+    "authentic data",
+    "user requirements"
+   ],
+   "sources": [
+    "2022-P2D-Q4(d)(i)",
+    "2020-P2D-Q4(b)"
+   ]
+  },
+  {
+   "id": "faq-061",
+   "topic": "Core A — Information Processing",
+   "question": "Why should characters be represented by character sets such as ASCII in computers?",
+   "answer": "To standardise the data representation of characters, so that the same character is represented by the same code on different computers. WARNING: 'because data in computers is stored in binary numbers' is NOT the reason — 61% of candidates wrongly chose it in 2022 (only 25% answered this question correctly); 'to enhance data encryption' is also not credited.",
+   "keywords": [
+    "character set",
+    "ASCII",
+    "standardise",
+    "data representation"
+   ],
+   "sources": [
+    "2022-P1A-Q11"
+   ]
+  },
+  {
+   "id": "faq-062",
+   "topic": "Core A — Information Processing",
+   "question": "To design and produce student result slips using student information and examination marks stored in a database, what should be used?",
+   "answer": "Create reports using database software. WARNING: a pivot table in spreadsheet software is for summarising and analysing data — it is NOT a tool for designing and producing result slips; 40% of candidates wrongly chose it in 2020, as many as chose the correct answer.",
+   "keywords": [
+    "database report",
+    "result slips",
+    "database software",
+    "pivot table"
+   ],
+   "sources": [
+    "2020-P1A-Q9"
+   ]
+  },
+  {
+   "id": "faq-063",
+   "topic": "Core A — Information Processing",
+   "question": "Give a reason for sending a document by email in PDF format instead of DOC format.",
+   "answer": "The page layout of the document can be preserved, so it is displayed and printed the same way on the receiver's computer. WARNING: 'the document can be encrypted' is NOT a reason — DOC files can also be encrypted (a quarter of candidates wrongly thought they could not); multimedia is not a reason either, as both PDF and DOC files can include multimedia elements.",
+   "keywords": [
+    "PDF",
+    "DOC",
+    "page layout preserved",
+    "encryption"
+   ],
+   "sources": [
+    "2020-P1A-Q8"
+   ]
+  },
+  {
+   "id": "faq-064",
+   "topic": "Core A — Information Processing",
+   "question": "Can data validation, such as using a calendar box instead of a text box for entering a date, ensure that the input is error-free?",
+   "answer": "No. A calendar box avoids impossible dates and provides a user-friendly interface, but the user can still select a wrong (valid) date — validation can reduce input errors but cannot guarantee error-free input. WARNING: in 2022, 45% of candidates wrongly believed a calendar box 'ensures that the input is error-free'.",
+   "keywords": [
+    "data validation",
+    "calendar box",
+    "impossible dates",
+    "error-free"
+   ],
+   "sources": [
+    "2022-P1A-Q3"
+   ]
+  },
+  {
+   "id": "faq-065",
+   "topic": "Core A — Information Processing",
+   "question": "In storage capacity calculations, why must 1024 (not 1000) be used when converting between MB, GB and TB?",
+   "answer": "The capacity units step by 1024: 1 GB = 1024 MB and 1 TB = 1024 GB. For example, a daily backup of 10 MB per minute needs 10 x 60 x 24 / 1024 = 14.0625 GB. WARNING: weaker candidates used 1000 instead of 1024 and lost the marks; and when file sizes are given in binary units but disk capacity in decimal TB, convert consistently — in the 2022 disk question the naive 30,000 / 2,000 = 15 was NOT the key (official answer 17), and only 7% of candidates answered correctly.",
+   "keywords": [
+    "1024",
+    "storage capacity",
+    "GB",
+    "TB",
+    "unit conversion"
+   ],
+   "sources": [
+    "2020-P1B-Q3(a)(ii)",
+    "2022-P1A-Q20"
+   ]
+  },
+  {
+   "id": "faq-066",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "What is the difference between the data bus and the control bus in a computer?",
+   "answer": "Data buses are used to transfer data between the main board / CPU, main memory and input/output devices, while control signals are transferred by the control bus. WARNING: the statement 'data buses are used to transfer control signals' is NOT correct — in 2020 only 33% of candidates answered this machine-organisation question correctly.",
+   "keywords": [
+    "data bus",
+    "control bus",
+    "control signals",
+    "machine organisation"
+   ],
+   "sources": [
+    "2020-P1A-Q22"
+   ]
+  },
+  {
+   "id": "faq-067",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "Give two major differences between system software and application software.",
+   "answer": "Any two CONTRASTING differences, e.g.: system software is usually written in low-level languages while application software is usually written in high-level languages; system software maintains and manages the system resources and provides the platform on which application software runs. WARNING: merely listing characteristics of system software without any comparison earns no marks, and 'system software is pre-installed while application software must be downloaded' is NOT accepted — application software can also be pre-installed.",
+   "keywords": [
+    "system software",
+    "application software",
+    "low-level language",
+    "system resources",
+    "platform"
+   ],
+   "sources": [
+    "2020-P1B-Q2(a)"
+   ]
+  },
+  {
+   "id": "faq-068",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Mary uses her mobile phone in her office to control appliances connected to the Wi-Fi network at home. Which of LAN, Internet and Access Point are involved?",
+   "answer": "All three are involved. A Wi-Fi network is a wireless LAN (WLAN) based on the IEEE 802.11 family of standards: the appliances sit on the home LAN behind an access point, and the phone reaches them from the office through the Internet. WARNING: 45% of candidates wrongly thought a Wi-Fi network was unrelated to a LAN — that was the most common error in this 2021 question.",
+   "keywords": [
+    "Wi-Fi",
+    "wireless LAN",
+    "WLAN",
+    "IEEE 802.11",
+    "access point",
+    "Internet"
+   ],
+   "sources": [
+    "2021-P1A-Q25"
+   ]
+  },
+  {
+   "id": "faq-069",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Suggest a biometric authentication method, other than fingerprint, that can be used to open an electronic door lock. How precisely must it be named?",
+   "answer": "Any one of: iris recognition, retinal scan, face recognition, hand geometry / palm vein, voice recognition. WARNING: writing just 'eye' earns NO mark — it is too general; the existing technology relates to the iris (or retina), so the answer must name the specific body feature used.",
+   "keywords": [
+    "biometric authentication",
+    "iris recognition",
+    "retinal scan",
+    "face recognition"
+   ],
+   "sources": [
+    "2020-P1B-Q3(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-070",
+   "topic": "Core D — Basic Programming Concepts",
+   "question": "How is a REPEAT ... UNTIL (X = 20) OR (Y > 15) loop rewritten as an equivalent WHILE loop?",
+   "answer": "Negate the whole UNTIL condition using De Morgan's law: WHILE (X <> 20) AND (Y <= 15) DO — the OR must become AND, and each comparison is reversed. WARNING: writing WHILE (X <> 20) OR (Y <= 15) stops the loop too early; 55% of candidates made exactly this mistake in 2022 and only 27% answered correctly.",
+   "keywords": [
+    "REPEAT-UNTIL",
+    "WHILE loop",
+    "De Morgan's law",
+    "negation",
+    "AND"
+   ],
+   "sources": [
+    "2022-P1A-Q28"
+   ]
+  },
+  {
+   "id": "faq-071",
+   "topic": "Core A — Information Processing",
+   "question": "Can a computer with no network connection carry out distributed processing?",
+   "answer": "No — a computer network is a must for operating a distributed processing system, because the processing is shared among computers connected by the network. A standalone computer can still carry out real-time processing and batch processing. (In 2023 about two-thirds of candidates failed to realise the network requirement.)",
+   "keywords": [
+    "distributed processing",
+    "computer network",
+    "real-time processing",
+    "batch processing"
+   ],
+   "sources": [
+    "2023-P1A-Q3"
+   ]
+  },
+  {
+   "id": "faq-072",
+   "topic": "Elective A — Databases",
+   "question": "What is the major advantage of using a form for data entry in database software?",
+   "answer": "It reduces input errors, because the form can present suitable input controls and checks for the user to enter data. WARNING: 'it shortens the execution time of SQL statements' and 'it requires less storage space' are NOT advantages — about half of the candidates wrongly believed one of them in 2021.",
+   "keywords": [
+    "data entry form",
+    "input errors",
+    "database software"
+   ],
+   "sources": [
+    "2021-P1A-Q11"
+   ]
+  },
+  {
+   "id": "faq-073",
+   "topic": "Elective A — Databases",
+   "question": "Why can a phone number be a candidate key but should not be chosen as the primary key? Give two benefits of having several candidate keys in a database.",
+   "answer": "A phone number is a natural key with contextual meaning: it may need to be changed and a member may have no phone number to give, so it cannot stand the test of time; a surrogate key such as the member identity code is more appropriate as the primary key. Benefits of having several candidate keys (any two): they can be used for data recovery if there is data corruption; more indexes can be set to improve query performance; the data/records can be better validated. (This part was rated Poor in the 2021 Candidates' Performance report.)",
+   "keywords": [
+    "candidate key",
+    "primary key",
+    "natural key",
+    "surrogate key",
+    "index"
+   ],
+   "sources": [
+    "2021-P2A-Q4(e)(i)",
+    "2021-P2A-Q4(e)(ii)"
+   ]
+  },
+  {
+   "id": "faq-074",
+   "topic": "Elective A — Databases",
+   "question": "In SQL, when should SUM be used instead of COUNT?",
+   "answer": "Use SUM to find the total of a numeric field over the selected records — e.g. the total rental fee earned is SUM(RFEE) after joining the tables. COUNT only counts how many records there are; it does not add up their values. WARNING: weaker candidates wrongly used COUNT instead of SUM to find the total fee in 2020.",
+   "keywords": [
+    "SUM",
+    "COUNT",
+    "SQL aggregate function",
+    "total"
+   ],
+   "sources": [
+    "2020-P2A-Q1(c)"
+   ]
+  },
+  {
+   "id": "faq-075",
+   "topic": "Elective D — Software Development",
+   "question": "What is a Gantt chart used for in the development of an application?",
+   "answer": "It manages the schedule of individual tasks in the project — the start date, end date and duration of each task — and it manages the dependencies between tasks, i.e. the critical path of the project. WARNING: only about a quarter of candidates explained this precisely in 2020; answers that mention the schedule but ignore task dependencies and the critical path are incomplete.",
+   "keywords": [
+    "Gantt chart",
+    "schedule",
+    "task dependencies",
+    "critical path"
+   ],
+   "sources": [
+    "2020-P2D-Q1(e)"
+   ]
+  },
+  {
+   "id": "faq-076",
+   "topic": "Elective A — Databases",
+   "question": "How must character (string) values be written in an SQL condition?",
+   "answer": "A string constant must be enclosed in quotes, e.g. MTYPE = \"O\" and VTITLE = \"Nice Face\"; numeric values are written without quotes. WARNING: weaker candidates lost marks in 2020 by omitting the quotes around string constants in their SQL statements.",
+   "keywords": [
+    "string constant",
+    "quotes",
+    "SQL",
+    "WHERE condition"
+   ],
+   "sources": [
+    "2020-P2A-Q1(b)",
+    "2020-P2A-Q1(c)"
+   ]
+  },
+  {
+   "id": "faq-077",
+   "topic": "Core A — Information Processing",
+   "question": "Give an advantage of linking, and an advantage of embedding, when an object such as a pivot chart is inserted into a document.",
+   "answer": "Linking: the content is automatically updated whenever a change occurs in the linked source (and the file size of the document will not increase drastically). Embedding: there is only one file to manage. WARNING: suggesting that 'no linking to the source document' is itself an advantage of embedding is wrong — the report notes this was actually a disadvantage; the credited advantage of embedding is single-file management.",
+   "keywords": [
+    "linking",
+    "embedding",
+    "OLE",
+    "automatically updated",
+    "single file"
+   ],
+   "sources": [
+    "2022-P1B-Q2(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-078",
+   "topic": "Elective C — Multimedia",
+   "question": "Give two reasons for using CSS across the pages of a web site.",
+   "answer": "Any two of: one (external) style sheet unifies the styles, layouts and interface of multiple web pages and makes them easier to adjust and maintain consistently; CSS has much wider presentation / enriched formatting capabilities that pure HTML cannot easily provide (e.g. image filters, online fonts, animated effects); CSS provides better control and standard over layout, including responsive web pages for different devices. WARNING: this was rated Very poor in 2020, and in 2021 only about 15% of candidates connected CSS with the consistency or unification of the design of the web pages.",
+   "keywords": [
+    "CSS",
+    "external style sheet",
+    "consistent design",
+    "responsive",
+    "layout"
+   ],
+   "sources": [
+    "2020-P2C-Q3(c)",
+    "2021-P2C-Q1(e)"
+   ]
+  },
+  {
+   "id": "faq-079",
+   "topic": "Core A — Information Processing",
+   "question": "How does run-length encoding (RLE) represent repeated data, and when does it fail to save storage space?",
+   "answer": "Each run of repeated values is stored as one pattern consisting of the value (colour code) plus the count of consecutive occurrences in binary — e.g. a whole row of 15 identical pixels is a single 6-bit pattern. It fails to save space when there are no long runs: if no two adjacent pixels are of the same colour, every pixel forms its own run and 15 x 6 = 90 bits are needed, more than a plain representation.",
+   "keywords": [
+    "run-length encoding",
+    "RLE",
+    "run",
+    "count",
+    "compression"
+   ],
+   "sources": [
+    "2021-P1B-Q5(c)(iii)(1)",
+    "2021-P1B-Q5(c)(iii)(2)"
+   ]
+  },
+  {
+   "id": "faq-080",
+   "topic": "Elective A — Databases",
+   "question": "What is a derived attribute? Give an example, and state a reason for storing one in a database.",
+   "answer": "A derived attribute is an attribute whose value can be calculated from other attributes — e.g. FINE in a loan table can be calculated from the borrowing and return timestamps (DOB and DOR). Storing it can increase query efficiency, because there is no need to calculate the value every time a query is run.",
+   "keywords": [
+    "derived attribute",
+    "calculated",
+    "query efficiency"
+   ],
+   "sources": [
+    "2021-P2A-Q2(b)(i)",
+    "2021-P2A-Q2(b)(ii)",
+    "2019-P2A-Q2(b)"
+   ]
+  },
+  {
+   "id": "faq-081",
+   "topic": "Elective A — Databases",
+   "question": "Distinguish entity integrity from referential integrity in a database.",
+   "answer": "Entity integrity: every record must be uniquely identified by its primary key — a non-unique attribute such as NAME cannot replace the key, because two readers may have the same name and records could not be reliably linked. Referential integrity: a foreign key value must refer to an existing record in the related table — deleting a READER record leaves the loan records referring to a reader who no longer exists, which violates referential integrity.",
+   "keywords": [
+    "entity integrity",
+    "referential integrity",
+    "primary key",
+    "foreign key",
+    "unique"
+   ],
+   "sources": [
+    "2021-P2A-Q2(d)(i)",
+    "2021-P2A-Q2(d)(ii)"
+   ]
+  },
+  {
+   "id": "faq-082",
+   "topic": "Elective A — Databases",
+   "question": "When two databases are merged into one, why is data conversion necessary?",
+   "answer": "Because the two databases may not store the same data in the same way (any such examples are credited): the same field may have a different data format, a different data length, or a different data type in the two tables, and the same person may appear as duplicated records in both tables. All of these must be standardised and resolved during the conversion.",
+   "keywords": [
+    "data conversion",
+    "merging databases",
+    "data format",
+    "data type",
+    "duplicated records"
+   ],
+   "sources": [
+    "2021-P2A-Q4(b)",
+    "2018-P2A-Q3(c)"
+   ]
+  },
+  {
+   "id": "faq-083",
+   "topic": "Elective D — Software Development",
+   "question": "Compare direct cutover, pilot and phased conversion for system conversion, giving an advantage of each.",
+   "answer": "Direct cutover: the old system is removed and the new system is implemented everywhere on one scheduled day — advantage: it saves the cost of managing the old system (no need to manage two systems at a time) and is quick and simple. Pilot conversion: the new system is first implemented in one office/site, then in the others — advantage: it minimises the impacts of the change. Phased conversion: the new system is implemented in stages — advantages include reduced risk, gradual implementation, easier training and increased user acceptance. (Weaker candidates in 2020 had difficulty distinguishing pilot conversion from phased conversion.)",
+   "keywords": [
+    "direct cutover",
+    "pilot conversion",
+    "phased conversion",
+    "system conversion"
+   ],
+   "sources": [
+    "2020-P2D-Q4(c)",
+    "2023-P2D-Q2(d)",
+    "2018-P2D-Q2(d)(i)",
+    "2018-P2D-Q2(d)(ii)"
+   ]
+  },
+  {
+   "id": "faq-084",
+   "topic": "Elective D — Software Development",
+   "question": "What is the major function of a linker in the execution of a program?",
+   "answer": "A linker combines / links the object code and/or libraries together to obtain executable code that can be run.",
+   "keywords": [
+    "linker",
+    "object code",
+    "libraries",
+    "executable code"
+   ],
+   "sources": [
+    "2023-P2D-Q2(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-085",
+   "topic": "Elective D — Software Development",
+   "question": "Give an advantage of using a low-level language for software development.",
+   "answer": "Any one of: better efficiency — fast and memory-efficient code; improved control — direct control over hardware for optimised programs; enhanced access — direct access to hardware features and devices.",
+   "keywords": [
+    "low-level language",
+    "efficiency",
+    "direct control",
+    "hardware access"
+   ],
+   "sources": [
+    "2023-P2D-Q2(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-086",
+   "topic": "Elective D — Software Development",
+   "question": "Other than the programming paradigm, give three criteria for selecting a programming language for a project.",
+   "answer": "Any three of: scale and modularity; reusability; portability; execution efficiency; functional strengths; readability; utility libraries and development tools; end-user interaction; familiarity; licensing fee for using libraries.",
+   "keywords": [
+    "programming language selection",
+    "portability",
+    "reusability",
+    "execution efficiency",
+    "libraries"
+   ],
+   "sources": [
+    "2020-P2D-Q4(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-087",
+   "topic": "Elective D — Software Development",
+   "question": "How do a queue and a stack differ in the order in which elements are removed?",
+   "answer": "A queue is first-in-first-out (FIFO): elements are enqueued at the rear and dequeued from the front, so the first element inserted is the first removed. A stack is last-in-first-out (LIFO): push and pop both act at the top of the stack, so the last element pushed is the first one popped.",
+   "keywords": [
+    "queue",
+    "stack",
+    "FIFO",
+    "LIFO",
+    "enqueue",
+    "push and pop"
+   ],
+   "sources": [
+    "2023-P2D-Q1(a)",
+    "2023-P2D-Q1(b)(ii)",
+    "2023-P2D-Q1(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-088",
+   "topic": "Core A — Information Processing",
+   "question": "A data field CODE consists of a class name followed by a class number (e.g. 1A01). Describe a validation check suitable for CODE.",
+   "answer": "Any one of: a format check (the entry follows the required pattern), a length check, a presence check, or a unique check — or a correct description of one of these checks. Warning: a range check and a check digit are explicitly NOT accepted for this field.",
+   "keywords": [
+    "format check",
+    "length check",
+    "presence check",
+    "unique check"
+   ],
+   "sources": [
+    "2020-P1B-Q1(a)"
+   ]
+  },
+  {
+   "id": "faq-089",
+   "topic": "Elective A — Databases",
+   "question": "How should a student's absence from a test be recorded in a numeric marks field — why not store 'ABS' or 0, and what precaution is needed if -1 is stored instead?",
+   "answer": "Storing 'ABS' is unsuitable: text does not match the numeric field type, it complicates data validation and problems occur when doing arithmetical calculations. Storing 0 is unsuitable: 0 will be mixed up with students who have genuinely got no marks. If -1 is stored to represent absence, it must be identified and discarded before any calculation (e.g. calculating the average mark) — or be input as text so that it is kept out of calculations.",
+   "keywords": [
+    "sentinel value",
+    "data type mismatch",
+    "genuine zero",
+    "exclude before calculation"
+   ],
+   "sources": [
+    "2020-P1B-Q1(c)(i)",
+    "2020-P1B-Q1(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-090",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give two technical issues that should be considered when designing a video streaming service.",
+   "answer": "Any two of: the media format / compression ratio for video and audio (bitrate) — an encoding scheme (codec) is also accepted; the frame size (video resolution), including the aspect ratio; the frame rate; the network bandwidth.",
+   "keywords": [
+    "bitrate",
+    "codec",
+    "frame size",
+    "frame rate",
+    "bandwidth"
+   ],
+   "sources": [
+    "2020-P1B-Q3(a)(iv)",
+    "2019-P1B-Q4(b)(ii)",
+    "2018-P2A-Q1(d)"
+   ]
+  },
+  {
+   "id": "faq-091",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give two disadvantages of using a smart card instead of biometric authentication to open a door.",
+   "answer": "Any two of: the user needs to bring the smart card along; the smart card may be lost; another person (a non-holder) may use the smart card to enter the room — unlike a biometric feature, the card can be passed to someone else.",
+   "keywords": [
+    "smart card",
+    "biometric authentication",
+    "lost card",
+    "non-holder use"
+   ],
+   "sources": [
+    "2020-P1B-Q3(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-092",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "Give two technical reasons why thermal printers are commonly used instead of laser printers in self-service kiosks.",
+   "answer": "Any two of: thermal printers are fast in printing; there is no need to replace toner; they are smaller in size.",
+   "keywords": [
+    "thermal printer",
+    "fast printing",
+    "no toner replacement",
+    "small size"
+   ],
+   "sources": [
+    "2020-P1B-Q4(c)"
+   ]
+  },
+  {
+   "id": "faq-093",
+   "topic": "Core E — Social Implications",
+   "question": "How does replacing cashier terminals with self-service kiosks change the nature of work in a fast food restaurant?",
+   "answer": "Any two of: less manpower is needed on the terminals; more technical staff are needed for the maintenance of the kiosks; more staff are deployed on customer service.",
+   "keywords": [
+    "self-service kiosk",
+    "less manpower",
+    "technical staff",
+    "customer service"
+   ],
+   "sources": [
+    "2020-P1B-Q4(d)(i)"
+   ]
+  },
+  {
+   "id": "faq-094",
+   "topic": "Elective A — Databases",
+   "question": "What is the difference between UNION and UNION ALL when two SQL result sets are combined?",
+   "answer": "UNION removes duplicate rows, so no duplicates are generated; UNION ALL keeps the duplicates, so it generates more rows than UNION on the same tables.",
+   "keywords": [
+    "UNION",
+    "UNION ALL",
+    "duplicate rows"
+   ],
+   "sources": [
+    "2020-P2A-Q4(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-095",
+   "topic": "Elective A — Databases",
+   "question": "After combining tables with UNION, all the records in the original tables must be cleared. Should DELETE or DROP be used? Explain briefly.",
+   "answer": "DELETE should be used: it removes all the records while the table itself remains. DROP would remove the entire table.",
+   "keywords": [
+    "DELETE",
+    "DROP",
+    "remove records",
+    "remove table"
+   ],
+   "sources": [
+    "2020-P2A-Q4(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-096",
+   "topic": "Elective A — Databases",
+   "question": "SID alone is the primary key of STUDENT. Is SID + CLNO a candidate key? And why would a composite candidate key such as CL + CLNO not be selected as the primary key?",
+   "answer": "No — a candidate key must be minimal: SID alone is already the primary key (one field), so SID + CLNO has more fields than necessary and is not a candidate key. A composite candidate key such as CL + CLNO would not be selected as the primary key because a composite key should be avoided for lower search performance, and its values change every year (students change class each year).",
+   "keywords": [
+    "candidate key",
+    "minimal",
+    "composite key",
+    "search performance"
+   ],
+   "sources": [
+    "2020-P2A-Q3(b)(i)",
+    "2020-P2A-Q3(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-097",
+   "topic": "Elective B — Networking",
+   "question": "CSMA/CA is adopted in a WiFi network. Briefly describe how collisions are avoided.",
+   "answer": "A device checks the channel to ensure it is clear before sending a packet. Otherwise it waits for a random period of time (the backoff factor / backoff counter). These steps are repeated until all packets are sent.",
+   "keywords": [
+    "CSMA/CA",
+    "channel clear",
+    "random backoff"
+   ],
+   "sources": [
+    "2020-P2B-Q2(a)(ii)",
+    "2018-P2B-Q1(d)"
+   ]
+  },
+  {
+   "id": "faq-098",
+   "topic": "Elective B — Networking",
+   "question": "What should be considered when deciding on the number of access points (APs) to install in an office? Give three technical considerations.",
+   "answer": "Any three of: the number of connections; bandwidth; obstacles / walls; frequency; interference by the environment; the area of coverage.",
+   "keywords": [
+    "number of connections",
+    "bandwidth",
+    "obstacles",
+    "interference",
+    "area of coverage"
+   ],
+   "sources": [
+    "2020-P2B-Q2(a)(i)",
+    "2019-P2B-Q1(b)(iii)"
+   ]
+  },
+  {
+   "id": "faq-099",
+   "topic": "Elective B — Networking",
+   "question": "In a ring topology, why can the remaining nodes not communicate with each other when one node is under maintenance?",
+   "answer": "The transmission in a ring topology is unidirectional, and no message can be sent through the node under maintenance, so the communication between two nodes will be broken.",
+   "keywords": [
+    "ring topology",
+    "unidirectional transmission",
+    "node under maintenance"
+   ],
+   "sources": [
+    "2020-P2B-Q3(c)"
+   ]
+  },
+  {
+   "id": "faq-100",
+   "topic": "Elective B — Networking",
+   "question": "Give two technical reasons to support using a peer-to-peer (P2P) network in a small office, and two technical reasons why a P2P network should not be used to provide file sharing for over 100 workstations.",
+   "answer": "Reasons for P2P in the office: easy setup; users can manage the sharing of resources directly. Reasons against P2P at that scale (any two): security; loading; network management (control).",
+   "keywords": [
+    "peer-to-peer network",
+    "easy setup",
+    "direct resource sharing",
+    "security",
+    "network management"
+   ],
+   "sources": [
+    "2020-P2B-Q4(a)",
+    "2020-P2B-Q4(c)"
+   ]
+  },
+  {
+   "id": "faq-101",
+   "topic": "Elective C — Multimedia",
+   "question": "Give two advantages of using vector images.",
+   "answer": "When enlarging vector images there is no distortion on the edges, and the file size is smaller (for images with lines and shapes only / generally). Warning: 'vector graphics is represented by mathematical expressions' is NOT accepted — that is a property, not an advantage; 'vector graphics is easy to be edited' is also NOT accepted unless the situation is clearly stated.",
+   "keywords": [
+    "vector image",
+    "no distortion on enlargement",
+    "smaller file size"
+   ],
+   "sources": [
+    "2020-P2C-Q2(a)(ii)",
+    "2018-P2C-Q4(b)"
+   ]
+  },
+  {
+   "id": "faq-102",
+   "topic": "Elective C — Multimedia",
+   "question": "Briefly explain the difference between the RGB and CMYK colour models.",
+   "answer": "RGB uses three primary colours (red, green, blue) and is the colour model for monitors — combining all three creates white (light). CMYK uses four primary colours (cyan, magenta, yellow, black) and is the colour model for printers — combining CMY creates black.",
+   "keywords": [
+    "RGB",
+    "CMYK",
+    "monitor",
+    "printer"
+   ],
+   "sources": [
+    "2020-P2C-Q2(d)"
+   ]
+  },
+  {
+   "id": "faq-103",
+   "topic": "Elective C — Multimedia",
+   "question": "For each error message on a registration page, state whether server-side or client-side validation should be used: (i) 'The username already exists', (ii) 'The password must contain more than 6 characters', (iii) 'The two passwords entered are not identical'.",
+   "answer": "(i) Server-side validation, because the usernames are stored in a database on the server. (ii) Client-side validation: it can be carried out by a client-side script, which releases the workload of the server. (iii) Server-side validation: it can be carried out by the server, as the JavaScript function in the browser might be disabled, so a client-side check cannot be relied on.",
+   "keywords": [
+    "server-side validation",
+    "client-side validation",
+    "database on server",
+    "JavaScript disabled"
+   ],
+   "sources": [
+    "2020-P2C-Q4(a)(i)",
+    "2020-P2C-Q4(a)(ii)",
+    "2020-P2C-Q4(a)(iii)",
+    "2018-P2C-Q2(a)"
+   ]
+  },
+  {
+   "id": "faq-104",
+   "topic": "Elective D — Software Development",
+   "question": "Why is a circular queue implementation more efficient than a linear array queue when an element is removed (dequeue)?",
+   "answer": "In the circular implementation, dequeue only advances the head index H (wrapping from A[99] back to A[0]); when the first item is removed there is no need to move (shift) the remaining items, unlike the linear implementation whose dequeue copies every remaining element one place forward.",
+   "keywords": [
+    "circular queue",
+    "head index",
+    "wrap-around",
+    "no shifting of elements"
+   ],
+   "sources": [
+    "2020-P2D-Q3(e)"
+   ]
+  },
+  {
+   "id": "faq-105",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "What is the major benefit of (i) a multi-user system and (ii) a real-time system?",
+   "answer": "(i) Multi-user: many users can use the system at the same time, so the waiting time is shorter. (ii) Real-time: the system responds to users' requests as early as possible.",
+   "keywords": [
+    "multi-user",
+    "real-time",
+    "simultaneous use",
+    "immediate response"
+   ],
+   "sources": [
+    "2019-P1B-Q1(a)(i)",
+    "2019-P1B-Q1(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-106",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Why do users prefer using a mobile application rather than a web browser to access a system? (Any one)",
+   "answer": "Any one of: some information has been pre-loaded in the mobile application so users can access the system faster; the application can be used offline; users can open the system directly by clicking the icon of the app.",
+   "keywords": [
+    "mobile app",
+    "pre-loaded",
+    "offline",
+    "app icon"
+   ],
+   "sources": [
+    "2019-P1B-Q1(c)(iii)"
+   ]
+  },
+  {
+   "id": "faq-107",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give an advantage of (i) forcing users to change their password after the first login and (ii) showing the previous login date and time when a user logs in.",
+   "answer": "(i) It ensures that the password is personalised, and prevents problems arising from the leak of the default password. (ii) The account owner can check that the last login was done by himself/herself, so unauthorised access can be spotted.",
+   "keywords": [
+    "forced password change",
+    "default password",
+    "previous login record",
+    "unauthorised access"
+   ],
+   "sources": [
+    "2019-P1B-Q2(a)(ii)(1)",
+    "2019-P1B-Q2(a)(ii)(2)"
+   ]
+  },
+  {
+   "id": "faq-108",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give two reasons to support using wired connections instead of wireless connections for online game booths.",
+   "answer": "Any two of: stable connections (less interference); lower security risk; higher data transfer rate. Warning: 'faster speed' alone was too general and earned no mark in 2019.",
+   "keywords": [
+    "wired connection",
+    "stability",
+    "interference",
+    "security risk",
+    "data transfer rate"
+   ],
+   "sources": [
+    "2019-P1B-Q4(a)(i)"
+   ]
+  },
+  {
+   "id": "faq-109",
+   "topic": "Core E — Social Implications",
+   "question": "Give three suggestions for setting up computer booths so as to reduce the health hazard to users of desktop computers.",
+   "answer": "Suitable lighting environment when using the computer; correct posture in using the computer; control the duration of using the computer.",
+   "keywords": [
+    "lighting",
+    "posture",
+    "duration of use",
+    "health hazard"
+   ],
+   "sources": [
+    "2019-P1B-Q4(c)"
+   ]
+  },
+  {
+   "id": "faq-110",
+   "topic": "Core E — Social Implications",
+   "question": "Suggest two measures to protect participants' personal data after it is uploaded to cloud storage.",
+   "answer": "Any two of: use encryption / secure channels for the data transmission; set access rights of the cloud storage; store the data encrypted in the cloud storage; use anti-spyware to prevent hackers' attack; destroy all data after the event.",
+   "keywords": [
+    "encryption",
+    "secure channel",
+    "access rights",
+    "cloud storage",
+    "personal data"
+   ],
+   "sources": [
+    "2019-P1B-Q4(d)"
+   ]
+  },
+  {
+   "id": "faq-111",
+   "topic": "Elective A — Databases",
+   "question": "In the database application development lifecycle, in what situation will data migration be carried out?",
+   "answer": "Data migration is carried out when there is some existing/original data that needs to be used in the new system.",
+   "keywords": [
+    "data migration",
+    "existing data",
+    "new system"
+   ],
+   "sources": [
+    "2019-P2A-Q1(b)(ii)",
+    "2018-P2A-Q3(a)"
+   ]
+  },
+  {
+   "id": "faq-112",
+   "topic": "Elective A — Databases",
+   "question": "Why does Mr Li use 'Student number' instead of 'HKID card number' as the primary key of STUDENT?",
+   "answer": "Either reason earns the mark: the HKID card number is sensitive, personal data; or some students may not have a HKID card at the registration period, so the value could be missing.",
+   "keywords": [
+    "primary key",
+    "HKID",
+    "sensitive personal data"
+   ],
+   "sources": [
+    "2019-P2A-Q2(a)"
+   ]
+  },
+  {
+   "id": "faq-113",
+   "topic": "Elective A — Databases",
+   "question": "Suggest three types of constraints that can be included in a CREATE TABLE command, indicating a field each can be applied to.",
+   "answer": "Any three of: NOT NULL → SID, LOC, FEE or OUTOFSER; UNIQUE → SID; PRIMARY KEY → SID; FOREIGN KEY → LOC; DEFAULT (value) → OUTOFSER; CHECK → FEE; INDEX → SID, LOC or FEE.",
+   "keywords": [
+    "NOT NULL",
+    "UNIQUE",
+    "PRIMARY KEY",
+    "FOREIGN KEY",
+    "DEFAULT",
+    "CHECK"
+   ],
+   "sources": [
+    "2019-P2A-Q3(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-114",
+   "topic": "Elective B — Networking",
+   "question": "Briefly explain why a switch should be used instead of a hub in a school network.",
+   "answer": "A switch will not do signal broadcasting most of the time (unlike a hub, which broadcasts to all ports); it can also support multiple networks in the classrooms.",
+   "keywords": [
+    "switch",
+    "hub",
+    "signal broadcasting"
+   ],
+   "sources": [
+    "2019-P2B-Q1(a)(i)"
+   ]
+  },
+  {
+   "id": "faq-115",
+   "topic": "Elective B — Networking",
+   "question": "Give two services provided by a DHCP server.",
+   "answer": "Automatic and dynamic IP assignment; assigning other network information (e.g. subnet mask, default gateway, DNS) to devices.",
+   "keywords": [
+    "DHCP",
+    "dynamic IP assignment",
+    "default gateway",
+    "DNS"
+   ],
+   "sources": [
+    "2019-P2B-Q1(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-116",
+   "topic": "Elective B — Networking",
+   "question": "State two features of a VPN that are related to information security, and a security protocol it uses.",
+   "answer": "Features: data are encrypted; login authentication is required. A security measure/protocol used by a VPN: a network connection with SSL, or IPSec.",
+   "keywords": [
+    "VPN",
+    "encryption",
+    "login authentication",
+    "SSL",
+    "IPSec"
+   ],
+   "sources": [
+    "2019-P2B-Q3(a)(i)",
+    "2019-P2B-Q3(a)(ii)",
+    "2018-P2B-Q2(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-117",
+   "topic": "Elective B — Networking",
+   "question": "Give one advantage of copper wires and one advantage of fibre optics as transmission media.",
+   "answer": "Copper wires: lower cost (the existing electricity/telephone network can be used). Fibre optics: high data transmission rate / less interference.",
+   "keywords": [
+    "copper wires",
+    "fibre optics",
+    "cost",
+    "data transmission rate",
+    "interference"
+   ],
+   "sources": [
+    "2019-P2B-Q4(a)(i)",
+    "2018-P2B-Q1(a)(i)"
+   ]
+  },
+  {
+   "id": "faq-118",
+   "topic": "Elective B — Networking",
+   "question": "Give an advantage and a disadvantage of asynchronous transmission.",
+   "answer": "Advantage: fewer overheads / lower cost. Disadvantage: more time delay.",
+   "keywords": [
+    "asynchronous transmission",
+    "overheads",
+    "time delay"
+   ],
+   "sources": [
+    "2019-P2B-Q4(c)"
+   ]
+  },
+  {
+   "id": "faq-119",
+   "topic": "Elective B — Networking",
+   "question": "State a function of TCP and a function of IP during data transmission.",
+   "answer": "TCP: split the data / reassemble the data, or add sequence numbers to the data packets. IP: select the best route for signal transmission.",
+   "keywords": [
+    "TCP",
+    "IP",
+    "sequence numbers",
+    "routing"
+   ],
+   "sources": [
+    "2019-P2B-Q4(d)(i)",
+    "2019-P2B-Q4(d)(ii)"
+   ]
+  },
+  {
+   "id": "faq-120",
+   "topic": "Elective C — Multimedia",
+   "question": "Explain briefly why a MIDI file can be easily edited.",
+   "answer": "The music is digitised and stored in a MIDI file, and each channel (key, tempo, etc.) can be tuned independently and mixed together directly.",
+   "keywords": [
+    "MIDI",
+    "digitised",
+    "channel",
+    "tempo"
+   ],
+   "sources": [
+    "2019-P2C-Q1(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-121",
+   "topic": "Elective C — Multimedia",
+   "question": "In video modes such as 720p and 1080i, what do 'Progressive' and 'Interlaced' mean?",
+   "answer": "Progressive video refreshes all lines on each frame (updates line by line). Interlaced video refreshes alternative lines of each frame (changes one after another).",
+   "keywords": [
+    "progressive",
+    "interlaced",
+    "lines refreshed",
+    "frame"
+   ],
+   "sources": [
+    "2019-P2C-Q2(g)(ii)"
+   ]
+  },
+  {
+   "id": "faq-122",
+   "topic": "Elective C — Multimedia",
+   "question": "Give a drawback of the JPG format for a movie still that needs editing, and suggest a suitable format.",
+   "answer": "Drawback: JPG does not support the layering / transparency feature. Suggested file format: PNG.",
+   "keywords": [
+    "JPG",
+    "transparency",
+    "layering",
+    "PNG"
+   ],
+   "sources": [
+    "2019-P2C-Q2(e)"
+   ]
+  },
+  {
+   "id": "faq-123",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "Arrange SSD, RAM and memory cache in ascending order of data transfer rate.",
+   "answer": "SSD, then RAM, then memory cache (SSD < RAM < memory cache). Only about 38% of 2019 candidates answered this correctly — the Candidates' Performance report notes that many candidates did not understand the fundamental functions and speeds of SSD, memory cache and RAM.",
+   "keywords": [
+    "data transfer rate",
+    "SSD",
+    "RAM",
+    "memory cache"
+   ],
+   "sources": [
+    "2019-P1A-Q19"
+   ]
+  },
+  {
+   "id": "faq-124",
+   "topic": "Elective B — Networking",
+   "question": "What are the advantages of using a network connection on a leased line instead of broadband?",
+   "answer": "The connection is more reliable, and the bandwidth is guaranteed. Warning: 'the cost is lower' is NOT an advantage — about a quarter of 2019 candidates wrongly chose it; a leased line costs more.",
+   "keywords": [
+    "leased line",
+    "reliability",
+    "guaranteed bandwidth",
+    "broadband"
+   ],
+   "sources": [
+    "2019-P1A-Q24"
+   ]
+  },
+  {
+   "id": "faq-125",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Why should antivirus software be updated regularly? (Any two reasons)",
+   "answer": "Any two of: the virus definitions will be updated, so new viruses can be detected; some additional features will be provided; some program bugs will be fixed; the old version of the software may no longer be compatible with the operating system of the computer. Warning: vague answers such as 'it keeps the software in a good condition' or 'it protects the computer from viruses' are NOT accepted.",
+   "keywords": [
+    "virus definitions",
+    "update",
+    "bug fixes",
+    "operating system compatibility"
+   ],
+   "sources": [
+    "2018-P1B-Q2(a)(i)"
+   ]
+  },
+  {
+   "id": "faq-126",
+   "topic": "Core E — Social Implications",
+   "question": "Give two factors that contribute to the digital divide, and two ways of narrowing it.",
+   "answer": "Factors (any two of): education; age; disability; geographical location; household size and type; gender; racial origin. Ways of narrowing it (any two of): improve the access to ICT equipment (hardware); improve the access to the Internet; improve the access to ICT knowledge (learning). Warning: 'educate the public that technology is beneficial' is NOT accepted as a way of narrowing the digital divide.",
+   "keywords": [
+    "digital divide",
+    "education",
+    "access to ICT equipment",
+    "Internet access",
+    "ICT knowledge"
+   ],
+   "sources": [
+    "2018-P1B-Q2(c)(i)",
+    "2018-P1B-Q2(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-127",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "What does defragmentation do to a hard disk, and what does it NOT do?",
+   "answer": "Defragmentation rearranges the data fragments so that they are stored close together, which speeds up the access of files. It does NOT increase the free space, and it does NOT change the file size.",
+   "keywords": [
+    "defragmentation",
+    "data fragments",
+    "file access speed",
+    "free space unchanged"
+   ],
+   "sources": [
+    "2018-P1B-Q3(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-128",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Compare the AVI and MP4 video formats. (One point for each)",
+   "answer": "AVI: it supports a better video quality. MP4: it supports a smaller file size of video because it is compressed; it also supports streaming, more portable devices and operating systems, and subtitles/menus.",
+   "keywords": [
+    "AVI",
+    "MP4",
+    "video quality",
+    "compression",
+    "streaming"
+   ],
+   "sources": [
+    "2018-P1B-Q3(a)"
+   ]
+  },
+  {
+   "id": "faq-129",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give one benefit and one limitation of video streaming.",
+   "answer": "Benefit: videos can be instantly played on clients without downloading the entire video (and storage space is saved as there is no need to store the entire videos). Limitation: playback depends on bandwidth, download speed and a stable Internet connection (network traffic and the number of clients also matter), and a streamed video cannot be downloaded for later watching.",
+   "keywords": [
+    "streaming",
+    "instant playback",
+    "bandwidth",
+    "stable Internet connection"
+   ],
+   "sources": [
+    "2018-P1B-Q3(d)"
+   ]
+  },
+  {
+   "id": "faq-130",
+   "topic": "Core E — Social Implications",
+   "question": "Give two characteristics of open source software.",
+   "answer": "Any two of: other people can freely use the program; the program code can be freely read and changed to improve the program; the program can be freely distributed.",
+   "keywords": [
+    "open source",
+    "free use",
+    "modify source code",
+    "free distribution"
+   ],
+   "sources": [
+    "2018-P1B-Q5(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-131",
+   "topic": "Core E — Social Implications",
+   "question": "Suggest two ways to reduce the health hazard (eye strain) of using a computer screen.",
+   "answer": "Any two of: control the brightness of the screen (use a filter); enlarge the font size (an accessibility function); use voice input/output.",
+   "keywords": [
+    "eye strain",
+    "screen brightness",
+    "enlarge font size",
+    "voice input/output"
+   ],
+   "sources": [
+    "2018-P1B-Q5(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-132",
+   "topic": "Core E — Social Implications",
+   "question": "Give two benefits of using multimedia e-learning materials.",
+   "answer": "Any two of: the learning materials contain multimedia elements that can help students learn better; the learning progress can be tailor-made for individual students during the learning process; the learning progress can be interactive (e.g. searching); appropriate feedback or response can be delivered instantly.",
+   "keywords": [
+    "e-learning",
+    "multimedia elements",
+    "tailor-made progress",
+    "interactive",
+    "instant feedback"
+   ],
+   "sources": [
+    "2018-P1B-Q1(c)"
+   ]
+  },
+  {
+   "id": "faq-133",
+   "topic": "Core A — Information Processing",
+   "question": "How does a check digit validate a numeric code?",
+   "answer": "The check digit is verified against the other digits of the code: in the 2018 paper the sum of the digits must be divisible by 10, so the code 10102 (digit sum 1+0+1+0+2 = 4) is invalid.",
+   "keywords": [
+    "check digit",
+    "validation",
+    "digit sum",
+    "divisible by 10"
+   ],
+   "sources": [
+    "2018-P1B-Q4(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-134",
+   "topic": "Elective A — Databases",
+   "question": "Why can the field TEACHER not be used as the primary key of a club table?",
+   "answer": "A primary key must uniquely identify a record, but TEACHER values are not unique: there are two identical teacher names (Greg Li) in the records (of the Chess Club and the Mathematics Club), so TEACHER does not uniquely identify a record.",
+   "keywords": [
+    "primary key",
+    "unique",
+    "duplicate values",
+    "identify a record"
+   ],
+   "sources": [
+    "2018-P1B-Q4(a)"
+   ]
+  },
+  {
+   "id": "faq-135",
+   "topic": "Elective A — Databases",
+   "question": "A fund transfer consists of two UPDATE commands. Why must both of them be completed?",
+   "answer": "If the system crashes in the middle of the execution, the account debited (BZ0001, minus $200) loses money while the receiving account (BZ0002) never receives it — a data integrity problem, because both commands are needed to complete the task (transaction) successfully.",
+   "keywords": [
+    "transaction",
+    "data integrity",
+    "system crash",
+    "both commands complete"
+   ],
+   "sources": [
+    "2018-P2A-Q4(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-136",
+   "topic": "Elective A — Databases",
+   "question": "Rewrite 'accounts used as payment account in more than two transactions' in SQL using GROUP BY and HAVING.",
+   "answer": "SELECT PID FROM TRAN GROUP BY PID HAVING COUNT(*) > 2 — the condition on the grouped aggregate (COUNT(*) > 2) is placed in the HAVING clause after GROUP BY PID.",
+   "keywords": [
+    "GROUP BY",
+    "HAVING",
+    "COUNT(*)",
+    "aggregate condition"
+   ],
+   "sources": [
+    "2018-P2A-Q4(d)(ii)"
+   ]
+  },
+  {
+   "id": "faq-137",
+   "topic": "Elective B — Networking",
+   "question": "State the functions of the network interface cards, network cables and switches in a school network.",
+   "answer": "Network interface cards: a card is installed in each workstation to manage the data sent and the data received through the network cables. Network cables: the communication links between the network interface cards and switches. Switches: used to manage the data transmission between the workstations and servers.",
+   "keywords": [
+    "network interface card",
+    "communication links",
+    "switch",
+    "data transmission"
+   ],
+   "sources": [
+    "2018-P1B-Q1(b)"
+   ]
+  },
+  {
+   "id": "faq-138",
+   "topic": "Elective B — Networking",
+   "question": "Why is a RAID system on its own not a complete backup solution?",
+   "answer": "Fire or other unexpected events might happen, and there is only one physical location where the file server/NAS with RAID stores the data files. It is better to create backups of the data files in another location (or in cloud storage).",
+   "keywords": [
+    "RAID",
+    "one physical location",
+    "off-site backup",
+    "cloud storage"
+   ],
+   "sources": [
+    "2018-P2B-Q3(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-139",
+   "topic": "Elective B — Networking",
+   "question": "Why is IPv6 needed instead of IPv4 for connecting a huge number of objects (IoT)?",
+   "answer": "IPv4 provides 2^32 (about 4.3 x 10^9) addresses, which is less than 2^34, so it cannot provide enough addresses for over 2^34 objects; IPv6 provides 2^128 (about 3.4 x 10^38) addresses, far more than enough.",
+   "keywords": [
+    "IPv6",
+    "IPv4",
+    "2^128 addresses",
+    "address space",
+    "IoT"
+   ],
+   "sources": [
+    "2018-P2B-Q2(d)(i)"
+   ]
+  },
+  {
+   "id": "faq-140",
+   "topic": "Elective B — Networking",
+   "question": "Give one advantage and one disadvantage of using a DHCP server.",
+   "answer": "Advantage: it allows many devices to share a limited address space on a network if only some devices will be online at a specific time (it also saves cost on allocating IP addresses to network devices). Disadvantage: the DHCP server can be a single point of failure when there is only one DHCP server, and an incorrectly defined configuration will affect all DHCP clients in one go.",
+   "keywords": [
+    "DHCP",
+    "share limited address space",
+    "single point of failure"
+   ],
+   "sources": [
+    "2018-P2B-Q4(c)"
+   ]
+  },
+  {
+   "id": "faq-141",
+   "topic": "Elective C — Multimedia",
+   "question": "Suggest two measures against brute-force login attacks on a web site.",
+   "answer": "Any two of: use CAPTCHA (reCAPTCHA), security questions or two-way authentication (one-time password) to ensure that robots are not on the client side; limit the number of failed login attempts.",
+   "keywords": [
+    "brute-force attack",
+    "CAPTCHA",
+    "two-way authentication",
+    "limit failed login attempts"
+   ],
+   "sources": [
+    "2018-P2C-Q2(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-142",
+   "topic": "Elective C — Multimedia",
+   "question": "Give two reasons for using GIF instead of SWF for web animation.",
+   "answer": "Any two of: many portable devices support GIF; no plugin is required for GIF; GIF is less likely to create security problems; many major browsers will not support SWF (Adobe stopped updating Flash Player at the end of 2020); it is easy to create transparent images. Warning: 'smaller file size' and 'more colours' are NOT accepted.",
+   "keywords": [
+    "GIF",
+    "SWF",
+    "no plugin required",
+    "portable devices",
+    "security"
+   ],
+   "sources": [
+    "2018-P2C-Q1(a)"
+   ]
+  },
+  {
+   "id": "faq-143",
+   "topic": "Elective D — Software Development",
+   "question": "What is boundary case testing? Give an example.",
+   "answer": "Boundary cases testing tests the extreme values of the input domain, e.g. maximum, minimum, just inside/outside boundaries, to ensure the program is correctly implemented as in normal cases. Example: adding 1 to the maximum value 255 in an 8-bit array — the final value 256 cannot be represented, confirming the largest representable value is 255 and that the program should handle this special case.",
+   "keywords": [
+    "boundary case testing",
+    "extreme values",
+    "maximum value",
+    "overflow"
+   ],
+   "sources": [
+    "2018-P2D-Q1(b)(i)",
+    "2018-P2D-Q1(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-144",
+   "topic": "Core E — Social Implications",
+   "question": "When does the creator of an original article obtain its copyright?",
+   "answer": "Automatically: the creator of an original article is automatically granted the copyright, a form of intellectual property, on creation — no registration is needed. Candidates' Performance 2018: about a third of the candidates did not realise this; the focus should be the ownership of the copyright instead of its existence.",
+   "keywords": [
+    "copyright",
+    "intellectual property",
+    "automatically granted",
+    "ownership"
+   ],
+   "sources": [
+    "2018-P1A-Q15"
+   ]
+  }
+ ]
+}
