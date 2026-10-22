@@ -180,7 +180,7 @@ label.setlab{font-weight:700;font-size:14.5px}
 </style>
 </head>
 <body>
-<header class="top"><div class="top-inner"><div><div class="eyebrow">HKDSE • ICT • Past Papers</div><h1>Drill real papers.<br>Mark like an examiner.</h1></div><nav class="nav"><button id="nav-home" class="active" onclick="showView('home')">Questions</button><button id="nav-faq" onclick="showView('faq')">FAQ</button><button id="nav-results" onclick="showView('results')">Results <span id="nav-count"></span></button><button id="nav-settings" onclick="showView('settings')">&#9881; Settings</button></nav></div></header>
+<header class="top"><div class="top-inner"><div><div class="eyebrow">HKDSE • ICT • Past Papers</div><h1>Drill real papers.<br>Mark like an examiner.</h1></div><nav class="nav"><button id="nav-home" class="active" onclick="showView('home')">Questions</button><button id="nav-faq" onclick="showView('faq')">FAQ</button><button id="nav-results" onclick="showView('results')">Results <span id="nav-count"></span></button><button id="nav-settings" onclick="showView('settings')">&#9881; Settings</button><button id="nav-auth" onclick="toggleAuthFromNav()">Sign in</button></nav></div></header>
 
 <main class="wrap">
 <!-- HOME -->
@@ -546,11 +546,13 @@ async function fetchJsonT(url, ms){ const r=await fetchT(url, ms); if(!r.ok) thr
 function renderAuthStatus(){
   const s=document.getElementById('cloud-status');
   const sHome=document.getElementById('cloud-status-home');
+  const navAuth=document.getElementById('nav-auth');
   const inBtn=document.getElementById('google-login-btn');
   const inBtnHome=document.getElementById('google-login-btn-home');
   const outBtn=document.getElementById('google-logout-btn');
   const outBtnHome=document.getElementById('google-logout-btn-home');
   const syncBtnHome=document.getElementById('sync-now-btn-home');
+  if(navAuth){ navAuth.disabled=!firebaseReady; navAuth.textContent=firebaseUser?'Sign out':'Sign in'; }
   if(inBtn) inBtn.disabled=!firebaseReady || !!firebaseUser;
   if(inBtnHome) inBtnHome.disabled=!firebaseReady || !!firebaseUser;
   if(outBtn) outBtn.disabled=!firebaseUser;
@@ -666,6 +668,7 @@ async function googleLogout(){
   if(!firebaseAuth) return;
   try{ await firebaseAuth.signOut(); }catch(e){}
 }
+async function toggleAuthFromNav(){ if(firebaseUser) await googleLogout(); else await googleLogin(); }
 async function syncNow(){ await syncProgressToCloud(); }
 /* ---- AI (LM Studio, OpenAI-compatible) ---- */
 async function probeAI(){ aiUp=false; aiModelId=null; const base=(settings.aiBase||'').trim().replace(/\/+$/,''); if(base){ try{ const d=await fetchJsonT(base+'/models', 3000); const ids=((d&&d.data)||[]).map(m=>m&&m.id).filter(Boolean); aiModelId=settings.aiModel||ids[0]||null; aiUp=!!(settings.aiModel||ids.length); }catch(e){ aiUp=false; } } renderAiStatus(); return aiUp; }
