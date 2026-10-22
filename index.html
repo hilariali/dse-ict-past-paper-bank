@@ -9,6 +9,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Fraunces:wght@700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --bg:#F6F7F3; --surface:#FFFFFF; --surface2:#EEF2EC; --ink:#12211A; --muted:#5A6B60; --line:#DDE3DB;
@@ -186,6 +189,18 @@ label.setlab{font-weight:700;font-size:14.5px}
     <div><span class="badge" id="hero-badge">Question bank ready</span><h2 id="hero-title">Drill smarter, not harder.</h2><p id="hero-desc">Use filters or quick random picks to start fast. Attempt first, then check official answers and marking points to learn efficiently.</p><div class="hero-toggle"><span id="hero-papers-summary" class="mini-note"></span></div></div>
     <div class="hero-stats"><div class="hstat"><b id="h-attempted">0 / 236</b><span>Attempted</span></div><div class="hstat"><b id="h-correct">0</b><span>Correct</span></div><div class="hstat"><b id="h-acc">—</b><span>Accuracy</span></div><div class="hstat"><b id="h-queue">0</b><span>In re-drill queue</span></div></div>
   </div>
+  <div class="flashcard" style="margin-top:12px">
+    <div class="flash-head">
+      <strong>Account sync</strong>
+      <button class="btn btn-ghost" style="padding:7px 12px" onclick="showView('settings')">Open Settings</button>
+    </div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button id="google-login-btn-home" class="btn btn-ghost" onclick="googleLogin()">Sign in with Google</button>
+      <button id="google-logout-btn-home" class="btn btn-ghost" onclick="googleLogout()">Sign out</button>
+      <button id="sync-now-btn-home" class="btn btn-ghost" onclick="syncNow()">Sync now</button>
+      <span id="cloud-status-home" style="font-size:14px;color:var(--muted)">Cloud sync: not configured</span>
+    </div>
+  </div>
   <div id="home-faq-card" class="flashcard" style="margin-top:12px"></div>
   <div class="quickpick">
     <div class="quickpick-row">
@@ -268,6 +283,18 @@ label.setlab{font-weight:700;font-size:14.5px}
     <input id="set-ai-model" class="setfield" type="text" placeholder="Leave blank to use the model LM Studio has loaded">
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-navy" onclick="saveSettingsFromForm()">Save AI settings</button><button class="btn btn-ghost" onclick="testAi()">Test connection</button><span id="ai-status" style="font-size:14px;color:var(--muted)">AI: not tested yet</span></div>
 
+    <div class="section-title">Account sync — Google + Firebase</div>
+    <p style="font-size:14.5px;color:var(--muted);margin:0 0 10px">Sign in with Google to sync progress across devices. Your ICT Drill Firebase config is pre-filled automatically. Just click Save settings, then sign in. If Firebase is not configured, the app keeps using device-local progress only.</p>
+    <label class="setlab" for="set-firebase-config">Firebase Web App config JSON</label>
+    <textarea id="set-firebase-config" class="setfield" style="min-height:120px;resize:vertical" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-navy" onclick="saveSettingsFromForm()">Save settings</button>
+      <button id="google-login-btn" class="btn btn-ghost" onclick="googleLogin()">Sign in with Google</button>
+      <button id="google-logout-btn" class="btn btn-ghost" onclick="googleLogout()">Sign out</button>
+      <button class="btn btn-ghost" onclick="syncNow()">Sync now</button>
+      <span id="cloud-status" style="font-size:14px;color:var(--muted)">Cloud sync: not configured</span>
+    </div>
+
     <div class="section-title">Question bank (JSON)</div>
     <p style="font-size:14.5px;color:var(--muted);margin:0 0 10px">The questions are loaded from a <code class="inline">question-bank.json</code> file — the format the project’s bank builder produces. On start the page tries, in order: the URL saved here (pre-filled with the project’s GitHub data repo, so the bank auto-syncs whenever the repo is updated), a <code class="inline">question-bank.json</code> sitting beside this page, then the built-in copy. You can also load a file from this device for this session. Your saved progress is keyed by question ID and survives any bank swap.</p>
     <label class="setlab" for="set-bank-url">Question bank URL</label>
@@ -304,17 +331,22 @@ let faqOpen={}, faqTopicFilter='All topics', faqDeckIds=null, faqDeckIndex=0, fa
 const SETTINGS_KEY='dse-ict-settings-v1';
 const DEFAULT_BANK_URL='https://raw.githubusercontent.com/hilariali/dse-ict-past-paper-bank/main/question-bank.json';
 const DEFAULT_FAQ_URL='https://raw.githubusercontent.com/hilariali/dse-ict-past-paper-bank/main/faq.json';
-let settings={aiBase:'http://localhost:1234/v1',aiModel:'',bankUrl:'',faqUrl:''};
+const DEFAULT_FIREBASE_CONFIG={apiKey:'AIzaSyCCAToKSxT_s4WnrHLCxQcFgPkki1GM_9M',authDomain:'ict-drill.firebaseapp.com',projectId:'ict-drill',storageBucket:'ict-drill.firebasestorage.app',messagingSenderId:'428208082415',appId:'1:428208082415:web:f8d2cb9e606dded803fa1a',measurementId:'G-T29BEM2X0L'};
+const DEFAULT_FIREBASE_CONFIG_JSON=JSON.stringify(DEFAULT_FIREBASE_CONFIG, null, 2);
+let settings={aiBase:'http://localhost:1234/v1',aiModel:'',bankUrl:'',faqUrl:'',firebaseConfig:DEFAULT_FIREBASE_CONFIG_JSON};
 try{ const s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'null'); if(s&&typeof s==='object') settings={...settings,...s}; }catch(e){}
+if(!(settings.firebaseConfig||'').trim()) settings.firebaseConfig=DEFAULT_FIREBASE_CONFIG_JSON;
 let aiUp=false, aiModelId=null, chatMsgs=[], chatBusy=false, aiMarkBusy=false;
 const KEY='dse-ict-drill-v1';
 let store={}; try{ store=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ store={}; }
 let filterYear='All years', filterPaper='All papers', filterTopics=[], filterStatus='All', filterSearch='', currentId=null, selAnswer=null, selConf=null, submitted=false, queueMode=false, queueList=[], quickPickModule='All modules', quickPickPaperGroup='All papers', quickPickIds=[], selfCheckLocked=false;
+let firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseReady=false, authObserverSet=false, firebaseUser=null, cloudSyncBusy=false, cloudSyncTimer=null, cloudStatusMsg='not configured';
 let panelOpen=false; try{ const _fp=localStorage.getItem('dse-ict-filterpanel-v1'); panelOpen = _fp===null ? (window.innerWidth>=820) : _fp==='1'; }catch(e){ panelOpen = window.innerWidth>=820; }
 let openModules={}, TOPIC_LIST=[], yearSig='';
 if(window.mermaid) mermaid.initialize({startOnLoad:false, theme:'default', securityLevel:'loose'});
 
-function save(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+function saveLocalOnly(){ try{ localStorage.setItem(KEY, JSON.stringify(store)); }catch(e){} }
+function save(){ saveLocalOnly(); scheduleCloudSync(); }
 function esc(s){ return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 const PAPERS=[{code:'P1A',label:'Paper 1A — Multiple choice'},{code:'P1B',label:'Paper 1B — Structured questions'},{code:'P2A',label:'Paper 2A — Databases (Elective A)'},{code:'P2B',label:'Paper 2B — Networking (Elective B)'},{code:'P2C',label:'Paper 2C — Multimedia (Elective C)'},{code:'P2D',label:'Paper 2D — Software Development (Elective D)'}];
 const PAPERS_2025={'P2A':'Paper 2A — Databases','P2B':'Paper 2B — Web Application Development','P2C':'Paper 2C — Algorithm and Programming'};
@@ -503,14 +535,138 @@ function bankHeadline(){ const ys=[...new Set(ALL.map(yearOf))].sort(); return `
 function renderBankSummary(){ const b=document.getElementById('hero-badge'); if(b) b.textContent=`${ALL.length} questions ready`; const t=document.getElementById('hero-title'); if(t) t.textContent='Drill smarter, not harder.'; const d=document.getElementById('hero-desc'); if(d) d.textContent='Use filters or quick random picks to start fast. Attempt first, then check official answers and marking points to learn efficiently.'; const ps=document.getElementById('hero-papers-summary'); if(ps) ps.textContent='Quick revision: flip the random FAQ card below and pull a new one any time.'; }
 /* ---- Settings ---- */
 function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch(e){} }
-function renderSettings(){ const b=document.getElementById('set-ai-base'); if(!b) return; b.value=settings.aiBase||''; document.getElementById('set-ai-model').value=settings.aiModel||''; document.getElementById('set-bank-url').value=settings.bankUrl||DEFAULT_BANK_URL; document.getElementById('set-faq-url').value=settings.faqUrl||DEFAULT_FAQ_URL; renderAiStatus(); renderBankSettingsStatus(); }
+function renderSettings(){ const b=document.getElementById('set-ai-base'); if(!b) return; b.value=settings.aiBase||''; document.getElementById('set-ai-model').value=settings.aiModel||''; document.getElementById('set-bank-url').value=settings.bankUrl||DEFAULT_BANK_URL; document.getElementById('set-faq-url').value=settings.faqUrl||DEFAULT_FAQ_URL; const fc=document.getElementById('set-firebase-config'); if(fc) fc.value=settings.firebaseConfig||''; renderAiStatus(); renderAuthStatus(); renderBankSettingsStatus(); }
 function renderAiStatus(){ const el=document.getElementById('ai-status'); if(el) el.textContent= aiUp? `AI: connected — model ${settings.aiModel||aiModelId||'(LM Studio default)'}` : 'AI: not connected — AI buttons stay hidden; everything works without AI'; }
 function renderBankSettingsStatus(){ const b=document.getElementById('bank-settings-status'); if(b) b.textContent=`Active bank: ${ALL.length} questions (${bankSource})`; const bn=document.getElementById('bank-note'); if(bn) bn.textContent=bankNote; const f=document.getElementById('faq-settings-status'); if(f) f.textContent=`Active FAQ: ${FAQS.length} entries (${faqSource})`; const fn=document.getElementById('faq-note'); if(fn) fn.textContent=faqNote; updateBankStatus(); }
-function updateBankStatus(){ const el=document.getElementById('bank-status'); if(el) el.textContent=`Question bank: ${ALL.length} questions (${bankSource}) • FAQ: ${FAQS.length} entries (${faqSource}) • Progress is saved on this device, keyed by question ID`; }
-function readSettingsForm(){ settings.aiBase=(document.getElementById('set-ai-base').value||'').trim()||'http://localhost:1234/v1'; settings.aiModel=(document.getElementById('set-ai-model').value||'').trim(); const _bu=(document.getElementById('set-bank-url').value||'').trim(); settings.bankUrl=(_bu===DEFAULT_BANK_URL)?'':_bu; const _fu=(document.getElementById('set-faq-url').value||'').trim(); settings.faqUrl=(_fu===DEFAULT_FAQ_URL)?'':_fu; saveSettings(); }
-function saveSettingsFromForm(){ readSettingsForm(); probeAI().then(()=>{ renderAiStatus(); if(aiUp&&currentId&&!submitted&&!document.getElementById('view-drill').hidden) refreshDrill(); }); const el=document.getElementById('ai-status'); if(el) el.textContent='Settings saved — testing the AI connection…'; }
+function updateBankStatus(){ const el=document.getElementById('bank-status'); if(el) el.textContent=`Question bank: ${ALL.length} questions (${bankSource}) • FAQ: ${FAQS.length} entries (${faqSource}) • Progress: ${firebaseUser?'cloud-synced with local fallback':'saved on this device'}${cloudSyncBusy?' • Cloud sync in progress…':''}`; }
+function readSettingsForm(){ settings.aiBase=(document.getElementById('set-ai-base').value||'').trim()||'http://localhost:1234/v1'; settings.aiModel=(document.getElementById('set-ai-model').value||'').trim(); const _bu=(document.getElementById('set-bank-url').value||'').trim(); settings.bankUrl=(_bu===DEFAULT_BANK_URL)?'':_bu; const _fu=(document.getElementById('set-faq-url').value||'').trim(); settings.faqUrl=(_fu===DEFAULT_FAQ_URL)?'':_fu; const _fc=(document.getElementById('set-firebase-config').value||'').trim(); settings.firebaseConfig=_fc; saveSettings(); }
+function saveSettingsFromForm(){ readSettingsForm(); probeAI().then(()=>{ renderAiStatus(); if(aiUp&&currentId&&!submitted&&!document.getElementById('view-drill').hidden) refreshDrill(); }); initFirebaseFromSettings(); renderAuthStatus(); const el=document.getElementById('ai-status'); if(el) el.textContent='Settings saved — testing the AI connection…'; }
 async function fetchT(url, ms, opts){ const c=new AbortController(); const t=setTimeout(()=>c.abort(), ms); try{ return await fetch(url, {...(opts||{}), signal:c.signal}); } finally{ clearTimeout(t); } }
 async function fetchJsonT(url, ms){ const r=await fetchT(url, ms); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
+function renderAuthStatus(){
+  const s=document.getElementById('cloud-status');
+  const sHome=document.getElementById('cloud-status-home');
+  const inBtn=document.getElementById('google-login-btn');
+  const inBtnHome=document.getElementById('google-login-btn-home');
+  const outBtn=document.getElementById('google-logout-btn');
+  const outBtnHome=document.getElementById('google-logout-btn-home');
+  const syncBtnHome=document.getElementById('sync-now-btn-home');
+  if(inBtn) inBtn.disabled=!firebaseReady || !!firebaseUser;
+  if(inBtnHome) inBtnHome.disabled=!firebaseReady || !!firebaseUser;
+  if(outBtn) outBtn.disabled=!firebaseUser;
+  if(outBtnHome) outBtnHome.disabled=!firebaseUser;
+  if(syncBtnHome) syncBtnHome.disabled=!firebaseReady || !firebaseUser || cloudSyncBusy;
+  let msg='Cloud sync: not configured';
+  if(!firebaseReady) msg=`Cloud sync: ${cloudStatusMsg}`;
+  else if(firebaseUser) msg=`Cloud sync: signed in as ${firebaseUser.displayName||firebaseUser.email||firebaseUser.uid}`;
+  else msg='Cloud sync: ready — sign in with Google to sync';
+  if(s){
+    s.textContent=msg;
+  }
+  if(sHome) sHome.textContent=msg;
+  updateBankStatus();
+}
+function parseFirebaseConfig(){
+  const raw=(settings.firebaseConfig||'').trim();
+  if(!raw) return null;
+  try{
+    const cfg=JSON.parse(raw);
+    return cfg&&typeof cfg==='object'?cfg:null;
+  }catch(e){}
+  const m=raw.match(/const\s+firebaseConfig\s*=\s*(\{[\s\S]*?\})\s*;?/);
+  if(!m) return null;
+  try{
+    const cleaned=m[1]
+      .replace(/\/\/.*$/gm,'')
+      .replace(/\/\*[\s\S]*?\*\//g,'')
+      .replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g,'$1"$2":')
+      .replace(/'/g,'"')
+      .replace(/,\s*([}\]])/g,'$1');
+    const cfg=JSON.parse(cleaned);
+    return cfg&&typeof cfg==='object'?cfg:null;
+  }catch(e){ return null; }
+}
+function setupAuthObserver(){
+  if(!firebaseAuth || authObserverSet) return;
+  authObserverSet=true;
+  firebaseAuth.onAuthStateChanged(async u=>{
+    firebaseUser=u||null;
+    renderAuthStatus();
+    if(firebaseUser) await loadCloudProgress();
+  });
+}
+function initFirebaseFromSettings(){
+  firebaseReady=false; firebaseAuth=null; firebaseDb=null; firebaseApp=null; firebaseUser=null;
+  const cfg=parseFirebaseConfig();
+  if(!cfg){ cloudStatusMsg=settings.firebaseConfig?'invalid Firebase config JSON':'not configured'; renderAuthStatus(); return; }
+  if(!window.firebase){ cloudStatusMsg='Firebase SDK not available'; renderAuthStatus(); return; }
+  try{
+    try{ firebaseApp=firebase.app('dse-ict-app'); }catch(e){ firebaseApp=firebase.initializeApp(cfg, 'dse-ict-app'); }
+    firebaseAuth=firebaseApp.auth();
+    firebaseDb=firebaseApp.firestore();
+    firebaseReady=true;
+    cloudStatusMsg='configured';
+    setupAuthObserver();
+  }catch(e){
+    cloudStatusMsg='failed to initialize';
+  }
+  renderAuthStatus();
+}
+function scheduleCloudSync(){
+  if(!firebaseReady || !firebaseUser) return;
+  if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
+  cloudSyncTimer=setTimeout(()=>{ syncProgressToCloud(); }, 700);
+}
+async function syncProgressToCloud(){
+  if(!firebaseReady || !firebaseUser || !firebaseDb) return;
+  cloudSyncBusy=true; renderAuthStatus();
+  try{
+    await firebaseDb.collection('users').doc(firebaseUser.uid).collection('appData').doc('progress').set({
+      store,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+      app: 'dse-ict-drill'
+    }, {merge:true});
+    cloudStatusMsg='synced';
+  }catch(e){
+    cloudStatusMsg='sync failed (local progress still safe)';
+  }
+  cloudSyncBusy=false; renderAuthStatus();
+}
+async function loadCloudProgress(){
+  if(!firebaseReady || !firebaseUser || !firebaseDb) return;
+  cloudSyncBusy=true; renderAuthStatus();
+  try{
+    const snap=await firebaseDb.collection('users').doc(firebaseUser.uid).collection('appData').doc('progress').get();
+    if(snap.exists){
+      const d=snap.data()||{};
+      if(d.store && typeof d.store==='object'){
+        store=d.store;
+        saveLocalOnly();
+        if(!document.getElementById('view-home').hidden) renderHome();
+        if(!document.getElementById('view-results').hidden) renderResults();
+      }
+    }
+    cloudStatusMsg='synced';
+  }catch(e){
+    cloudStatusMsg='cloud load failed (using local progress)';
+  }
+  cloudSyncBusy=false; renderAuthStatus();
+}
+async function googleLogin(){
+  if(!firebaseReady || !firebaseAuth) return;
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    await firebaseAuth.signInWithPopup(provider);
+  }catch(e){
+    cloudStatusMsg='Google sign-in failed';
+    renderAuthStatus();
+  }
+}
+async function googleLogout(){
+  if(!firebaseAuth) return;
+  try{ await firebaseAuth.signOut(); }catch(e){}
+}
+async function syncNow(){ await syncProgressToCloud(); }
 /* ---- AI (LM Studio, OpenAI-compatible) ---- */
 async function probeAI(){ aiUp=false; aiModelId=null; const base=(settings.aiBase||'').trim().replace(/\/+$/,''); if(base){ try{ const d=await fetchJsonT(base+'/models', 3000); const ids=((d&&d.data)||[]).map(m=>m&&m.id).filter(Boolean); aiModelId=settings.aiModel||ids[0]||null; aiUp=!!(settings.aiModel||ids.length); }catch(e){ aiUp=false; } } renderAiStatus(); return aiUp; }
 async function testAi(){ readSettingsForm(); const el=document.getElementById('ai-status'); if(el) el.textContent='AI: testing…'; const ok=await probeAI(); if(el) el.textContent= ok? `AI: connected — model ${settings.aiModel||aiModelId}` : 'AI: could not connect — check LM Studio is running with the server started, then test again. Everything else keeps working.'; if(ok&&currentId&&!submitted&&!document.getElementById('view-drill').hidden) refreshDrill(); }
@@ -618,7 +774,7 @@ function renderFaq(){ const root=document.getElementById('faq-root'); if(!root) 
 function toggleFaq(id){ faqOpen[id]=!faqOpen[id]; renderFaq(); }
 function faqRate(id, r){ store[id]={...(store[id]||{}), faq:true, rating:r}; save(); renderFaq(); }
 /* ---- Boot: probe AI quietly, then try external bank / FAQ sources in order ---- */
-async function boot(){ renderSettings(); updateBankStatus(); probeAI(); const bu=settings.bankUrl||DEFAULT_BANK_URL, bGh=!settings.bankUrl; let bErr=''; try{ const d=await fetchJsonT(bu, 5000); if(validBank(d)) applyBank(d, bGh?'loaded from GitHub':'loaded from URL'); else bErr= bGh?'The GitHub question bank did not return a valid bank':'The saved question-bank URL did not return a valid bank'; }catch(e){ bErr= bGh?'Could not load the question bank from GitHub':'Could not load the question bank from the saved URL'; } if(bErr){ if(bankSource==='built-in copy'){ try{ const d=await fetchJsonT('question-bank.json', 5000); if(validBank(d)) applyBank(d,'loaded from question-bank.json beside the page'); }catch(e){} } bankNote= bankSource==='built-in copy'? bErr+' — using the built-in copy.' : bErr+' — using the copy of question-bank.json beside the page.'; } const fu=settings.faqUrl||DEFAULT_FAQ_URL, fGh=!settings.faqUrl; let fErr=''; try{ const d=await fetchJsonT(fu, 5000); if(validFaq(d)) applyFaq(d, fGh?'loaded from GitHub':'loaded from URL'); else fErr= fGh?'The GitHub FAQ did not return a valid faq.json':'The saved FAQ URL did not return a valid faq.json'; }catch(e){ fErr= fGh?'Could not load the FAQ from GitHub':'Could not load the FAQ from the saved URL'; } if(fErr){ if(faqSource==='built-in copy'){ try{ const d=await fetchJsonT('faq.json', 5000); if(validFaq(d)) applyFaq(d,'loaded from faq.json beside the page'); }catch(e){} } faqNote= faqSource==='built-in copy'? fErr+' — using the built-in copy.' : fErr+' — using the copy of faq.json beside the page.'; } renderBankSettingsStatus(); renderHome(); }
+async function boot(){ renderSettings(); initFirebaseFromSettings(); updateBankStatus(); probeAI(); const bu=settings.bankUrl||DEFAULT_BANK_URL, bGh=!settings.bankUrl; let bErr=''; try{ const d=await fetchJsonT(bu, 5000); if(validBank(d)) applyBank(d, bGh?'loaded from GitHub':'loaded from URL'); else bErr= bGh?'The GitHub question bank did not return a valid bank':'The saved question-bank URL did not return a valid bank'; }catch(e){ bErr= bGh?'Could not load the question bank from GitHub':'Could not load the question bank from the saved URL'; } if(bErr){ if(bankSource==='built-in copy'){ try{ const d=await fetchJsonT('question-bank.json', 5000); if(validBank(d)) applyBank(d,'loaded from question-bank.json beside the page'); }catch(e){} } bankNote= bankSource==='built-in copy'? bErr+' — using the built-in copy.' : bErr+' — using the copy of question-bank.json beside the page.'; } const fu=settings.faqUrl||DEFAULT_FAQ_URL, fGh=!settings.faqUrl; let fErr=''; try{ const d=await fetchJsonT(fu, 5000); if(validFaq(d)) applyFaq(d, fGh?'loaded from GitHub':'loaded from URL'); else fErr= fGh?'The GitHub FAQ did not return a valid faq.json':'The saved FAQ URL did not return a valid faq.json'; }catch(e){ fErr= fGh?'Could not load the FAQ from GitHub':'Could not load the FAQ from the saved URL'; } if(fErr){ if(faqSource==='built-in copy'){ try{ const d=await fetchJsonT('faq.json', 5000); if(validFaq(d)) applyFaq(d,'loaded from faq.json beside the page'); }catch(e){} } faqNote= faqSource==='built-in copy'? fErr+' — using the built-in copy.' : fErr+' — using the copy of faq.json beside the page.'; } renderBankSettingsStatus(); renderHome(); }
 renderHome(); boot();
 </script>
 </body>
