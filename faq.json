@@ -3,7 +3,7 @@
   "title": "DSE ICT FAQ — common questions & marking-scheme keywords",
   "version": 2,
   "generatedFrom": "question-bank.json (live bank)",
-  "notes": "Each pair is condensed faithfully from the official marking scheme of at least one extracted past paper in the live question bank; sources cite question id + part label (e.g. 2021-P1B-Q1(d)(ii)). Where a scheme credits 'any two of' a list, the answer says so and reproduces the credited list. Answers flagged NOT accepted in a scheme are recorded as warnings where relevant. Keywords are the load-bearing terms markers look for, kept tight for reuse in flashcards and matching games. Version 2 (2026-10-21): second mining pass added faq-061 to faq-087 using two lenses. (1) Candidate-performance lens: pairs built from the official Candidates' Performance reports (per-question commentary, common errors and option statistics in the bank, plus per-part performance comments in the per-paper files) — the performance material shows where students fail (e.g. 7% correct on the 2022 storage-capacity item), and each pair states the credited answer with the NOT-accepted phrasing kept as an explicit warning; answers still reproduce only content credited in an official marking scheme. (2) Coverage-gap lens: extra standard formulations for the areas thinnest in version 1 (Elective D — Software Development, Core D — Basic Programming Concepts, Core A — Information Processing, Elective A — Databases), each confirmed by an extracted scheme in the bank. 2019 pass (2026-10-21): mined the 2019 papers (2019_ans.pdf schemes) and 2019_per.pdf candidate performance; 20 pairs added and 17 existing pairs gained 2019 citations, including performance-lens pairs from the 2019 P1A commentary (memory data-transfer-rate order, 38% correct; leased line vs broadband, with the 'lower cost' trap). 2018 pass (2026-10-21): 20 pairs added (faq-125 to faq-144) and 31 citations merged into 25 existing pairs, mined from the 2018 papers' official schemes (2018_ans.pdf) and the NOT-accepted phrasings in those schemes; performance-lens pair faq-144 comes from the 2018 Candidates' Performance commentary on P1A Q.15. 2018 P1A Q.40 was a deleted exam item and was deliberately not used."
+  "notes": "Each pair is condensed faithfully from the official marking scheme of at least one extracted past paper in the live question bank; sources cite question id + part label (e.g. 2021-P1B-Q1(d)(ii)). Where a scheme credits 'any two of' a list, the answer says so and reproduces the credited list. Answers flagged NOT accepted in a scheme are recorded as warnings where relevant. Keywords are the load-bearing terms markers look for, kept tight for reuse in flashcards and matching games. Version 2 (2026-10-21): second mining pass added faq-061 to faq-087 using two lenses. (1) Candidate-performance lens: pairs built from the official Candidates' Performance reports (per-question commentary, common errors and option statistics in the bank, plus per-part performance comments in the per-paper files) — the performance material shows where students fail (e.g. 7% correct on the 2022 storage-capacity item), and each pair states the credited answer with the NOT-accepted phrasing kept as an explicit warning; answers still reproduce only content credited in an official marking scheme. (2) Coverage-gap lens: extra standard formulations for the areas thinnest in version 1 (Elective D — Software Development, Core D — Basic Programming Concepts, Core A — Information Processing, Elective A — Databases), each confirmed by an extracted scheme in the bank. 2019 pass (2026-10-21): mined the 2019 papers (2019_ans.pdf schemes) and 2019_per.pdf candidate performance; 20 pairs added and 17 existing pairs gained 2019 citations, including performance-lens pairs from the 2019 P1A commentary (memory data-transfer-rate order, 38% correct; leased line vs broadband, with the 'lower cost' trap). 2018 pass (2026-10-21): 20 pairs added (faq-125 to faq-144) and 31 citations merged into 25 existing pairs, mined from the 2018 papers' official schemes (2018_ans.pdf) and the NOT-accepted phrasings in those schemes; performance-lens pair faq-144 comes from the 2018 Candidates' Performance commentary on P1A Q.15. 2018 P1A Q.40 was a deleted exam item and was deliberately not used. 2017 pass (2026-10-22): mined the 2017 papers (2017_ans.pdf schemes) and 2017_per.pdf candidate performance; 21 pairs added (faq-145 to faq-165) and 34 citations merged into 30 existing pairs. Performance-lens pair faq-146 comes from 2017 P1A Q.26 (domain-name registration, only 36% correct). The classic LAN vs WAN pair (faq-145) and the circuit-switching pair (faq-157) are now sourced from the 2017 schemes. No deleted item arises in the 2017 papers used."
  },
  "faqs": [
   {
@@ -221,7 +221,8 @@
     "2021-P1B-Q1(d)(i)",
     "2022-P2B-Q2(a)(i)",
     "2022-P1B-Q3(d)",
-    "2019-P2B-Q3(d)"
+    "2019-P2B-Q3(d)",
+    "2017-P2B-Q1(b)(ii)"
    ]
   },
   {
@@ -306,7 +307,8 @@
    "sources": [
     "2022-P1B-Q3(b)",
     "2020-P1B-Q3(a)(iii)",
-    "2019-P1B-Q4(b)(i)"
+    "2019-P1B-Q4(b)(i)",
+    "2017-P2B-Q3(b)(ii)"
    ]
   },
   {
@@ -354,7 +356,8 @@
    ],
    "sources": [
     "2022-P2C-Q3(e)",
-    "2020-P2C-Q1(c)(iii)"
+    "2020-P2C-Q1(c)(iii)",
+    "2017-P2C-Q4(b)(ii)"
    ]
   },
   {
@@ -407,7 +410,8 @@
    ],
    "sources": [
     "2022-P1B-Q4(c)(i)",
-    "2019-P1B-Q2(a)(i)"
+    "2019-P1B-Q2(a)(i)",
+    "2017-P1B-Q5(c)(i)"
    ]
   },
   {
@@ -487,7 +491,8 @@
    ],
    "sources": [
     "2023-P1B-Q1(d)(ii)",
-    "2019-P1B-Q2(b)(iii)"
+    "2019-P1B-Q2(b)(iii)",
+    "2017-P1B-Q2(d)"
    ]
   },
   {
@@ -519,7 +524,8 @@
    "sources": [
     "2022-P2D-Q3(d)(iii)",
     "2025-P2C-Q11(b)",
-    "2018-P2D-Q3(e)"
+    "2018-P2D-Q3(e)",
+    "2017-P2D-Q4(e)(ii)"
    ]
   },
   {
@@ -536,7 +542,8 @@
    ],
    "sources": [
     "2023-P2D-Q4(d)",
-    "2018-P2D-Q2(e)(iii)"
+    "2018-P2D-Q2(e)(iii)",
+    "2017-P2D-Q2(e)"
    ]
   },
   {
@@ -587,7 +594,8 @@
    ],
    "sources": [
     "2021-P1B-Q4(c)(i)",
-    "2020-P2A-Q1(a)"
+    "2020-P2A-Q1(a)",
+    "2017-P1B-Q4(a)(ii)"
    ]
   },
   {
@@ -605,7 +613,8 @@
    "sources": [
     "2023-P2A-Q4(c)",
     "2022-P2A-Q4(b)",
-    "2018-P2A-Q1(b)(ii)"
+    "2018-P2A-Q1(b)(ii)",
+    "2017-P2A-Q1(c)(ii)"
    ]
   },
   {
@@ -622,7 +631,8 @@
    "sources": [
     "2021-P2A-Q3(c)(ii)",
     "2022-P2A-Q3(c)",
-    "2019-P2A-Q2(c)(i)"
+    "2019-P2A-Q2(c)(i)",
+    "2017-P2A-Q1(c)(i)"
    ]
   },
   {
@@ -690,7 +700,8 @@
     "2020-P2B-Q3(a)",
     "2019-P2B-Q4(b)",
     "2018-P2B-Q1(b)(i)",
-    "2018-P2B-Q1(b)(ii)"
+    "2018-P2B-Q1(b)(ii)",
+    "2017-P2B-Q3(a)(i)"
    ]
   },
   {
@@ -726,7 +737,8 @@
    "sources": [
     "2022-P2B-Q2(b)(i)",
     "2020-P2B-Q1(d)",
-    "2019-P2B-Q3(e)(ii)"
+    "2019-P2B-Q3(e)(ii)",
+    "2017-P2B-Q1(e)(i)"
    ]
   },
   {
@@ -759,7 +771,9 @@
    ],
    "sources": [
     "2022-P2B-Q2(c)(iv)",
-    "2018-P2B-Q3(b)(iii)"
+    "2018-P2B-Q3(b)(iii)",
+    "2017-P2B-Q2(d)(ii)",
+    "2017-P2B-Q2(d)(iii)"
    ]
   },
   {
@@ -775,7 +789,8 @@
    ],
    "sources": [
     "2021-P2B-Q3(c)",
-    "2019-P2B-Q1(c)(i)"
+    "2019-P2B-Q1(c)(i)",
+    "2017-P2B-Q4(b)"
    ]
   },
   {
@@ -920,7 +935,8 @@
     "2023-P2C-Q2(b)",
     "2021-P2C-Q3(c)(i)",
     "2020-P2C-Q1(a)(ii)",
-    "2018-P2C-Q3(b)(iii)"
+    "2018-P2C-Q3(b)(iii)",
+    "2017-P2C-Q2(a)"
    ]
   },
   {
@@ -952,7 +968,9 @@
     "update all clients"
    ],
    "sources": [
-    "2023-P2C-Q4(a)"
+    "2023-P2C-Q4(a)",
+    "2017-P2C-Q3(b)(i)",
+    "2017-P2C-Q3(b)(ii)"
    ]
   },
   {
@@ -1097,7 +1115,8 @@
    ],
    "sources": [
     "2020-P1B-Q3(a)(ii)",
-    "2022-P1A-Q20"
+    "2022-P1A-Q20",
+    "2017-P1B-Q2(b)"
    ]
   },
   {
@@ -1128,7 +1147,8 @@
     "platform"
    ],
    "sources": [
-    "2020-P1B-Q2(a)"
+    "2020-P1B-Q2(a)",
+    "2017-P1B-Q2(a)(ii)"
    ]
   },
   {
@@ -1160,7 +1180,8 @@
     "face recognition"
    ],
    "sources": [
-    "2020-P1B-Q3(c)(i)"
+    "2020-P1B-Q3(c)(i)",
+    "2017-P2C-Q3(c)(i)"
    ]
   },
   {
@@ -1205,7 +1226,9 @@
     "database software"
    ],
    "sources": [
-    "2021-P1A-Q11"
+    "2021-P1A-Q11",
+    "2017-P1A-Q10",
+    "2017-P2A-Q1(d)(i)"
    ]
   },
   {
@@ -1222,7 +1245,8 @@
    ],
    "sources": [
     "2021-P2A-Q4(e)(i)",
-    "2021-P2A-Q4(e)(ii)"
+    "2021-P2A-Q4(e)(ii)",
+    "2017-P1B-Q4(a)(i)"
    ]
   },
   {
@@ -1334,7 +1358,9 @@
    "sources": [
     "2021-P2A-Q2(b)(i)",
     "2021-P2A-Q2(b)(ii)",
-    "2019-P2A-Q2(b)"
+    "2019-P2A-Q2(b)",
+    "2017-P2A-Q1(b)(i)",
+    "2017-P2A-Q1(b)(ii)"
    ]
   },
   {
@@ -1351,7 +1377,8 @@
    ],
    "sources": [
     "2021-P2A-Q2(d)(i)",
-    "2021-P2A-Q2(d)(ii)"
+    "2021-P2A-Q2(d)(ii)",
+    "2017-P2A-Q2(c)(ii)"
    ]
   },
   {
@@ -1432,7 +1459,8 @@
     "libraries"
    ],
    "sources": [
-    "2020-P2D-Q4(a)(ii)"
+    "2020-P2D-Q4(a)(ii)",
+    "2017-P2D-Q3(d)(ii)"
    ]
   },
   {
@@ -1574,7 +1602,8 @@
     "remove table"
    ],
    "sources": [
-    "2020-P2A-Q4(b)(ii)"
+    "2020-P2A-Q4(b)(ii)",
+    "2017-P2A-Q2(d)"
    ]
   },
   {
@@ -1920,7 +1949,8 @@
    ],
    "sources": [
     "2019-P2B-Q4(a)(i)",
-    "2018-P2B-Q1(a)(i)"
+    "2018-P2B-Q1(a)(i)",
+    "2017-P2B-Q1(a)"
    ]
   },
   {
@@ -1965,7 +1995,8 @@
     "tempo"
    ],
    "sources": [
-    "2019-P2C-Q1(a)(ii)"
+    "2019-P2C-Q1(a)(ii)",
+    "2017-P2C-Q2(b)(i)"
    ]
   },
   {
@@ -2088,7 +2119,8 @@
     "streaming"
    ],
    "sources": [
-    "2018-P1B-Q3(a)"
+    "2018-P1B-Q3(a)",
+    "2017-P1B-Q2(a)(i)"
    ]
   },
   {
@@ -2103,7 +2135,8 @@
     "stable Internet connection"
    ],
    "sources": [
-    "2018-P1B-Q3(d)"
+    "2018-P1B-Q3(d)",
+    "2017-P1B-Q2(c)(i)"
    ]
   },
   {
@@ -2300,7 +2333,8 @@
     "security"
    ],
    "sources": [
-    "2018-P2C-Q1(a)"
+    "2018-P2C-Q1(a)",
+    "2017-P2C-Q1(b)"
    ]
   },
   {
@@ -2332,6 +2366,338 @@
    ],
    "sources": [
     "2018-P1A-Q15"
+   ]
+  },
+  {
+   "id": "faq-145",
+   "topic": "Elective B — Networking",
+   "question": "What is the main characteristic of a LAN compared with a WAN?",
+   "answer": "A LAN covers a smaller geographical area than a WAN; equivalently, it has fewer hosts and is simpler in structure.",
+   "keywords": [
+    "LAN",
+    "WAN",
+    "coverage",
+    "hosts"
+   ],
+   "sources": [
+    "2017-P2B-Q4(a)(i)"
+   ]
+  },
+  {
+   "id": "faq-146",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Peter's company can be reached through the links web.goodcompany.hk, www.goodcompany.hk, www.goodcompany.com.hk, www.goodcompany.com and web.goodcompany.com. How many domain names does he need to register?",
+   "answer": "3: goodcompany.hk, goodcompany.com.hk and goodcompany.com. 'web' and 'www' are only host (subdomain) names within a registered domain, not separate domain names. WARNING (Candidates' Performance 2017): only 36% of candidates answered correctly — weaker candidates thought that 'goodcompany' was the only domain name used in the links.",
+   "keywords": [
+    "domain name",
+    "subdomain",
+    "registration",
+    "host name"
+   ],
+   "sources": [
+    "2017-P1A-Q26"
+   ]
+  },
+  {
+   "id": "faq-147",
+   "topic": "Core A — Information Processing",
+   "question": "Why can ASCII not be used to represent the data in a student database containing Chinese names, and why is Unicode used instead of Big-5 code?",
+   "answer": "ASCII includes no codes for Chinese characters. Big-5 covers traditional Chinese characters only, while the data contains simplified Chinese characters, which Unicode can represent; Unicode includes characters of many different languages, but generally requires more storage (variable-width encoding of 1–4 bytes per character, against Big-5's fixed 2 bytes).",
+   "keywords": [
+    "ASCII",
+    "Unicode",
+    "Big-5",
+    "Chinese characters",
+    "storage"
+   ],
+   "sources": [
+    "2017-P1B-Q4(c)(i)",
+    "2017-P1B-Q4(c)(ii)",
+    "2017-P1B-Q4(c)(iii)"
+   ]
+  },
+  {
+   "id": "faq-148",
+   "topic": "Core B — Computer System Fundamentals",
+   "question": "Give one difference between flash memory and RAM, and one difference between flash memory and ROM.",
+   "answer": "Flash memory is non-volatile, while RAM is volatile. Flash memory is re-writable, while ROM cannot be rewritten.",
+   "keywords": [
+    "flash memory",
+    "non-volatile",
+    "RAM",
+    "ROM",
+    "re-writable"
+   ],
+   "sources": [
+    "2017-P1B-Q3(b)(i)",
+    "2017-P1B-Q3(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-149",
+   "topic": "Core A — Information Processing",
+   "question": "Give two kinds of validation checks that can be carried out on an HKID number.",
+   "answer": "Any two of: character / format / data type check (checking the alphanumeric character at each position); length check (presence check) on the length of the entered string; check digit; uniqueness check.",
+   "keywords": [
+    "validation check",
+    "format check",
+    "length check",
+    "check digit",
+    "uniqueness check"
+   ],
+   "sources": [
+    "2017-P1B-Q4(b)"
+   ]
+  },
+  {
+   "id": "faq-150",
+   "topic": "Core C — Internet & its Applications",
+   "question": "How does a security token help with customer authentication on a web site?",
+   "answer": "A token stores cryptographic keys (a passcode / password / value), so it enhances security on top of the current security measure (the password). It can take the form of a one-time password, a hardware device or a contactless device.",
+   "keywords": [
+    "token",
+    "cryptographic keys",
+    "one-time password",
+    "authentication"
+   ],
+   "sources": [
+    "2017-P1B-Q5(c)(ii)"
+   ]
+  },
+  {
+   "id": "faq-151",
+   "topic": "Core C — Internet & its Applications",
+   "question": "In an email, what is the difference between the recipients in 'To' and those in 'cc'? Why can a recipient of a group email not see the other recipients' addresses?",
+   "answer": "The sender expects actions and attention from the recipients in 'To', while the recipients in 'cc' (carbon copy) receive the message for information only. The other addresses are hidden because the sender put all of them in 'bcc' (blind carbon copy).",
+   "keywords": [
+    "To",
+    "cc",
+    "bcc",
+    "information only"
+   ],
+   "sources": [
+    "2017-P1B-Q5(b)(i)",
+    "2017-P1B-Q5(b)(ii)"
+   ]
+  },
+  {
+   "id": "faq-152",
+   "topic": "Core C — Internet & its Applications",
+   "question": "An instant messaging application encrypts all messages before sending. Give a benefit and a drawback of this encryption function.",
+   "answer": "Benefit: the messages are protected from eavesdropping and interception (better data security). Drawback: time is taken to do the encryption.",
+   "keywords": [
+    "encryption",
+    "eavesdropping",
+    "interception",
+    "data security"
+   ],
+   "sources": [
+    "2017-P1B-Q1(a)"
+   ]
+  },
+  {
+   "id": "faq-153",
+   "topic": "Core E — Social Implications",
+   "question": "A messaging company asks users to store their contact lists, previous messages and multimedia files on its centralised servers. Give two uses of the stored data that can benefit the users, and two privacy threats posed by this request.",
+   "answer": "Benefits (any two): users can recover their contact lists / previous messages through the Internet; the data on the device can be deleted so as to save its storage space; the consistency of data across multiple devices is maintained. Privacy threats (any two): the company may distribute or misuse users' contact lists for other commercial activities; the company may reveal the privacy in users' private conversations; the server attracts more hacking because it holds much more private information.",
+   "keywords": [
+    "centralised server",
+    "data recovery",
+    "consistency",
+    "privacy",
+    "misuse"
+   ],
+   "sources": [
+    "2017-P1B-Q1(e)(i)",
+    "2017-P1B-Q1(e)(ii)"
+   ]
+  },
+  {
+   "id": "faq-154",
+   "topic": "Elective D — Software Development",
+   "question": "What is the critical path of a project, and what does its length tell us?",
+   "answer": "The critical path is the longest sequence of dependent tasks in the project (e.g. Task 2 → Task 3 → Task 4, taking 3 + 4 + 3 = 10 days). Its total duration is the minimum number of days needed to complete the whole project.",
+   "keywords": [
+    "critical path",
+    "dependencies",
+    "longest path",
+    "minimum completion time"
+   ],
+   "sources": [
+    "2017-P2D-Q1(a)(ii)",
+    "2017-P2D-Q1(a)(iii)"
+   ]
+  },
+  {
+   "id": "faq-155",
+   "topic": "Elective D — Software Development",
+   "question": "A text editor uses stack S1 to store the typed words and stack S2 as temporary storage for the UNDO and REDO buttons. Describe the stack operations when UNDO is clicked, and when REDO is clicked.",
+   "answer": "UNDO: pop the latest typed word from S1 and push it onto S2. REDO: pop the latest removed word from S2 and push it back onto S1. If S1 is empty, clicking UNDO performs no action.",
+   "keywords": [
+    "stack",
+    "pop",
+    "push",
+    "UNDO",
+    "REDO"
+   ],
+   "sources": [
+    "2017-P2D-Q3(a)(i)",
+    "2017-P2D-Q3(a)(ii)",
+    "2017-P2D-Q3(a)(iii)"
+   ]
+  },
+  {
+   "id": "faq-156",
+   "topic": "Elective D — Software Development",
+   "question": "State the correct sequence of unit testing, system testing and acceptance testing, and the use of each stage.",
+   "answer": "Unit testing first: test each subprogram / module separately. Then system testing: test the whole integrated system as one system. Finally acceptance testing: check with the users that the system meets their requirements before it is accepted.",
+   "keywords": [
+    "unit testing",
+    "system testing",
+    "acceptance testing",
+    "sequence"
+   ],
+   "sources": [
+    "2017-P2D-Q3(c)"
+   ]
+  },
+  {
+   "id": "faq-157",
+   "topic": "Elective B — Networking",
+   "question": "What is circuit switching?",
+   "answer": "In circuit switching, a dedicated connection (circuit) is set up between the two communicating parties before communication begins, and it is held (reserved) for the whole duration of the communication.",
+   "keywords": [
+    "circuit switching",
+    "dedicated connection",
+    "set up before communication"
+   ],
+   "sources": [
+    "2017-P2B-Q3(a)(iii)"
+   ]
+  },
+  {
+   "id": "faq-158",
+   "topic": "Elective B — Networking",
+   "question": "What is synchronous transmission, and what is its advantage?",
+   "answer": "In synchronous transmission, data is sent in blocks in a synchronised stream timed by a clock signal, without start/stop bits for each character. The advantage is a lower overhead, hence a higher throughput.",
+   "keywords": [
+    "synchronous transmission",
+    "clock signal",
+    "blocks",
+    "overhead",
+    "throughput"
+   ],
+   "sources": [
+    "2017-P2B-Q3(a)(ii)"
+   ]
+  },
+  {
+   "id": "faq-159",
+   "topic": "Elective B — Networking",
+   "question": "Give three pieces of information stored in the header of a packet.",
+   "answer": "Any three of: source address; destination address; length of the packet; checksum; identification tag; priority (Quality of Service); hop count / TTL (time to live); port number.",
+   "keywords": [
+    "packet header",
+    "source address",
+    "destination address",
+    "checksum",
+    "TTL"
+   ],
+   "sources": [
+    "2017-P2B-Q3(b)(i)"
+   ]
+  },
+  {
+   "id": "faq-160",
+   "topic": "Elective A — Databases",
+   "question": "Describe how data mining can be used to determine sales strategies.",
+   "answer": "Filter out the relevant records of the customers, then find the trends / patterns / associations / relationships in them — such as the sales volume and the products sought, compared with the other cohorts — and determine the sales strategies from them. WARNING: merely describing the technique as a 'statistical function' is NOT accepted.",
+   "keywords": [
+    "data mining",
+    "patterns",
+    "trends",
+    "associations",
+    "sales strategies"
+   ],
+   "sources": [
+    "2017-P2A-Q2(e)"
+   ]
+  },
+  {
+   "id": "faq-161",
+   "topic": "Elective B — Networking",
+   "question": "Students can seamlessly connect to any access point in a school campus. What two access point settings should be configured to make this possible?",
+   "answer": "Set the same SSID on all the access points, and set the same security method / password on all of them (so that devices can roam between access points).",
+   "keywords": [
+    "SSID",
+    "roaming",
+    "access point",
+    "security settings"
+   ],
+   "sources": [
+    "2017-P2B-Q1(d)"
+   ]
+  },
+  {
+   "id": "faq-162",
+   "topic": "Elective B — Networking",
+   "question": "An IP camera in a coffee shop has the private IP address 192.168.0.8. Which computers can connect to it through this address, and which can connect through the shop's fixed public IP address?",
+   "answer": "Through 192.168.0.8: only a computer inside the shop's LAN (the staff computer), because a private IP address is reachable only within the local network. Through the fixed public IP address: both the staff computer and an outside computer (e.g. a home computer), via the Internet.",
+   "keywords": [
+    "private IP address",
+    "public IP address",
+    "LAN",
+    "Internet"
+   ],
+   "sources": [
+    "2017-P2B-Q2(c)(i)"
+   ]
+  },
+  {
+   "id": "faq-163",
+   "topic": "Core E — Social Implications",
+   "question": "Mary uses a tablet computer continuously for four hours every day. Give a health problem she may encounter and a way to minimise it.",
+   "answer": "Health problem: neck pain / fatigue (pain in the eyes or arms is also accepted). Minimise it by taking a 5-minute break after every 30 minutes of use, or by using ergonomically designed furniture.",
+   "keywords": [
+    "health problem",
+    "neck pain",
+    "regular breaks",
+    "ergonomic furniture"
+   ],
+   "sources": [
+    "2017-P1B-Q1(d)"
+   ]
+  },
+  {
+   "id": "faq-164",
+   "topic": "Core C — Internet & its Applications",
+   "question": "Give a benefit and a drawback of using an IP address instead of a domain name in a hyperlink.",
+   "answer": "Benefit: no translation of the domain name is required (and it is not necessary to own or purchase a domain name). Drawback: the link looks like a phishing web site that customers do not want to visit, and an IP address is hard to remember compared with a meaningful domain name.",
+   "keywords": [
+    "IP address",
+    "domain name",
+    "DNS translation",
+    "phishing"
+   ],
+   "sources": [
+    "2017-P1B-Q5(b)(iii)"
+   ]
+  },
+  {
+   "id": "faq-165",
+   "topic": "Elective C — Multimedia",
+   "question": "Give an advantage of using RAW over JPG for photo-taking, and an advantage of using TIFF over RAW.",
+   "answer": "RAW over JPG: RAW keeps most of the data of the image because no (lossy) compression is applied. WARNING: answering only 'better quality' is NOT accepted. TIFF over RAW: TIFF can be viewed by common operating systems and photo editing applications without dedicated software, and its data is already in an editable format, so no conversion is needed.",
+   "keywords": [
+    "RAW",
+    "JPG",
+    "lossy compression",
+    "TIFF",
+    "compatibility"
+   ],
+   "sources": [
+    "2017-P2C-Q1(f)(i)",
+    "2017-P2C-Q1(f)(ii)"
    ]
   }
  ]
