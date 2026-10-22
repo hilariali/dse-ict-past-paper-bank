@@ -97,8 +97,8 @@ blockquote{margin:12px 0;padding:14px 16px;border-left:4px solid var(--teal);bac
 code.inline{font-family:"JetBrains Mono",monospace;font-size:13px;background:var(--surface2);padding:2px 6px;border-radius:6px}
 /* Structured drill */
 .part{position:relative;border:1px solid var(--line);border-radius:16px;padding:16px;margin-top:14px;background:var(--surface)}
-.part-overlay{position:absolute;inset:0;background:rgba(15,42,68,.14);backdrop-filter:blur(1px);display:grid;place-items:center;border-radius:16px;z-index:4}
-.part-overlay-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;font-size:14px;font-weight:700}
+.part-overlay{position:absolute;inset:0;background:rgba(15,42,68,.45);backdrop-filter:blur(2px);display:grid;place-items:center;border-radius:16px;z-index:6}
+.part-overlay-card{background:var(--surface);border:2px solid var(--teal);border-radius:12px;padding:12px 14px;font-size:15px;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .part-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:baseline}
 .answerbox{width:100%;min-height:96px;margin-top:10px;padding:12px 14px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:16px;line-height:1.55;resize:vertical}
 .answerbox:focus{outline:none;border-color:var(--teal)}
@@ -308,7 +308,7 @@ try{ const s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'null'); if(s&&typeo
 let aiUp=false, aiModelId=null, chatMsgs=[], chatBusy=false, aiMarkBusy=false;
 const KEY='dse-ict-drill-v1';
 let store={}; try{ store=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ store={}; }
-let filterYear='All years', filterPaper='All papers', filterTopics=[], filterStatus='All', filterSearch='', currentId=null, selAnswer=null, selConf=null, submitted=false, queueMode=false, queueList=[], quickPickModule='All modules', quickPickPaperGroup='All papers', quickPickIds=[];
+let filterYear='All years', filterPaper='All papers', filterTopics=[], filterStatus='All', filterSearch='', currentId=null, selAnswer=null, selConf=null, submitted=false, queueMode=false, queueList=[], quickPickModule='All modules', quickPickPaperGroup='All papers', quickPickIds=[], selfCheckLocked=false;
 let panelOpen=false; try{ const _fp=localStorage.getItem('dse-ict-filterpanel-v1'); panelOpen = _fp===null ? (window.innerWidth>=820) : _fp==='1'; }catch(e){ panelOpen = window.innerWidth>=820; }
 let openModules={}, TOPIC_LIST=[], yearSig='';
 if(window.mermaid) mermaid.initialize({startOnLoad:false, theme:'default', securityLevel:'loose'});
@@ -477,15 +477,16 @@ function submitStructured(){ const q=STRUCTURED.find(x=>x.id===currentId); submi
     document.getElementById('part-reveal-'+pi).innerHTML=`<div style="margin-top:14px;border-top:1px dashed var(--line);padding-top:12px"><div style="font-weight:800">Marking scheme — Part ${esc(p.label)} <span class="partscore" id="pscore-${pi}">(0 / ${p.marks})</span></div>${model}<p style="font-size:14px;color:var(--muted);margin:8px 0 0">Tick each point your answer genuinely earned — mark it like an examiner, not like a friend:</p>${pts}${unacc}</div>`; });
   document.getElementById('reveal').innerHTML=`<div class="reveal"><div class="result-banner ok" id="struct-banner">Self-score so far: 0 / ${q.marks} marks — tick the marking points above, part by part</div><h4 style="margin:18px 0 4px">Now rate yourself honestly</h4><p style="color:var(--muted);margin:0;font-size:14.5px">This decides your re-drill queue. Shaky and Gap questions come back automatically.</p><div class="rating" id="rating"><button data-r="Know" onclick="rate('Know')">✓ Know<br><small style="font-weight:400">I get it fully</small></button><button data-r="Shaky" onclick="rate('Shaky')">~ Shaky<br><small style="font-weight:400">Partly sure</small></button><button data-r="Gap" onclick="rate('Gap')">✕ Gap<br><small style="font-weight:400">Need to relearn</small></button></div><div id="after-rate" style="margin-top:14px"></div></div>`;
   document.getElementById('reveal').scrollIntoView({behavior:'smooth',block:'start'});
-  if(aiUp) aiMark();
+  if(aiUp){ selfCheckLocked=true; aiMark(); }
 }
-function toggleTick(pi,pti){ const q=STRUCTURED.find(x=>x.id===currentId); const entry=store[q.id]; if(!entry) return; entry.ticks=entry.ticks||{}; const key=pi+'-'+pti; if(entry.ticks[key]) delete entry.ticks[key]; else entry.ticks[key]=true; const btn=document.querySelector(`.tickrow[data-part="${pi}"][data-pt="${pti}"]`); if(btn) btn.classList.toggle('on', !!entry.ticks[key]);
+function toggleTick(pi,pti){ if(selfCheckLocked || aiMarkBusy) return; const q=STRUCTURED.find(x=>x.id===currentId); const entry=store[q.id]; if(!entry) return; entry.ticks=entry.ticks||{}; const key=pi+'-'+pti; if(entry.ticks[key]) delete entry.ticks[key]; else entry.ticks[key]=true; const btn=document.querySelector(`.tickrow[data-part="${pi}"][data-pt="${pti}"]`); if(btn) btn.classList.toggle('on', !!entry.ticks[key]);
   let total=0; q.parts.forEach((p,pj)=>{ let ps=0; (p.markingScheme.points||[]).forEach((pt,pk)=>{ if(entry.ticks[pj+'-'+pk]) ps+=pt.marks; }); ps=Math.min(ps,p.marks); const el=document.getElementById('pscore-'+pj); if(el) el.textContent=`(${ps} / ${p.marks})`; total+=ps; });
   entry.score=total; entry.correct = total*2>=q.marks; save();
   const b=document.getElementById('struct-banner'); if(b) b.textContent=`Self-score: ${total} / ${q.marks} marks${total===q.marks?' — full marks, examiner-grade':''}`;
   renderHome();
 }
-function rate(r){ const q=ALL.find(x=>x.id===currentId); store[q.id].rating=r; save(); document.querySelectorAll('#rating button').forEach(b=>{ b.className=''; if(b.dataset.r===r) b.classList.add('sel-'+r.toLowerCase()); }); const inQueue=['Shaky','Gap'].includes(r); document.getElementById('after-rate').innerHTML=`<div class="note">${inQueue?`<strong>Added to your re-drill queue</strong> — rated ${r}.`:`<strong>Marked as Know</strong> — it will not be queued for re-drill.`}</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-navy" onclick="nextQuestion()">${nextLabel()}</button><button class="btn btn-ghost" onclick="showView('home')">Back to all questions</button><button class="btn btn-ghost" onclick="showView('results')">See results</button></div>`; renderHome(); }
+function questionMarkSummary(q, entry){ if(!q||!entry) return ''; if(q.type==='structured'){ const self=typeof entry.score==='number'? entry.score : 0; if(typeof entry.aiScore==='number') return `Total mark for this question: <strong>${entry.aiScore} / ${q.marks}</strong> (AI) • Self-check: <strong>${self} / ${q.marks}</strong>`; return `Total mark for this question: <strong>${self} / ${q.marks}</strong>`; } const got=entry.correct? q.marks : 0; return `Total mark for this question: <strong>${got} / ${q.marks}</strong>`; }
+function rate(r){ const q=ALL.find(x=>x.id===currentId); store[q.id].rating=r; save(); document.querySelectorAll('#rating button').forEach(b=>{ b.className=''; if(b.dataset.r===r) b.classList.add('sel-'+r.toLowerCase()); }); const inQueue=['Shaky','Gap'].includes(r); const markLine=questionMarkSummary(q, store[q.id]); document.getElementById('after-rate').innerHTML=`<div class="note">${inQueue?`<strong>Added to your re-drill queue</strong> — rated ${r}.`:`<strong>Marked as Know</strong> — it will not be queued for re-drill.`}${markLine?`<br>${markLine}`:''}</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-navy" onclick="nextQuestion()">${nextLabel()}</button><button class="btn btn-ghost" onclick="showView('home')">Back to all questions</button><button class="btn btn-ghost" onclick="showView('results')">See results</button></div>`; renderHome(); }
 function nextLabel(){ if(queueMode){ const idx=queueList.indexOf(currentId); return idx>=0 && idx<queueList.length-1 ? 'Next in queue →' : 'Finish queue'; } const idx=ALL.indexOf(ALL.find(q=>q.id===currentId)); return idx<ALL.length-1 ? 'Next question →' : 'Finish — see results'; }
 function nextQuestion(){ if(queueMode){ const idx=queueList.indexOf(currentId); if(idx<queueList.length-1){ startDrill(queueList[idx+1]); return; } queueMode=false; showView('results'); return; } const idx=ALL.indexOf(ALL.find(q=>q.id===currentId)); if(idx<ALL.length-1) startDrill(ALL[idx+1].id); else showView('results'); }
 function startQueue(){ const q=ALL.filter(x=>['Shaky','Gap'].includes(store[x.id]?.rating)); if(!q.length){ showView('home'); return; } queueMode=true; queueList=q.map(x=>x.id); startDrill(queueList[0]); }
@@ -521,7 +522,78 @@ async function aiComplete(messages){ const base=(settings.aiBase||'').trim().rep
 function toggleChat(){ const p=document.getElementById('ai-chat'); if(!p) return; p.hidden=!p.hidden; if(!p.hidden) renderChatMsgs(); }
 function renderChatMsgs(){ const el=document.getElementById('chat-msgs'); if(!el) return; el.innerHTML=chatMsgs.map(m=>`<div class="chatmsg ${m.role==='user'?'user':'ai'}"><strong>${m.role==='user'?'You':'AI tutor'}</strong><div style="white-space:pre-wrap;margin-top:2px">${esc(m.content)}</div></div>`).join(''); }
 async function sendChat(){ if(chatBusy) return; const inp=document.getElementById('chat-input'); const text=((inp&&inp.value)||'').trim(); if(!text) return; inp.value=''; chatMsgs.push({role:'user', content:text}); renderChatMsgs(); chatBusy=true; const send=document.getElementById('chat-send'); const note=document.getElementById('chat-note'); if(send){ send.disabled=true; send.textContent='Sending…'; } if(inp) inp.disabled=true; if(note) note.innerHTML='<div class="note"><span class="loading">AI is thinking…</span></div>'; const q=ALL.find(x=>x.id===currentId); const sys= submitted? `You are a tutor for HKDSE ICT students. The student HAS submitted this question and the official marking scheme is now revealed to them. Explain the official answer and marking points clearly, refer to the student's own answer, and point out exactly where marks were earned or lost.\nOFFICIAL MARKING INFORMATION:\n${schemeContext(q)}` : `You are a tutor for HKDSE ICT students. The student has NOT submitted this question yet. Explain what the question is asking, teach the underlying concepts, give hints and ask guiding questions. You must NOT reveal, state or hint at the correct answer, the official marking scheme, model answers, marking points, or which option is right — even if the student asks directly. If they ask for the answer, decline politely and offer another hint.`; try{ const reply=await aiComplete([{role:'system', content:sys+'\n\nQUESTION CONTEXT:\n'+questionContext(q)}, ...chatMsgs]); chatMsgs.push({role:'assistant', content:reply}); if(note) note.innerHTML=''; }catch(e){ if(note) note.innerHTML=`<div class="note">AI unavailable right now — keep drilling; the official marking scheme appears after you submit.</div>`; } chatBusy=false; if(send){ send.disabled=false; send.textContent='Send'; } if(inp) inp.disabled=false; renderChatMsgs(); }
-async function aiMark(){ if(aiMarkBusy) return; const q=STRUCTURED.find(x=>x.id===currentId); if(!q) return; const panel=document.getElementById('ai-mark-panel'); const live=document.getElementById('ai-mark-live'); const answers=q.parts.map((p,pi)=>{ const el=document.getElementById('ans-'+pi); if(el) return el.value.trim(); const st=store[q.id]; return st&&st.answers? String(st.answers[p.label]||'').trim() : ''; }); if(!answers.some(a=>a)){ if(panel) panel.innerHTML=`<div class="note">Type an answer in at least one part first, then ask the AI to mark it.</div>`; return; } aiMarkBusy=true; q.parts.forEach((_,pi)=>{ const ov=document.getElementById('part-overlay-'+pi); if(ov) ov.hidden=true; }); if(live){ live.hidden=false; live.innerHTML=`<span class="loading">AI marking ${yearOf(q)} ${paperOf(q)} Question ${esc(q.number)}…</span>`; } if(panel) panel.innerHTML=`<div class="note"><span class="loading">AI is marking your answers for ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}…</span></div>`; let total=0, marked=0; for(let pi=0; pi<q.parts.length; pi++){ const p=q.parts[pi]; const slot=document.getElementById('aimark-'+pi); const overlay=document.getElementById('part-overlay-'+pi); const ans=answers[pi]; if(!ans){ if(slot) slot.innerHTML=`<div class="aimarkbox"><strong>AI score: 0 / ${p.marks}</strong> — no answer written for this part.</div>`; if(overlay) overlay.hidden=true; continue; } if(live) live.innerHTML=`<span class="loading">AI marking ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — Part ${esc(p.label)} (${pi+1}/${q.parts.length})…</span>`; if(overlay) overlay.hidden=false; try{ const res=await aiMarkPart(q,p,ans); total+=res.score; marked++; if(slot) slot.innerHTML=`<div class="aimarkbox"><strong>AI score: ${res.score} / ${p.marks}</strong>${res.feedback?` — ${esc(res.feedback)}`:''}${res.hits?`<div style="margin-top:6px">${res.hits.map((h,i)=>`<div class="${h?'hit':'miss'}">${h?'✓':'✗'} ${esc((p.markingScheme.points||[])[i].point)}</div>`).join('')}</div>`:''}</div>`; }catch(e){ if(slot) slot.innerHTML=`<div class="note" style="margin-top:10px">AI unavailable for this part — mark yourself against the official scheme.</div>`; }finally{ if(overlay) overlay.hidden=true; } } if(panel) panel.innerHTML= marked===0? `<div class="note"><strong>AI unavailable</strong> — mark yourself against the official scheme below.</div>` : `<div class="note" style="border-color:var(--teal)"><strong>AI marking complete for ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}.</strong><br>Total AI score: <strong>${total} / ${q.marks} marks</strong>. Please still check and confirm with the official marking points below.</div>`; if(live){ live.hidden=false; live.innerHTML = marked===0 ? `<strong>AI unavailable for this question.</strong> Use the official marking points below.` : `<strong>AI marking done for this question:</strong> ${total} / ${q.marks} marks.`; } aiMarkBusy=false; }
+async function aiMark(){
+  if(aiMarkBusy) return;
+  const q=STRUCTURED.find(x=>x.id===currentId);
+  if(!q) return;
+  const panel=document.getElementById('ai-mark-panel');
+  const live=document.getElementById('ai-mark-live');
+  const banner=document.getElementById('struct-banner');
+  const tickRows=[...document.querySelectorAll('.tickrow')];
+  const answers=q.parts.map((p,pi)=>{
+    const el=document.getElementById('ans-'+pi);
+    if(el) return el.value.trim();
+    const st=store[q.id];
+    return st&&st.answers? String(st.answers[p.label]||'').trim() : '';
+  });
+  if(!answers.some(a=>a)){
+    if(panel) panel.innerHTML=`<div class="note">Type an answer in at least one part first, then ask the AI to mark it.</div>`;
+    return;
+  }
+  aiMarkBusy=true;
+  selfCheckLocked=true;
+  tickRows.forEach(b=>{ b.disabled=true; b.style.opacity='0.6'; });
+  if(banner) banner.textContent='AI is marking this question now — self-check is temporarily locked.';
+  q.parts.forEach((_,pi)=>{ const ov=document.getElementById('part-overlay-'+pi); if(ov) ov.hidden=true; });
+  if(live){
+    live.hidden=false;
+    live.innerHTML=`<span class="loading">AI marking ${yearOf(q)} ${paperOf(q)} Question ${esc(q.number)}…</span>`;
+  }
+  if(panel) panel.innerHTML=`<div class="note"><span class="loading">AI is marking your answers for ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}…</span></div>`;
+  let total=0, marked=0;
+  for(let pi=0; pi<q.parts.length; pi++){
+    const p=q.parts[pi];
+    const slot=document.getElementById('aimark-'+pi);
+    const overlay=document.getElementById('part-overlay-'+pi);
+    const ans=answers[pi];
+    if(!ans){
+      if(slot) slot.innerHTML=`<div class="aimarkbox"><strong>AI score: 0 / ${p.marks}</strong> — no answer written for this part.</div>`;
+      if(overlay) overlay.hidden=true;
+      continue;
+    }
+    if(live) live.innerHTML=`<span class="loading">AI marking ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — Part ${esc(p.label)} (${pi+1}/${q.parts.length})…</span>`;
+    if(overlay) overlay.hidden=false;
+    try{
+      const res=await aiMarkPart(q,p,ans);
+      total+=res.score;
+      marked++;
+      if(slot) slot.innerHTML=`<div class="aimarkbox"><strong>AI score: ${res.score} / ${p.marks}</strong>${res.feedback?` — ${esc(res.feedback)}`:''}${res.hits?`<div style="margin-top:6px">${res.hits.map((h,i)=>`<div class="${h?'hit':'miss'}">${h?'✓':'✗'} ${esc((p.markingScheme.points||[])[i].point)}</div>`).join('')}</div>`:''}</div>`;
+    }catch(e){
+      if(slot) slot.innerHTML=`<div class="note" style="margin-top:10px">AI unavailable for this part — mark yourself against the official scheme.</div>`;
+    }finally{
+      if(overlay) overlay.hidden=true;
+    }
+  }
+  const entry=store[q.id]||{};
+  if(marked>0) entry.aiScore=total; else delete entry.aiScore;
+  store[q.id]=entry;
+  save();
+  if(panel) panel.innerHTML= marked===0
+    ? `<div class="note"><strong>AI unavailable</strong> — you can now use manual self-check below.</div>`
+    : `<div class="note" style="border-color:var(--teal)"><strong>AI marking complete for ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}.</strong><br>Total AI score: <strong>${total} / ${q.marks} marks</strong>.</div>`;
+  if(live){
+    live.hidden=false;
+    live.innerHTML = marked===0
+      ? `<strong>AI unavailable for this question.</strong> Manual self-check is now unlocked.`
+      : `<strong>AI total mark for this question:</strong> ${total} / ${q.marks} marks.`;
+  }
+  if(banner) banner.textContent = marked===0
+    ? `Self-score so far: ${entry.score||0} / ${q.marks} marks — AI unavailable, continue manual self-check.`
+    : `AI total: ${total} / ${q.marks} marks • You can now verify with manual self-check.`;
+  tickRows.forEach(b=>{ b.disabled=false; b.style.opacity=''; });
+  selfCheckLocked=false;
+  aiMarkBusy=false;
+}
 async function aiMarkPart(q,p,ans){ const ms=p.markingScheme||{}; const pts=ms.points||[]; const sys=`You are an HKDSE ICT examiner. Mark the student's answer strictly against the official marking scheme points provided. Reply with ONLY a JSON object, no other text: {"hit":[true,false,...],"score":<number>,"feedback":"<1-2 short lines>"}. The "hit" array must have exactly ${pts.length} entries, one per marking point, in order. "score" is the total marks earned for this part, out of ${p.marks}.`; const user=`QUESTION PART ${p.label} (${p.marks} marks):\n${blocksToText(p.stem)}\n\nSTUDENT'S ANSWER:\n${ans}\n\nOFFICIAL MARKING POINTS:\n${pts.map((pt,i)=>`${i+1}. [${pt.marks} mark${pt.marks!==1?'s':''}] ${pt.point}`).join('\n')}${ms.modelAnswer?`\n\nMODEL ANSWER:\n${ms.modelAnswer}`:''}${ms.unacceptable&&ms.unacceptable.length?`\n\nNOT ACCEPTED (award no marks for these):\n${ms.unacceptable.join('\n')}`:''}`; const raw=await aiComplete([{role:'system',content:sys},{role:'user',content:user}]); const txt=raw.replace(/```json|```/g,''); const a=txt.indexOf('{'), b=txt.lastIndexOf('}'); if(a<0||b<=a) throw new Error('parse'); const j=JSON.parse(txt.slice(a,b+1)); let hits=null, score=null; if(Array.isArray(j.hit)&&j.hit.length===pts.length){ hits=j.hit.map(Boolean); score=Math.min(p.marks, pts.reduce((s,pt,i)=>s+(hits[i]?pt.marks:0),0)); } else if(typeof j.score==='number'&&isFinite(j.score)){ score=Math.max(0, Math.min(p.marks, Math.round(j.score*2)/2)); } else throw new Error('shape'); return {score, hits, feedback: typeof j.feedback==='string'? j.feedback.slice(0,300):''}; }
 /* ---- Runtime question-bank loading ---- */
 function validBank(d){ if(!Array.isArray(d)||d.length<1) return false; const ids=new Set(); for(const q of d){ if(!q||typeof q.id!=='string'||ids.has(q.id)) return false; ids.add(q.id); if(!Array.isArray(q.topics)||typeof q.marks!=='number') return false; if(q.type==='mc'){ if(!Array.isArray(q.stem)||!Array.isArray(q.options)||!q.markingScheme||!q.markingScheme.answer) return false; } else if(q.type==='structured'){ if(!Array.isArray(q.parts)||!q.parts.length) return false; } else return false; } return true; }
