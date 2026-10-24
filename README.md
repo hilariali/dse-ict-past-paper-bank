@@ -34,4 +34,4 @@ Set these Vercel environment variables:
 - `FIREBASE_MESSAGING_SENDER_ID` (optional)
 - `FIREBASE_MEASUREMENT_ID` (optional)
 
-If these vars are missing, the endpoint returns `503` and the app falls back to manual Firebase config input in Settings.
+If these vars are missing, the endpoint returns `503` and cloud sync stays disabled in the UI.

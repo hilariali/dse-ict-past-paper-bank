@@ -297,9 +297,7 @@ label.setlab{font-weight:700;font-size:14.5px}
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="btn btn-ghost" onclick="testAi()">Test AI connection</button><span id="ai-status" style="font-size:14px;color:var(--muted)">AI: not tested yet</span></div>
 
     <div class="section-title">Account sync — Google + Firebase</div>
-    <p style="font-size:14.5px;color:var(--muted);margin:0 0 10px">Sign in with Google to sync progress across devices. Firebase config can be loaded from your secure server endpoint (<code class="inline">/api/firebase-config</code>) or pasted manually below. If Firebase is not configured, the app keeps using device-local progress only.</p>
-    <label class="setlab" for="set-firebase-config">Firebase Web App config JSON</label>
-    <textarea id="set-firebase-config" class="setfield" style="min-height:120px;resize:vertical" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea>
+    <p style="font-size:14.5px;color:var(--muted);margin:0 0 10px">Sign in with Google to sync progress across devices. Firebase config is loaded only from your secure server endpoint (<code class="inline">/api/firebase-config</code>). If Firebase is not configured, the app keeps using device-local progress only.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-navy" onclick="saveSettingsFromForm()">Save settings</button>
       <button id="google-login-btn" class="btn btn-ghost" onclick="googleLogin()">Sign in with Google</button>
@@ -344,9 +342,10 @@ let faqOpen={}, faqTopicFilter='All topics', faqDeckIds=null, faqDeckIndex=0, fa
 const SETTINGS_KEY='dse-ict-settings-v1';
 const DEFAULT_BANK_URL='https://raw.githubusercontent.com/hilariali/dse-ict-past-paper-bank/main/question-bank.json';
 const DEFAULT_FAQ_URL='https://raw.githubusercontent.com/hilariali/dse-ict-past-paper-bank/main/faq.json';
-let settings={bankUrl:'',faqUrl:'',firebaseConfig:''};
+let settings={bankUrl:'',faqUrl:''};
 try{ const s=JSON.parse(localStorage.getItem(SETTINGS_KEY)||'null'); if(s&&typeof s==='object') settings={...settings,...s}; }catch(e){}
 let aiUp=false, chatMsgs=[], chatBusy=false, aiMarkBusy=false;
+let serverFirebaseConfig=null;
 const KEY='dse-ict-drill-v1';
 let store={}; try{ store=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ store={}; }
 let filterYear='All years', filterPaper='All papers', filterTopics=[], filterStatus='All', filterSearch='', currentId=null, selAnswer=null, selConf=null, submitted=false, queueMode=false, queueList=[], quickPickModule='All modules', quickPickPaperGroup='All papers', quickPickIds=[], selfCheckLocked=false;
@@ -545,22 +544,24 @@ function bankHeadline(){ const ys=[...new Set(ALL.map(yearOf))].sort(); return `
 function renderBankSummary(){ const b=document.getElementById('hero-badge'); if(b) b.textContent=`${ALL.length} questions ready`; const t=document.getElementById('hero-title'); if(t) t.textContent='Drill smarter, not harder.'; const d=document.getElementById('hero-desc'); if(d) d.textContent='Use filters or quick random picks to start fast. Attempt first, then check official answers and marking points to learn efficiently.'; const ps=document.getElementById('hero-papers-summary'); if(ps) ps.textContent='Quick revision: flip the random FAQ card below and pull a new one any time.'; }
 /* ---- Settings ---- */
 function saveSettings(){ try{ localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings)); }catch(e){} }
-function renderSettings(){ document.getElementById('set-bank-url').value=settings.bankUrl||DEFAULT_BANK_URL; document.getElementById('set-faq-url').value=settings.faqUrl||DEFAULT_FAQ_URL; const fc=document.getElementById('set-firebase-config'); if(fc) fc.value=settings.firebaseConfig||''; renderAiStatus(); renderAuthStatus(); renderBankSettingsStatus(); }
+function renderSettings(){
+  document.getElementById('set-bank-url').value=settings.bankUrl||DEFAULT_BANK_URL;
+  document.getElementById('set-faq-url').value=settings.faqUrl||DEFAULT_FAQ_URL;
+  renderAiStatus(); renderAuthStatus(); renderBankSettingsStatus();
+}
 function renderAiStatus(){ const el=document.getElementById('ai-status'); if(el) el.textContent= aiUp? 'AI: connected — secure server endpoint is available' : 'AI: not connected — AI buttons stay hidden; everything works without AI'; }
 function renderBankSettingsStatus(){ const b=document.getElementById('bank-settings-status'); if(b) b.textContent=`Active bank: ${ALL.length} questions (${bankSource})`; const bn=document.getElementById('bank-note'); if(bn) bn.textContent=bankNote; const f=document.getElementById('faq-settings-status'); if(f) f.textContent=`Active FAQ: ${FAQS.length} entries (${faqSource})`; const fn=document.getElementById('faq-note'); if(fn) fn.textContent=faqNote; updateBankStatus(); }
 function updateBankStatus(){ const el=document.getElementById('bank-status'); if(el) el.textContent=`Question bank: ${ALL.length} questions (${bankSource}) • FAQ: ${FAQS.length} entries (${faqSource}) • Progress: ${firebaseUser?'cloud-synced with local fallback':'saved on this device'}${cloudSyncBusy?' • Cloud sync in progress…':''}`; }
-function readSettingsForm(){ const _bu=(document.getElementById('set-bank-url').value||'').trim(); settings.bankUrl=(_bu===DEFAULT_BANK_URL)?'':_bu; const _fu=(document.getElementById('set-faq-url').value||'').trim(); settings.faqUrl=(_fu===DEFAULT_FAQ_URL)?'':_fu; const _fc=(document.getElementById('set-firebase-config').value||'').trim(); settings.firebaseConfig=_fc; saveSettings(); }
+function readSettingsForm(){ const _bu=(document.getElementById('set-bank-url').value||'').trim(); settings.bankUrl=(_bu===DEFAULT_BANK_URL)?'':_bu; const _fu=(document.getElementById('set-faq-url').value||'').trim(); settings.faqUrl=(_fu===DEFAULT_FAQ_URL)?'':_fu; saveSettings(); }
 function saveSettingsFromForm(){ readSettingsForm(); probeAI().then(()=>{ renderAiStatus(); if(aiUp&&currentId&&!submitted&&!document.getElementById('view-drill').hidden) refreshDrill(); }); initFirebaseFromSettings(); renderAuthStatus(); const el=document.getElementById('ai-status'); if(el) el.textContent='Settings saved — testing the AI connection…'; }
 async function fetchT(url, ms, opts){ const c=new AbortController(); const t=setTimeout(()=>c.abort(), ms); try{ return await fetch(url, {...(opts||{}), signal:c.signal}); } finally{ clearTimeout(t); } }
 async function fetchJsonT(url, ms){ const r=await fetchT(url, ms); if(!r.ok) throw new Error('HTTP '+r.status); return await r.json(); }
 async function loadFirebaseConfigFromEndpoint(){
-  if((settings.firebaseConfig||'').trim()) return false;
   try{
     const d=await fetchJsonT('/api/firebase-config', 4000);
     const cfg=d&&d.config&&typeof d.config==='object'?d.config:null;
     if(!cfg) return false;
-    settings.firebaseConfig=JSON.stringify(cfg, null, 2);
-    saveSettings();
+    serverFirebaseConfig=cfg;
     return true;
   }catch(e){
     return false;
@@ -592,24 +593,7 @@ function renderAuthStatus(){
   updateBankStatus();
 }
 function parseFirebaseConfig(){
-  const raw=(settings.firebaseConfig||'').trim();
-  if(!raw) return null;
-  try{
-    const cfg=JSON.parse(raw);
-    return cfg&&typeof cfg==='object'?cfg:null;
-  }catch(e){}
-  const m=raw.match(/const\s+firebaseConfig\s*=\s*(\{[\s\S]*?\})\s*;?/);
-  if(!m) return null;
-  try{
-    const cleaned=m[1]
-      .replace(/\/\/.*$/gm,'')
-      .replace(/\/\*[\s\S]*?\*\//g,'')
-      .replace(/([{,]\s*)([A-Za-z0-9_]+)\s*:/g,'$1"$2":')
-      .replace(/'/g,'"')
-      .replace(/,\s*([}\]])/g,'$1');
-    const cfg=JSON.parse(cleaned);
-    return cfg&&typeof cfg==='object'?cfg:null;
-  }catch(e){ return null; }
+  return serverFirebaseConfig&&typeof serverFirebaseConfig==='object' ? serverFirebaseConfig : null;
 }
 function setupAuthObserver(){
   if(!firebaseAuth || authObserverSet) return;
@@ -623,7 +607,7 @@ function setupAuthObserver(){
 function initFirebaseFromSettings(){
   firebaseReady=false; firebaseAuth=null; firebaseDb=null; firebaseApp=null; firebaseUser=null;
   const cfg=parseFirebaseConfig();
-  if(!cfg){ cloudStatusMsg=settings.firebaseConfig?'invalid Firebase config JSON':'not configured'; renderAuthStatus(); return; }
+  if(!cfg){ cloudStatusMsg='not configured'; renderAuthStatus(); return; }
   if(!window.firebase){ cloudStatusMsg='Firebase SDK not available'; renderAuthStatus(); return; }
   try{
     try{ firebaseApp=firebase.app('dse-ict-app'); }catch(e){ firebaseApp=firebase.initializeApp(cfg, 'dse-ict-app'); }
