@@ -1,0 +1,243 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // This security rules file assumes the following data structures:
+    //
+    // Collection: users
+    // Document ID: {userId} (matches Firebase Auth UID)
+    // Fields:
+    //   - uid: string (required, immutable, matches userId, max 128 chars)
+    //   - email: string (required, valid email, max 120 chars)
+    //   - displayName: string (required, 1-100 chars)
+    //   - role: string (required, 'student' | 'teacher' | 'admin')
+    //   - classId: string (optional, max 100 chars)
+    //   - className: string (optional, max 100 chars)
+    //   - stats: map (optional, max 50 keys, stores attempt counts & accuracy)
+    //   - moduleMastery: list or map (optional, max 50 entries)
+    //   - lastActive: timestamp (optional)
+    //   - createdAt: timestamp (required, immutable, recent on create)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: users/{userId}/appData
+    // Document ID: {docId} (e.g. 'progress')
+    // Fields:
+    //   - store: map (required, max 5000 keys, maps questionId to attempt records)
+    //   - savedIds: list of strings (optional, max 1000 items)
+    //   - updatedAt: timestamp (required)
+    //   - app: string (required, max 50 chars, e.g. 'dse-ict-drill')
+    //
+    // Collection: classes
+    // Document ID: {classId}
+    // Fields:
+    //   - id: string (required, immutable, matches classId, max 100 chars)
+    //   - name: string (required, 1-100 chars)
+    //   - code: string (required, 1-30 chars, class enrollment code)
+    //   - teacherId: string (required, teacher's UID, max 128 chars)
+    //   - teacherEmail: string (required, valid email, max 120 chars)
+    //   - teacherName: string (required, 1-100 chars)
+    //   - studentUids: list of strings (required, max 300 student UIDs)
+    //   - createdAt: timestamp (required, immutable, recent on create)
+    //   - updatedAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && (
+        ('admin' in request.auth.token && request.auth.token.admin == true) ||
+        ('role' in request.auth.token && request.auth.token.role == 'admin') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
+    }
+
+    function isTeacher() {
+      return isAuthenticated() && (
+        isAdmin() ||
+        ('teacher' in request.auth.token && request.auth.token.teacher == true) ||
+        ('role' in request.auth.token && request.auth.token.role == 'teacher') ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         'role' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'teacher')
+      );
+    }
+
+    function isValidEmail(email) {
+      return email is string &&
+        email.size() <= 120 &&
+        email.matches('^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$');
+    }
+
+    function isRecent(time) {
+      return time is timestamp &&
+        time > request.time - duration.value(5, 'm') &&
+        time <= request.time + duration.value(1, 'm');
+    }
+
+    // ===============================================================
+    // Domain Validators
+    // ===============================================================
+
+    function isValidUser(data, userId) {
+      return data.keys().hasAll(['uid', 'email', 'displayName', 'role', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['uid', 'email', 'displayName', 'role', 'classId', 'className', 'stats', 'moduleMastery', 'lastActive', 'createdAt', 'updatedAt']) &&
+        data.uid is string && data.uid == userId && data.uid.size() <= 128 &&
+        isValidEmail(data.email) &&
+        data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 100 &&
+        data.role in ['student', 'teacher', 'admin'] &&
+        (!('classId' in data) || (data.classId is string && data.classId.size() <= 100)) &&
+        (!('className' in data) || (data.className is string && data.className.size() <= 100)) &&
+        (!('stats' in data) || (data.stats is map && data.stats.keys().size() <= 50)) &&
+        (!('moduleMastery' in data) || ((data.moduleMastery is map && data.moduleMastery.keys().size() <= 50) || (data.moduleMastery is list && data.moduleMastery.size() <= 50))) &&
+        (!('lastActive' in data) || data.lastActive is timestamp) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAppData(data) {
+      return data.keys().hasAll(['store', 'updatedAt', 'app']) &&
+        data.keys().hasOnly(['store', 'savedIds', 'updatedAt', 'app']) &&
+        data.app is string && data.app.size() >= 1 && data.app.size() <= 50 &&
+        data.store is map && data.store.keys().size() <= 5000 &&
+        (!('savedIds' in data) || (data.savedIds is list && data.savedIds.size() <= 1000)) &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidClass(data, classId) {
+      return data.keys().hasAll(['id', 'name', 'code', 'teacherId', 'teacherEmail', 'teacherName', 'studentUids', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'name', 'code', 'teacherId', 'teacherEmail', 'teacherName', 'studentUids', 'createdAt', 'updatedAt']) &&
+        data.id is string && data.id == classId && data.id.size() <= 100 &&
+        data.name is string && data.name.size() >= 1 && data.name.size() <= 100 &&
+        data.code is string && data.code.size() >= 1 && data.code.size() <= 30 &&
+        data.teacherId is string && data.teacherId.size() >= 1 && data.teacherId.size() <= 128 &&
+        isValidEmail(data.teacherEmail) &&
+        data.teacherName is string && data.teacherName.size() >= 1 && data.teacherName.size() <= 100 &&
+        data.studentUids is list && data.studentUids.size() <= 300 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Root-level default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------
+    // Users Collection
+    // -------------------------------------------------------------
+    match /users/{userId} {
+      // Read: Users can view their own profile; Teachers and Admins can view all profiles
+      allow read: if isAuthenticated() && (isOwner(userId) || isTeacher() || isAdmin());
+
+      // Create: Authenticated users can create their own profile.
+      // Default roles allowed on self-registration are 'student' or 'teacher'. Only admins can create 'admin' roles.
+      allow create: if isOwner(userId) &&
+        isValidUser(request.resource.data, userId) &&
+        isRecent(request.resource.data.createdAt) &&
+        (request.resource.data.role in ['student', 'teacher'] || isAdmin());
+
+      // Update:
+      // - Regular user / Owner: can update profile fields and transition between 'student' and 'teacher' (cannot assign/modify admin role).
+      // - Teacher: can update student class assignments (classId, className) and student profiles (cannot modify or assign admin roles).
+      // - Admin: full update permissions.
+      allow update: if isAuthenticated() &&
+        isValidUser(request.resource.data, userId) &&
+        request.resource.data.uid == resource.data.uid &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        (
+          isAdmin() ||
+          (isOwner(userId) &&
+           resource.data.role != 'admin' &&
+           request.resource.data.role in ['student', 'teacher'] &&
+           (request.resource.data.email == resource.data.email ||
+            (request.auth.token.email != null && request.resource.data.email == request.auth.token.email))) ||
+          (isTeacher() &&
+           resource.data.role != 'admin' &&
+           request.resource.data.role in ['student', 'teacher'] &&
+           request.resource.data.email == resource.data.email)
+        );
+
+      // Delete: Only owner or admin can delete user document
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+
+      // -----------------------------------------------------------
+      // AppData Subcollection (e.g. users/{userId}/appData/progress)
+      // -----------------------------------------------------------
+      match /appData/{docId} {
+        // Read: The user themselves, or any teacher/admin reviewing progress reports
+        allow read: if isAuthenticated() && (isOwner(userId) || isTeacher() || isAdmin());
+
+        // Write: Only the user can create or update their own drill progress
+        allow create: if isOwner(userId) && isValidAppData(request.resource.data);
+        allow update: if isOwner(userId) && isValidAppData(request.resource.data);
+        allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Classes Collection
+    // -------------------------------------------------------------
+    match /classes/{classId} {
+      // Read: Any authenticated user can read class details (students join by code / view their class)
+      allow read: if isAuthenticated();
+
+      // Create: Only teachers or admins can create classes
+      allow create: if isAuthenticated() &&
+        (isTeacher() || isAdmin()) &&
+        isValidClass(request.resource.data, classId) &&
+        isRecent(request.resource.data.createdAt) &&
+        (request.resource.data.teacherId == request.auth.uid || isAdmin());
+
+      // Update:
+      // - Teachers (assigned teacher or any teacher) and Admins: can update class details and assign/remove students
+      // - Students: can add/remove their own UID from studentUids when joining/leaving with class code
+      allow update: if isAuthenticated() &&
+        isValidClass(request.resource.data, classId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        (
+          isAdmin() ||
+          (isTeacher() &&
+           (request.resource.data.teacherId == resource.data.teacherId || resource.data.teacherId == request.auth.uid)) ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['studentUids', 'updatedAt']) &&
+           (
+             // Joining: exactly 1 member added, which is request.auth.uid
+             (request.resource.data.studentUids.size() == resource.data.studentUids.size() + 1 &&
+              request.resource.data.studentUids.hasAll(resource.data.studentUids) &&
+              request.auth.uid in request.resource.data.studentUids) ||
+             // Leaving: exactly 1 member removed, which is request.auth.uid
+             (request.resource.data.studentUids.size() == resource.data.studentUids.size() - 1 &&
+              resource.data.studentUids.hasAll(request.resource.data.studentUids) &&
+              !(request.auth.uid in request.resource.data.studentUids)) ||
+             // List unchanged, timestamp update only
+             (request.resource.data.studentUids == resource.data.studentUids)
+           ))
+        );
+
+      // Delete: Only the assigned teacher or an admin can delete the class
+      allow delete: if isAuthenticated() &&
+        (isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid));
+    }
+  }
+}
