@@ -255,6 +255,50 @@ async function setUserRole(uid, role){
   catch(e){ alert('Could not change role: '+(e.message||e)); }
 }
 
+
+/* ---------------- Per-question attempt history ---------------- */
+function attemptList(q,a){
+  let h=Array.isArray(a.history)?a.history.map(x=>({...x})):[];
+  if(!h.length) h=[{date:a.date,answer:a.answer,answers:a.answers,correct:a.correct,score:a.score,maxScore:q.marks,confidence:a.confidence}];
+  const last=h[h.length-1];
+  if(last.answer==null&&last.answers==null){ if(a.answer!=null) last.answer=a.answer; if(a.answers) last.answers=a.answers; }
+  if(last.score==null&&q.type==='structured'&&a.score!=null) last.score=a.score;
+  return h;
+}
+function attemptAnswerText(q,x){
+  if(q.type==='structured'){
+    if(!x.answers) return '—';
+    return Object.entries(x.answers).map(([k,v])=>'('+k+') '+(String(v).trim()||'(blank)')).join('\n');
+  }
+  return x.answer!=null?x.answer:'—';
+}
+function attemptScoreText(q,x){
+  const max=x.maxScore!=null?x.maxScore:q.marks;
+  if(q.type==='structured'){ let t=(x.score!=null?x.score:0)+' / '+max; if(x.aiScore!=null) t+=' (AI '+x.aiScore+')'; return t; }
+  const sc=x.score!=null?x.score:(x.correct?max:0);
+  return sc+' / '+max+(x.correct?' ✓':' ✕');
+}
+function questionAttempts(st){
+  return ALL.filter(q=>st[q.id]&&!st[q.id].faq).map(q=>{
+    const a=st[q.id], h=attemptList(q,a);
+    return {q,a,h,total:Math.max(typeof a.attempts==='number'?a.attempts:0,h.length)};
+  }).sort((x,y)=>String(y.a.date||'').localeCompare(String(x.a.date||'')));
+}
+function attemptHistoryHtml(st){
+  const rows=questionAttempts(st);
+  if(!rows.length) return '<p class="mini-note">No attempts yet.</p>';
+  const answerCell=t=>`<div style="white-space:pre-wrap;max-width:360px">${esc(t)}</div>`;
+  return rows.map(({q,a,h,total})=>`<details style="border:1px solid var(--line);border-radius:12px;padding:8px 12px;margin-bottom:8px"><summary style="cursor:pointer;font-weight:700">${qLabel(q)} <span class="mini-note">· attempted ${total} time${total!==1?'s':''}${total>h.length?' (latest '+h.length+' shown)':''} · latest ${attemptScoreText(q,h[h.length-1])}</span></summary>
+  <table class="admin-table"><thead><tr><th>#</th><th>Date</th><th>Answer given</th><th>Score</th><th>Confidence</th></tr></thead><tbody>${h.map((x,i)=>`<tr><td>${total-h.length+i+1}</td><td>${x.date?new Date(x.date).toLocaleString():'—'}</td><td>${answerCell(attemptAnswerText(q,x))}</td><td>${esc(attemptScoreText(q,x))}</td><td>${esc(x.confidence||'—')}</td></tr>`).join('')}</tbody></table></details>`).join('');
+}
+function downloadAttemptsCsv(uid){
+  const u=adminState.users.find(x=>x.uid===uid); const st=adminState.userProgressMap[uid]||{};
+  const rows=[['Question','Attempt #','Date','Answer','Score','Max','Confidence']];
+  questionAttempts(st).forEach(({q,h,total})=>h.forEach((x,i)=>rows.push([q.id,total-h.length+i+1,x.date||'',attemptAnswerText(q,x),x.score!=null?x.score:(x.correct?q.marks:0),x.maxScore!=null?x.maxScore:q.marks,x.confidence||''])));
+  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=((u&&u.displayName)||'student')+'-attempts.csv'; a.click();
+}
+
 /* ---------------- Reports ---------------- */
 function adminReportsHtml(){
   return `<p class="mini-note">Pick a class for a class-wide report, or a student for an individual practice report. Reports can be printed or saved as PDF/CSV.</p>
@@ -275,6 +319,7 @@ async function openStudentReport(uid){
   <div class="kpi-grid"><div class="kpi-card"><b>${r.att}</b><span>Attempted</span></div><div class="kpi-card"><b>${accCell(r.acc)}</b><span>Average score</span></div><div class="kpi-card"><b>${queue}</b><span>Re-drill queue</span></div><div class="kpi-card"><b>${fmtDate(u.lastActive)}</b><span>Last active</span></div></div>
   <div class="report-section"><div class="report-section-title">Mastery by module</div>${modBars(r.mods)}</div>
   <div class="report-section"><div class="report-section-title">Weakest topics</div>${r.weakTopics.length?`<table class="admin-table"><tbody>${r.weakTopics.map(w=>`<tr><td>${esc(shortTopic(w.t))}</td><td>${w.pct}%</td><td>${w.n} attempt(s)</td></tr>`).join('')}</tbody></table>`:'<p class="mini-note">No data.</p>'}</div>
+  <div class="report-section"><div class="report-section-title">Attempt history by question <button class="btn btn-ghost btn-sm no-print" style="margin-left:8px" onclick="downloadAttemptsCsv('${esc(uid)}')">CSV</button></div><p class="mini-note no-print">Click a question to see every attempt: answer, score and confidence.</p>${attemptHistoryHtml(st)}</div>
   <div class="report-section"><div class="report-section-title">Recent attempts</div>${r.rec.length?`<table class="admin-table"><thead><tr><th>Question</th><th>Result</th><th>Confidence</th><th>Date</th></tr></thead><tbody>${r.rec.map(({q,a})=>`<tr><td>${qLabel(q)}</td><td>${q.type==='structured'?(a.score||0)+' / '+q.marks:(a.correct?'Correct':'Incorrect')}${a.rating?' · '+esc(a.rating):''}</td><td>${esc(a.confidence||'—')}</td><td>${fmtDate(a.date)}</td></tr>`).join('')}</tbody></table>`:'<p class="mini-note">No attempts yet.</p>'}</div></div>`);
 }
 async function openClassReport(id){

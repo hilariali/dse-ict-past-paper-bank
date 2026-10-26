@@ -570,7 +570,7 @@ function startDrill(id){ currentId=id; selAnswer=null; selConf=null; submitted=f
 function pickAnswer(k){ if(submitted) return; selAnswer=k; document.querySelectorAll('.opt').forEach(el=>el.classList.toggle('selected',el.dataset.k===k)); updateSubmit(); }
 function pickConf(c){ if(submitted) return; selConf=c; document.querySelectorAll('#conf button').forEach(b=>b.classList.toggle('active',b.textContent.startsWith(c))); const q=ALL.find(x=>x.id===currentId); if(q && q.type==='structured') updateStructSubmit(); else updateSubmit(); }
 function updateSubmit(){ document.getElementById('submitBtn').disabled = !(selAnswer && selConf); }
-function submitAnswer(){ const q=QUESTIONS.find(x=>x.id===currentId); submitted=true; const correct= selAnswer===q.markingScheme.answer; store[q.id]={...(store[q.id]||{}), answer:selAnswer, correct, confidence:selConf, date:new Date().toISOString()}; pushHistory(q.id, {correct, confidence:selConf}); save();
+function submitAnswer(){ const q=QUESTIONS.find(x=>x.id===currentId); submitted=true; const correct= selAnswer===q.markingScheme.answer; store[q.id]={...(store[q.id]||{}), answer:selAnswer, correct, confidence:selConf, date:new Date().toISOString()}; pushHistory(q.id, {correct, answer:selAnswer, confidence:selConf, score:correct?q.marks:0, maxScore:q.marks}); save();
   document.querySelectorAll('.opt').forEach(el=>{ const k=el.dataset.k; el.disabled=true; if(k===q.markingScheme.answer) el.classList.add('correct'); else if(k===selAnswer) el.classList.add('wrong'); });
   document.getElementById('submitBtn').style.display='none';
   const perf=q.performance||{}; const cp=perf.correctPct;
@@ -591,7 +591,7 @@ function startStructured(q){
 }
 function updateStructSubmit(){ const q=STRUCTURED.find(x=>x.id===currentId); if(!q) return; const any=q.parts.some((p,pi)=>{ const el=document.getElementById('ans-'+pi); return el && el.value.trim().length>0; }); const btn=document.getElementById('submitBtn'); if(btn) btn.disabled=!(any && selConf); }
 function submitStructured(){ const q=STRUCTURED.find(x=>x.id===currentId); submitted=true; const answers={}; q.parts.forEach((p,pi)=>{ const el=document.getElementById('ans-'+pi); answers[p.label]=el.value; el.disabled=true; });
-  store[q.id]={...(store[q.id]||{}), type:'structured', answers, ticks:{}, score:0, maxScore:q.marks, correct:false, confidence:selConf, date:new Date().toISOString()}; pushHistory(q.id, {confidence:selConf, score:0, maxScore:q.marks}); save();
+  store[q.id]={...(store[q.id]||{}), type:'structured', answers, ticks:{}, score:0, maxScore:q.marks, correct:false, confidence:selConf, date:new Date().toISOString()}; pushHistory(q.id, {answers:Object.fromEntries(Object.entries(answers).map(([k,v])=>[k,String(v).slice(0,600)])), confidence:selConf, score:0, maxScore:q.marks}); save();
   document.getElementById('submitBtn').style.display='none';
   q.parts.forEach((p,pi)=>{ const ms=p.markingScheme||{}; const model=ms.modelAnswer? `<div class="modelbox"><strong>Model answer</strong><pre>${esc(ms.modelAnswer)}</pre></div>`:''; const unacc=(ms.unacceptable&&ms.unacceptable.length)? `<div class="noaccept"><strong>✕ Not accepted — the official scheme marks these wrong</strong><ul style="margin:6px 0 0 18px;padding:0">${ms.unacceptable.map(u=>`<li>${esc(u)}</li>`).join('')}</ul></div>`:''; const pts=(ms.points||[]).map((pt,pti)=>`<button class="tickrow" data-part="${pi}" data-pt="${pti}" onclick="toggleTick(${pi},${pti})"><span class="box">✓</span><span style="flex:1">${esc(pt.point)}</span><span style="font-weight:800;white-space:nowrap">${pt.marks} mark${pt.marks!==1?'s':''}</span></button>`).join('');
     document.getElementById('part-reveal-'+pi).innerHTML=`<div style="margin-top:14px;border-top:1px dashed var(--line);padding-top:12px"><div style="font-weight:800">Marking scheme — Part ${esc(p.label)} <span class="partscore" id="pscore-${pi}">(0 / ${p.marks})</span></div>${model}<p style="font-size:14px;color:var(--muted);margin:8px 0 0">Tick each point your answer genuinely earned — mark it like an examiner, not like a friend:</p>${pts}${unacc}</div>`; });
@@ -601,7 +601,7 @@ function submitStructured(){ const q=STRUCTURED.find(x=>x.id===currentId); submi
 }
 function toggleTick(pi,pti){ if(selfCheckLocked || aiMarkBusy) return; const q=STRUCTURED.find(x=>x.id===currentId); const entry=store[q.id]; if(!entry) return; entry.ticks=entry.ticks||{}; const key=pi+'-'+pti; if(entry.ticks[key]) delete entry.ticks[key]; else entry.ticks[key]=true; const btn=document.querySelector(`.tickrow[data-part="${pi}"][data-pt="${pti}"]`); if(btn) btn.classList.toggle('on', !!entry.ticks[key]);
   let total=0; q.parts.forEach((p,pj)=>{ let ps=0; (p.markingScheme.points||[]).forEach((pt,pk)=>{ if(entry.ticks[pj+'-'+pk]) ps+=pt.marks; }); ps=Math.min(ps,p.marks); const el=document.getElementById('pscore-'+pj); if(el) el.textContent=`(${ps} / ${p.marks})`; total+=ps; });
-  entry.score=total; entry.correct = total*2>=q.marks; save();
+  entry.score=total; entry.correct = total*2>=q.marks; updateLastHistory(q.id,{score:total}); save();
   const b=document.getElementById('struct-banner'); if(b) b.textContent=`Self-score: ${total} / ${q.marks} marks${total===q.marks?' — full marks, examiner-grade':''}`;
   renderHome();
 }
@@ -930,7 +930,7 @@ async function aiMark(){
     }
   }
   const entry=store[q.id]||{};
-  if(marked>0) entry.aiScore=total; else delete entry.aiScore;
+  if(marked>0){ entry.aiScore=total; updateLastHistory(q.id,{aiScore:total}); } else delete entry.aiScore;
   store[q.id]=entry;
   save();
   if(panel) panel.innerHTML= marked===0
@@ -976,7 +976,8 @@ function faqRate(id, r){ store[id]={...(store[id]||{}), faq:true, rating:r}; sav
 const SAVED_KEY='dse-ict-saved-v1';
 let savedIds=[]; try{ const _s=JSON.parse(localStorage.getItem(SAVED_KEY)||'[]'); if(Array.isArray(_s)) savedIds=_s; }catch(e){}
 function persistSaved(){ try{ localStorage.setItem(SAVED_KEY, JSON.stringify(savedIds)); }catch(e){} }
-function pushHistory(id, rec){ const e=store[id]; if(!e) return; const h=Array.isArray(e.history)?e.history:[]; h.push({...rec, date:new Date().toISOString()}); e.history=h.slice(-30); }
+function pushHistory(id, rec){ const e=store[id]; if(!e) return; const h=Array.isArray(e.history)?e.history:[]; e.attempts=(typeof e.attempts==='number'?e.attempts:h.length)+1; h.push({...rec, date:new Date().toISOString()}); e.history=h.slice(-20); }
+function updateLastHistory(id, patch){ const e=store[id]; if(!e||!Array.isArray(e.history)||!e.history.length) return; Object.assign(e.history[e.history.length-1], patch); }
 function updateSaveBtn(){ const b=document.getElementById('save-btn'); if(b) b.textContent=savedIds.includes(currentId)?'★ Saved to Practice Zone (click to remove)':'☆ Save to Practice Zone'; }
 function toggleSaved(){ if(!currentId) return; setSaved(currentId, !savedIds.includes(currentId)); }
 function setSaved(id, on){ const i=savedIds.indexOf(id); if(on&&i<0) savedIds.push(id); if(!on&&i>=0) savedIds.splice(i,1); persistSaved(); updateSaveBtn(); if(!document.getElementById('view-practice').hidden) renderPractice(); }
