@@ -13,6 +13,11 @@ function updateNavAdminRole(){
   }
   const a=document.getElementById('nav-auth');
   if(a){ a.disabled=!firebaseReady; a.textContent = firebaseUser ? 'Account' : 'Sign in / Register'; }
+  if(firebaseUser){ loadStudentAssignments(); }
+  else {
+    const badge = document.getElementById('nav-assign-count');
+    if(badge) badge.textContent = '';
+  }
 }
 
 /* ---------------- Modal helpers ---------------- */
@@ -97,10 +102,15 @@ async function loadAdminData(force){
   adminState.loading=true; renderAdmin();
   try{
     let cq=firebaseDb.collection('classes');
-    if(!isAdminRole()) cq=cq.where('teacherId','==',firebaseUser.uid);
-    const [cs,us]=await Promise.all([cq.get(), firebaseDb.collection('users').get()]);
+    let aq=firebaseDb.collection('assignments');
+    if(!isAdminRole()){
+      cq=cq.where('teacherId','==',firebaseUser.uid);
+      aq=aq.where('teacherId','==',firebaseUser.uid);
+    }
+    const [cs,us,as]=await Promise.all([cq.get(), firebaseDb.collection('users').get(), aq.get()]);
     adminState.classes=cs.docs.map(d=>({...d.data(), id:d.id}));
     adminState.users=us.docs.map(d=>({...d.data(), uid:d.id}));
+    adminState.assignments=as.docs.map(d=>({...d.data(), id:d.id}));
     adminState.error='';
   }catch(e){ adminState.error='Could not load data: '+(e.message||e); }
   adminState.loading=false; renderAdmin();
@@ -146,7 +156,7 @@ function renderAdmin(){
   if(!firebaseUser){ root.innerHTML=`<div class="empty">Please <a href="#" onclick="openAuthModal('teacher');return false">sign in as a teacher</a> to open the dashboard.</div>`; return; }
   if(!isStaffRole()){ root.innerHTML=`<div class="empty">This area is for teachers and admins. <a href="#" onclick="openAuthModal('teacher');return false">Register as a teacher</a> with your school access key.</div>`; return; }
   if(!adminState.classes.length && !adminState.users.length && !adminState.loading && !adminState.error){ loadAdminData(); }
-  const tabs=[['overview','Overview'],['classes','Classes'],['students','Students'],['reports','Reports']];
+  const tabs=[['overview','Overview'],['classes','Classes'],['students','Students'],['assignments','Assignments'],['reports','Reports']];
   if(isAdminRole()) tabs.push(['staff','Teachers']);
   root.innerHTML=`<div class="drill-card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><h2 style="font-family:Fraunces,serif;margin:0">${isAdminRole()?'Admin Dashboard':'Teacher Portal'}</h2><span><span class="admin-badge ${esc(userRole())}">${esc(userRole().toUpperCase())}</span> <button class="btn btn-ghost btn-sm" onclick="adminState.userProgressMap={};loadAdminData(true)">Refresh</button></span></div>
   <div class="admin-nav" id="admin-tabs-bar">${tabs.map(([k,l])=>`<button class="admin-tab ${adminTab===k?'active':''}" onclick="setAdminTab('${k}')">${l}</button>`).join('')}</div>
@@ -154,7 +164,7 @@ function renderAdmin(){
   ${adminState.loading?'<p class="loading">Loading…</p>':'<div id="admin-body"></div>'}</div>`;
   if(adminState.loading) return;
   const body=document.getElementById('admin-body');
-  body.innerHTML = ({overview:adminOverviewHtml,classes:adminClassesHtml,students:adminStudentsHtml,reports:adminReportsHtml,staff:adminStaffHtml}[adminTab]||adminOverviewHtml)();
+  body.innerHTML = ({overview:adminOverviewHtml,classes:adminClassesHtml,students:adminStudentsHtml,assignments:adminAssignmentsHtml,reports:adminReportsHtml,staff:adminStaffHtml}[adminTab]||adminOverviewHtml)();
 }
 
 function adminOverviewHtml(){
@@ -255,6 +265,385 @@ async function setUserRole(uid, role){
   catch(e){ alert('Could not change role: '+(e.message||e)); }
 }
 
+/* ---------------- Assignments tab (Teacher / Admin) ---------------- */
+function adminAssignmentsHtml(){
+  const asList = adminState.assignments || [];
+  return `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+      <p class="mini-note" style="margin:0">Create assignments for classes or specific students. Student attempts and grades are recorded separately from casual practice.</p>
+      <button class="btn btn-primary" onclick="openCreateAssignmentModal()">+ Create Assignment</button>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card"><b>${asList.length}</b><span>Total Assignments</span></div>
+      <div class="kpi-card"><b>${asList.reduce((s,a)=>(s+(a.questionIds||[]).length),0)}</b><span>Questions Assigned</span></div>
+      <div class="kpi-card"><b>${adminState.classes.length}</b><span>Classes</span></div>
+    </div>
+    <div class="tablewrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Assignment Title</th>
+            <th>Target</th>
+            <th>Questions</th>
+            <th>Total Marks</th>
+            <th>Due Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${asList.map(a => {
+            const cNames = (a.classIds||[]).map(cid => (classById(cid)||{}).name || cid).filter(Boolean);
+            const targetText = cNames.length ? cNames.join(', ') : ((a.studentUids||[]).length + ' students');
+            const qCount = (a.questionIds||[]).length;
+            const marksTotal = (a.questionIds||[]).map(qid => (ALL.find(x=>x.id===qid)||{}).marks || 0).reduce((x,y)=>x+y, 0);
+            return `
+              <tr>
+                <td><b>${esc(a.title)}</b>${a.description ? `<br><span class="mini-note">${esc(a.description)}</span>` : ''}</td>
+                <td><span class="pill none">${esc(targetText||'All')}</span></td>
+                <td>${qCount}</td>
+                <td>${marksTotal}</td>
+                <td>${a.dueDate ? esc(a.dueDate) : '<span style="color:var(--muted)">No due date</span>'}</td>
+                <td>
+                  <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="btn btn-navy btn-sm" onclick="openAssignmentSubmissionsModal('${esc(a.id)}')">Submissions &amp; Gradebook</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteAssignment('${esc(a.id)}')">Delete</button>
+                  </div>
+                </td>
+              </tr>
+            `;
+          }).join('') || '<tr><td colspan="6" style="color:var(--muted)">No assignments created yet. Click "+ Create Assignment" to get started.</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+window._assignSelectedQIds = [];
+window._assignSearchTerm = '';
+window._assignModuleFilter = 'All';
+
+function openCreateAssignmentModal(){
+  window._assignSelectedQIds = [];
+  window._assignSearchTerm = '';
+  window._assignModuleFilter = 'All';
+  renderCreateAssignmentModal();
+}
+
+function renderCreateAssignmentModal(){
+  const term = (window._assignSearchTerm || '').toLowerCase().trim();
+  const modF = window._assignModuleFilter || 'All';
+  const pool = ALL.filter(q => {
+    if(modF !== 'All' && !questionInModule(q, modF)) return false;
+    if(term && !((blocksToText(q.stem)+' '+q.topics.join(' ')+' '+yearOf(q)+' '+paperOf(q)+' q.'+q.number).toLowerCase().includes(term))) return false;
+    return true;
+  });
+
+  const selectedQuestions = window._assignSelectedQIds.map(id => ALL.find(x => x.id === id)).filter(Boolean);
+  const totalMarks = selectedQuestions.reduce((s, q) => s + (q.marks || 0), 0);
+
+  openModal(`
+    <div style="max-width:820px">
+      <div style="border-bottom:2px solid var(--line);padding-bottom:10px;margin-bottom:14px">
+        <h2 style="font-family:Fraunces,serif;margin:0 0 4px;font-size:24px">Create New Assignment</h2>
+        <span class="mini-note">Assign questions to an entire class or selected students. Attempts will be recorded separately.</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>
+          <label style="font-weight:700;font-size:13.5px">Assignment Title *</label>
+          <input id="new-assign-title" class="admin-input" placeholder="e.g. Paper 1A Practice Quiz 1" maxlength="120" style="margin-top:4px">
+        </div>
+        <div>
+          <label style="font-weight:700;font-size:13.5px">Due Date (Optional)</label>
+          <input id="new-assign-duedate" class="admin-input" type="date" style="margin-top:4px">
+        </div>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-weight:700;font-size:13.5px">Instructions / Description (Optional)</label>
+        <textarea id="new-assign-desc" class="admin-input" placeholder="e.g. Complete before next Tuesday's lesson. No calculators allowed." rows="2" maxlength="1000" style="margin-top:4px;resize:vertical"></textarea>
+      </div>
+
+      <div style="margin-bottom:14px">
+        <label style="font-weight:700;font-size:13.5px">Assign To Classes</label>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px" id="new-assign-classes">
+          ${adminState.classes.map(c => `
+            <label style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);padding:6px 12px;border-radius:999px;font-weight:700;font-size:13.5px;cursor:pointer">
+              <input type="checkbox" class="target-class-chk" value="${esc(c.id)}" checked style="accent-color:var(--teal)">
+              <span>${esc(c.name)}</span>
+            </label>
+          `).join('') || '<span class="mini-note">No classes available. Create a class first or assign by student.</span>'}
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--line);padding-top:14px;margin-top:14px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px">
+          <div>
+            <label style="font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;color:var(--teal)">Select Questions</label>
+            <span class="mini-note" style="margin-left:8px">Selected: <b>${selectedQuestions.length}</b> question(s) • <b>${totalMarks}</b> total marks</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+          <input class="admin-input" style="flex:1;min-width:180px" placeholder="Search questions by keyword or topic…" value="${esc(window._assignSearchTerm||'')}" oninput="window._assignSearchTerm=this.value;renderCreateAssignmentModal()">
+          <select class="admin-select" style="max-width:200px" onchange="window._assignModuleFilter=this.value;renderCreateAssignmentModal()">
+            <option value="All">All modules</option>
+            ${MODULE_ORDER.map(m => `<option value="${esc(m)}" ${modF===m?'selected':''}>${esc(m)}</option>`).join('')}
+          </select>
+        </div>
+
+        <div style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface)">
+          ${pool.slice(0, 100).map(q => {
+            const isSel = window._assignSelectedQIds.includes(q.id);
+            const textSnippet = (q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text || ('Question '+q.number);
+            return `
+              <label style="display:flex;align-items:flex-start;gap:10px;padding:8px;border-bottom:1px solid var(--line);cursor:pointer;background:${isSel?'var(--teal-light)':'transparent'}">
+                <input type="checkbox" ${isSel?'checked':''} onchange="toggleAssignQ('${esc(q.id)}')" style="margin-top:4px;accent-color:var(--teal)">
+                <div style="flex:1;font-size:13px">
+                  <div><b>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}</b> <span class="pill none" style="font-size:11px">${q.marks}m</span> <span class="mini-note">${esc(q.topics[0]||'')}</span></div>
+                  <div style="color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:680px">${esc(textSnippet)}</div>
+                </div>
+              </label>
+            `;
+          }).join('')}
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px">
+        <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveNewAssignment()">Create &amp; Assign</button>
+      </div>
+    </div>
+  `);
+}
+
+function toggleAssignQ(qid){
+  const idx = window._assignSelectedQIds.indexOf(qid);
+  if(idx >= 0) window._assignSelectedQIds.splice(idx, 1);
+  else window._assignSelectedQIds.push(qid);
+  renderCreateAssignmentModal();
+}
+
+async function saveNewAssignment(){
+  const title = ((document.getElementById('new-assign-title')||{}).value||'').trim();
+  const desc = ((document.getElementById('new-assign-desc')||{}).value||'').trim();
+  const dueDate = ((document.getElementById('new-assign-duedate')||{}).value||'').trim();
+  const classCheckboxes = document.querySelectorAll('.target-class-chk:checked');
+  const classIds = Array.from(classCheckboxes).map(c => c.value);
+  const qIds = window._assignSelectedQIds || [];
+
+  if(!title){ alert('Please enter an assignment title.'); return; }
+  if(!qIds.length){ alert('Please select at least one question for the assignment.'); return; }
+  if(!classIds.length){ alert('Please select at least one class to assign.'); return; }
+
+  const ref = firebaseDb.collection('assignments').doc();
+  const data = {
+    id: ref.id,
+    title: title.slice(0, 120),
+    description: desc.slice(0, 1000) || '',
+    questionIds: qIds.slice(0, 150),
+    classIds: classIds.slice(0, 30),
+    studentUids: [],
+    teacherId: firebaseUser.uid,
+    teacherName: currentUserProfile.displayName || firebaseUser.displayName || 'Teacher',
+    dueDate: dueDate || '',
+    createdAt: FV().serverTimestamp(),
+    updatedAt: FV().serverTimestamp()
+  };
+
+  try{
+    await ref.set(data);
+    closeModal();
+    await loadAdminData(true);
+  }catch(e){
+    alert('Could not create assignment: ' + (e.message || e));
+  }
+}
+
+async function deleteAssignment(id){
+  if(!confirm('Are you sure you want to delete this assignment?')) return;
+  try{
+    await firebaseDb.collection('assignments').doc(id).delete();
+    await loadAdminData(true);
+  }catch(e){
+    alert('Could not delete assignment: ' + (e.message || e));
+  }
+}
+
+async function openAssignmentSubmissionsModal(assignId){
+  const a = (adminState.assignments||[]).find(x => x.id === assignId);
+  if(!a) return;
+  openModal('<p class="loading">Loading student submissions…</p>');
+
+  const targetStudentSet = new Set(a.studentUids || []);
+  (a.classIds || []).forEach(cid => {
+    const c = classById(cid);
+    if(c && c.studentUids) c.studentUids.forEach(uid => targetStudentSet.add(uid));
+  });
+  const targetStudents = adminState.users.filter(u => targetStudentSet.has(u.uid) && u.role === 'student');
+
+  const subs = await Promise.all(targetStudents.map(async u => {
+    try{
+      const snap = await firebaseDb.collection('users').doc(u.uid).collection('assignmentAttempts').doc(assignId).get();
+      return { u, attempt: snap.exists ? snap.data() : null };
+    }catch(e){
+      return { u, attempt: null };
+    }
+  }));
+
+  const maxPossibleMarks = (a.questionIds||[]).map(qid => (ALL.find(x=>x.id===qid)||{}).marks || 0).reduce((x,y)=>x+y, 0);
+  const completedSubs = subs.filter(s => s.attempt && s.attempt.status === 'completed');
+  const avgScore = completedSubs.length ? Math.round(completedSubs.reduce((acc,s)=>acc+(s.attempt.score||0),0)/completedSubs.length) : null;
+
+  window._currentGradebookRows = subs.map(s => [
+    s.u.displayName || '',
+    s.u.email || '',
+    s.u.className || '—',
+    s.attempt ? s.attempt.status : 'not_started',
+    s.attempt ? s.attempt.score : '',
+    maxPossibleMarks,
+    s.attempt && maxPossibleMarks ? Math.round(s.attempt.score / maxPossibleMarks * 100) : '',
+    s.attempt && s.attempt.submittedAt ? fmtDate(s.attempt.submittedAt) : ''
+  ]);
+  window._currentGradebookTitle = a.title;
+
+  openModal(`
+    <div style="max-width:880px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:14px">
+        <div>
+          <h2 style="font-family:Fraunces,serif;margin:0 0 4px;font-size:24px">${esc(a.title)} — Gradebook</h2>
+          <div class="mini-note">Due: ${a.dueDate ? esc(a.dueDate) : 'None'} • Questions: ${(a.questionIds||[]).length} • Max marks: ${maxPossibleMarks}</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-navy no-print" onclick="window.print()">Print / PDF</button>
+          <button class="btn btn-ghost no-print" onclick="downloadGradebookCsv()">Export CSV</button>
+        </div>
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><b>${targetStudents.length}</b><span>Target Students</span></div>
+        <div class="kpi-card"><b>${completedSubs.length}</b><span>Submitted</span></div>
+        <div class="kpi-card"><b>${targetStudents.length - completedSubs.length}</b><span>Pending</span></div>
+        <div class="kpi-card"><b>${avgScore != null ? avgScore + ' / ' + maxPossibleMarks : '—'}</b><span>Average Score</span></div>
+      </div>
+
+      <div class="tablewrap" style="margin-top:14px">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>Class</th>
+              <th>Status</th>
+              <th>Score / Max</th>
+              <th>Accuracy</th>
+              <th>Submitted Date</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${subs.map(({u, attempt}) => {
+              const isDone = attempt && attempt.status === 'completed';
+              const pct = isDone && maxPossibleMarks ? Math.round((attempt.score||0)/maxPossibleMarks*100)+'%' : '—';
+              return `
+                <tr>
+                  <td><b>${esc(u.displayName||'')}</b><br><span class="mini-note">${esc(u.email||'')}</span></td>
+                  <td>${esc(u.className||'—')}</td>
+                  <td>${isDone ? '<span class="pill know">Submitted</span>' : '<span class="pill none">Not Started</span>'}</td>
+                  <td><b>${isDone ? (attempt.score||0) + ' / ' + maxPossibleMarks : '—'}</b></td>
+                  <td>${pct}</td>
+                  <td>${isDone && attempt.submittedAt ? fmtDate(attempt.submittedAt) : '—'}</td>
+                  <td>
+                    ${isDone ? `<button class="btn btn-primary btn-sm" onclick="openStudentAssignmentAttemptModal('${esc(assignId)}','${esc(u.uid)}')">View Attempt</button>` : '<span class="mini-note">—</span>'}
+                  </td>
+                </tr>
+              `;
+            }).join('') || '<tr><td colspan="7" style="color:var(--muted)">No students assigned.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:16px;display:flex;justify-content:flex-end">
+        <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+      </div>
+    </div>
+  `);
+}
+
+function downloadGradebookCsv(){
+  const rows = [['Student Name','Email','Class','Status','Score','Max Marks','Percentage','Submitted Date'], ...(window._currentGradebookRows || [])];
+  const csv = rows.map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download = ((window._currentGradebookTitle||'assignment')+'-gradebook.csv').replace(/[\s\/\\]+/g,'_');
+  a.click();
+}
+
+async function openStudentAssignmentAttemptModal(assignId, uid){
+  const a = (adminState.assignments||[]).find(x => x.id === assignId);
+  const u = adminState.users.find(x => x.uid === uid);
+  if(!a || !u) return;
+
+  openModal('<p class="loading">Loading student attempt details…</p>');
+  try{
+    const snap = await firebaseDb.collection('users').doc(uid).collection('assignmentAttempts').doc(assignId).get();
+    if(!snap.exists){
+      openModal('<p>No submission found for this student.</p>');
+      return;
+    }
+    const attempt = snap.data();
+    const results = attempt.results || {};
+    const questions = (a.questionIds||[]).map(qid => ALL.find(x => x.id === qid)).filter(Boolean);
+
+    openModal(`
+      <div style="max-width:840px">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:14px">
+          <div>
+            <h2 style="font-family:Fraunces,serif;margin:0 0 4px;font-size:24px">Submission: ${esc(u.displayName||'')}</h2>
+            <div class="mini-note">Assignment: <b>${esc(a.title)}</b> • Submitted: ${fmtDate(attempt.submittedAt)}</div>
+          </div>
+          <div style="font-size:20px;font-weight:bold;color:var(--teal)">
+            Score: ${attempt.score} / ${attempt.maxScore} marks (${Math.round((attempt.score||0)/(attempt.maxScore||1)*100)}%)
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:14px">
+          ${questions.map((q, idx) => {
+            const res = results[q.id] || {};
+            const isS = q.type === 'structured';
+            return `
+              <div class="part" style="margin-top:0">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <b>Q${idx+1}. ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} [${q.marks} mark${q.marks!==1?'s':''}]</b>
+                  <span class="pill ${res.correct?'know':'gap'}">${res.score||0} / ${q.marks} marks</span>
+                </div>
+                <div class="stem" style="font-size:14px">${renderBlocks(q.stem)}</div>
+
+                <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface2)">
+                  ${!isS ? `
+                    <div><b>Student's answer:</b> <span style="font-weight:bold;color:${res.correct?'var(--green)':'var(--red)'}">${esc(res.answer||'(blank)')}</span> • <b>Official answer:</b> ${esc(q.markingScheme.answer)}</div>
+                  ` : `
+                    <div><b>Student's answers:</b></div>
+                    ${Object.entries(res.answers||{}).map(([lbl, val]) => `
+                      <div style="margin-top:6px;padding:6px;background:var(--surface);border-radius:6px">
+                        <b>Part (${esc(lbl)}):</b> <pre style="margin:4px 0;white-space:pre-wrap;font-family:inherit">${esc(val||'(blank)')}</pre>
+                      </div>
+                    `).join('') || '<span class="mini-note">No written answers.</span>'}
+                  `}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <div style="margin-top:16px;display:flex;justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="openAssignmentSubmissionsModal('${esc(assignId)}')">← Back to Gradebook</button>
+        </div>
+      </div>
+    `);
+  }catch(e){
+    alert('Error loading attempt: ' + (e.message || e));
+  }
+}
+
 
 /* ---------------- Per-question attempt history ---------------- */
 function attemptList(q,a){
@@ -313,11 +702,36 @@ async function openStudentReport(uid){
   if(!uid) return;
   const u=adminState.users.find(x=>x.uid===uid); if(!u) return;
   openModal('<p class="loading">Building report…</p>');
-  const st=await loadStudentProgress(uid); const r=computeStoreStats(st);
+  const [st, attSnap]=await Promise.all([
+    loadStudentProgress(uid),
+    firebaseDb.collection('users').doc(uid).collection('assignmentAttempts').get().catch(()=>({docs:[]}))
+  ]);
+  const r=computeStoreStats(st);
   const queue=ALL.filter(q=>st[q.id]&&['Shaky','Gap'].includes(st[q.id].rating)).length;
+  const studentAssignments = attSnap.docs.map(d=>d.data());
+
   openModal(`<div class="report-sheet" style="margin:0;border:none;padding:0"><div class="report-header"><div><h2 class="report-title">Student practice report</h2><div class="report-meta">${esc(u.displayName||'')} · ${esc(u.email||'')}<br>Class: ${esc(u.className||'Unassigned')} · Generated ${new Date().toLocaleDateString()} by ${esc(currentUserProfile.displayName||'')}</div></div><button class="btn btn-navy no-print" onclick="window.print()">Print / PDF</button></div>
-  <div class="kpi-grid"><div class="kpi-card"><b>${r.att}</b><span>Attempted</span></div><div class="kpi-card"><b>${accCell(r.acc)}</b><span>Average score</span></div><div class="kpi-card"><b>${queue}</b><span>Re-drill queue</span></div><div class="kpi-card"><b>${fmtDate(u.lastActive)}</b><span>Last active</span></div></div>
-  <div class="report-section"><div class="report-section-title">Mastery by module</div>${modBars(r.mods)}</div>
+  <div class="kpi-grid"><div class="kpi-card"><b>${r.att}</b><span>Attempted</span></div><div class="kpi-card"><b>${accCell(r.acc)}</b><span>Practice accuracy</span></div><div class="kpi-card"><b>${studentAssignments.length}</b><span>Assignments submitted</span></div><div class="kpi-card"><b>${fmtDate(u.lastActive)}</b><span>Last active</span></div></div>
+  <div class="report-section"><div class="report-section-title">Assigned Tests &amp; Homework (${studentAssignments.length})</div><p class="mini-note">Scores from official assignments assigned by teachers — kept separate from casual practice records.</p>
+  ${studentAssignments.length ? `
+    <table class="admin-table">
+      <thead>
+        <tr><th>Assignment Title</th><th>Score</th><th>Accuracy</th><th>Submitted Date</th></tr>
+      </thead>
+      <tbody>
+        ${studentAssignments.map(as => `
+          <tr>
+            <td><b>${esc(as.title || as.assignmentId)}</b></td>
+            <td><b>${as.score} / ${as.maxScore} marks</b></td>
+            <td>${as.maxScore ? Math.round(as.score/as.maxScore*100)+'%' : '—'}</td>
+            <td>${fmtDate(as.submittedAt)}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  ` : '<p class="mini-note">No assignment attempts on record.</p>'}
+  </div>
+  <div class="report-section"><div class="report-section-title">Mastery by module (Practice)</div>${modBars(r.mods)}</div>
   <div class="report-section"><div class="report-section-title">Weakest topics</div>${r.weakTopics.length?`<table class="admin-table"><tbody>${r.weakTopics.map(w=>`<tr><td>${esc(shortTopic(w.t))}</td><td>${w.pct}%</td><td>${w.n} attempt(s)</td></tr>`).join('')}</tbody></table>`:'<p class="mini-note">No data.</p>'}</div>
   <div class="report-section"><div class="report-section-title">Attempt history by question <button class="btn btn-ghost btn-sm no-print" style="margin-left:8px" onclick="downloadAttemptsCsv('${esc(uid)}')">CSV</button></div><p class="mini-note no-print">Click a question to see every attempt: answer, score and confidence.</p>${attemptHistoryHtml(st)}</div>
   <div class="report-section"><div class="report-section-title">Recent attempts</div>${r.rec.length?`<table class="admin-table"><thead><tr><th>Question</th><th>Result</th><th>Confidence</th><th>Date</th></tr></thead><tbody>${r.rec.map(({q,a})=>`<tr><td>${qLabel(q)}</td><td>${q.type==='structured'?(a.score||0)+' / '+q.marks:(a.correct?'Correct':'Incorrect')}${a.rating?' · '+esc(a.rating):''}</td><td>${esc(a.confidence||'—')}</td><td>${fmtDate(a.date)}</td></tr>`).join('')}</tbody></table>`:'<p class="mini-note">No attempts yet.</p>'}</div></div>`);
@@ -343,4 +757,316 @@ function downloadClassCsv(){
   const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
   const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download=(window._classReportName||'class')+'-report.csv'; a.click();
 }
+
+/* ---------------- Student: Assignments View & Runner ---------------- */
+async function loadStudentAssignments(force){
+  if(!firebaseUser || !firebaseDb) return;
+  if(studentAssignmentsState.loading) return;
+  studentAssignmentsState.loading = true;
+  try{
+    const [asSnap, attSnap] = await Promise.all([
+      firebaseDb.collection('assignments').get(),
+      firebaseDb.collection('users').doc(firebaseUser.uid).collection('assignmentAttempts').get()
+    ]);
+    const cid = (currentUserProfile && currentUserProfile.classId) || '';
+    const allA = asSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+    studentAssignmentsState.list = allA.filter(a => {
+      const inClass = cid && (a.classIds || []).includes(cid);
+      const inStudents = (a.studentUids || []).includes(firebaseUser.uid);
+      return inClass || inStudents;
+    });
+    studentAssignmentsState.attempts = {};
+    attSnap.docs.forEach(d => {
+      studentAssignmentsState.attempts[d.id] = d.data();
+    });
+    studentAssignmentsState.error = '';
+
+    // Update nav badge count
+    const pending = studentAssignmentsState.list.filter(a => !(studentAssignmentsState.attempts[a.id] && studentAssignmentsState.attempts[a.id].status === 'completed')).length;
+    const badge = document.getElementById('nav-assign-count');
+    if(badge) badge.textContent = pending ? `• ${pending} due` : '';
+  }catch(e){
+    studentAssignmentsState.error = e.message || e;
+  }
+  studentAssignmentsState.loading = false;
+  if(document.getElementById('view-assignments') && !document.getElementById('view-assignments').hidden) renderAssignments();
+}
+
+function renderAssignments(){
+  const root = document.getElementById('assignments-root');
+  if(!root) return;
+
+  if(!firebaseUser){
+    root.innerHTML = `<div class="empty">Please <a href="#" onclick="openAuthModal('student');return false">sign in with Google</a> to view and attempt your assigned homework and assessments.</div>`;
+    return;
+  }
+  if(activeAssignmentRunner){
+    renderAssignmentRunner();
+    return;
+  }
+  if(!studentAssignmentsState.list.length && !studentAssignmentsState.loading && !studentAssignmentsState.error){
+    loadStudentAssignments();
+  }
+
+  const list = studentAssignmentsState.list || [];
+  const attempts = studentAssignmentsState.attempts || {};
+
+  root.innerHTML = `
+    ${studentAssignmentsState.error ? `<div class="note" style="color:var(--red)">${esc(studentAssignmentsState.error)}</div>` : ''}
+    ${studentAssignmentsState.loading ? '<p class="loading">Loading assignments…</p>' : `
+      <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
+        ${list.map(a => {
+          const att = attempts[a.id];
+          const isDone = att && att.status === 'completed';
+          const qCount = (a.questionIds || []).length;
+          const maxMarks = (a.questionIds || []).map(qid => (ALL.find(x => x.id === qid) || {}).marks || 0).reduce((x, y) => x + y, 0);
+
+          return `
+            <div class="qcard" style="padding:20px">
+              <div class="qcard-top">
+                <div>
+                  <span class="qnum" style="background:var(--navy);color:#fff">Assignment</span>
+                  <span style="font-weight:700;font-size:17px;margin-left:8px">${esc(a.title)}</span>
+                </div>
+                ${isDone ? `<span class="pill know">Completed • ${att.score} / ${att.maxScore} marks</span>` : `<span class="pill ${a.dueDate?'shaky':'none'}">${a.dueDate?'Due '+esc(a.dueDate):'No due date'}</span>`}
+              </div>
+              ${a.description ? `<p style="margin:4px 0;font-size:14.5px;color:var(--muted)">${esc(a.description)}</p>` : ''}
+              <div class="topic">Teacher: <b>${esc(a.teacherName||'Teacher')}</b> • ${qCount} questions • ${maxMarks} marks total</div>
+              <div class="qfoot">
+                <span style="font-size:13px;color:var(--muted)">${isDone ? 'Submitted on ' + fmtDate(att.submittedAt) + ' — assignment score recorded separately' : 'Unsubmitted assignment'}</span>
+                <div style="display:flex;gap:8px">
+                  ${isDone ? `
+                    <button class="btn btn-ghost" onclick="startAssignmentRunner('${esc(a.id)}', true)">Review Submission →</button>
+                  ` : `
+                    <button class="btn btn-primary" onclick="startAssignmentRunner('${esc(a.id)}', false)">${att?'Resume Assignment':'Start Assignment'} →</button>
+                  `}
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('') || '<div class="empty">No assignments assigned to you yet. If you have a class code from your teacher, join your class in the Practice Zone or Settings.</div>'}
+      </div>
+    `}
+  `;
+}
+
+function startAssignmentRunner(assignId, isReview){
+  const a = studentAssignmentsState.list.find(x => x.id === assignId) || (adminState.assignments||[]).find(x => x.id === assignId);
+  if(!a) return;
+  const questions = (a.questionIds || []).map(qid => ALL.find(x => x.id === qid)).filter(Boolean);
+  const prevAttempt = studentAssignmentsState.attempts[assignId] || null;
+
+  activeAssignmentRunner = {
+    assign: a,
+    questions,
+    curIndex: 0,
+    isReview: !!isReview,
+    answers: (prevAttempt && prevAttempt.results) ? Object.fromEntries(Object.entries(prevAttempt.results).map(([k,v])=>[k, v.answer != null ? v.answer : v.answers])) : {}
+  };
+  showView('assignments');
+  renderAssignmentRunner();
+}
+
+function exitAssignmentRunner(){
+  activeAssignmentRunner = null;
+  renderAssignments();
+}
+
+function renderAssignmentRunner(){
+  const root = document.getElementById('assignments-root');
+  if(!root || !activeAssignmentRunner) return;
+
+  const { assign, questions, curIndex, isReview, answers } = activeAssignmentRunner;
+  const q = questions[curIndex];
+  if(!q){ exitAssignmentRunner(); return; }
+
+  const isS = q.type === 'structured';
+  const prevAttempt = studentAssignmentsState.attempts[assign.id];
+  const qResult = prevAttempt && prevAttempt.results && prevAttempt.results[q.id];
+
+  const pillsHtml = questions.map((item, idx) => {
+    const hasAns = answers[item.id] != null && answers[item.id] !== '';
+    const isCur = idx === curIndex;
+    return `
+      <button class="fbtn ${isCur?'active':''}" style="${isCur?'background:var(--navy);color:#fff':(hasAns?'background:var(--teal-light);border-color:var(--teal)':'')}" onclick="jumpAssignmentQ(${idx})">
+        ${idx + 1}${hasAns ? ' •' : ''}
+      </button>
+    `;
+  }).join('');
+
+  root.innerHTML = `
+    <div style="border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <span class="eyebrow">${isReview ? 'Reviewing Submission' : 'Assignment in progress'}</span>
+        <h2 style="font-family:Fraunces,serif;margin:2px 0 4px;font-size:24px">${esc(assign.title)}</h2>
+        <span class="mini-note">Question ${curIndex + 1} of ${questions.length} • Total ${q.marks} mark${q.marks!==1?'s':''}</span>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="exitAssignmentRunner()">← Exit Assignment</button>
+    </div>
+
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+      ${pillsHtml}
+    </div>
+
+    <div class="drill-card" style="border:1px solid var(--line);background:var(--surface)">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <span class="qnum">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)}</span>
+        <span style="font-size:13px;color:var(--muted)">${esc(q.topics.join(' • '))} • ${q.marks} mark${q.marks!==1?'s':''}</span>
+      </div>
+
+      <div class="blocks" style="margin-top:16px">${renderBlocks(q.stem)}</div>
+
+      ${!isS ? `
+        <div class="section-title" style="margin-top:12px">${isReview?'Your answer & official answer':'Select your answer'}</div>
+        <div class="options">
+          ${q.options.map(o => {
+            const isUserChoice = answers[q.id] === o.key;
+            const isCorrect = isReview && q.markingScheme.answer === o.key;
+            const isWrong = isReview && isUserChoice && !isCorrect;
+            let cls = '';
+            if(isReview){
+              if(isCorrect) cls = 'correct';
+              else if(isWrong) cls = 'wrong';
+            } else if(isUserChoice){
+              cls = 'selected';
+            }
+            return `
+              <button class="opt ${cls}" onclick="${isReview?'':'setAssignmentAnswer(\''+o.key+'\')'}">
+                <span class="opt-key">${esc(o.key)}</span>
+                <span class="blocks">${renderBlocks(o.content)}</span>
+              </button>
+            `;
+          }).join('')}
+        </div>
+      ` : `
+        <div class="section-title" style="margin-top:12px">${isReview?'Your written answers & marking scheme':'Type your answers for each part'}</div>
+        ${q.parts.map((p, pi) => {
+          const userAns = (answers[q.id] && answers[q.id][p.label]) || '';
+          const ms = p.markingScheme || {};
+          return `
+            <div class="part">
+              <div class="part-head">
+                <strong>Part (${esc(p.label)})</strong>
+                <span style="font-size:13px;color:var(--muted)">${p.marks} mark${p.marks!==1?'s':''}</span>
+              </div>
+              <div class="blocks" style="margin-top:8px">${renderBlocks(p.stem)}</div>
+              <textarea class="answerbox" ${isReview?'disabled':''} placeholder="Type your answer for part ${esc(p.label)} here…" oninput="setAssignmentStructAnswer('${esc(p.label)}', this.value)">${esc(userAns)}</textarea>
+              ${isReview ? `
+                <div style="margin-top:10px;padding:10px;background:var(--teal-light);border-radius:10px">
+                  <b>Model Answer:</b>
+                  <pre style="margin:4px 0;font-family:inherit;white-space:pre-wrap">${esc(ms.modelAnswer||'(No model answer published)')}</pre>
+                </div>
+              ` : ''}
+            </div>
+          `;
+        }).join('')}
+      `}
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:10px">
+        <button class="btn btn-ghost" ${curIndex===0?'disabled':''} onclick="prevAssignmentQ()">← Previous</button>
+        <div style="display:flex;gap:10px">
+          ${!isReview ? `<button class="btn btn-navy" onclick="submitActiveAssignment()">Finish &amp; Submit Assignment</button>` : ''}
+          <button class="btn btn-primary" ${curIndex===questions.length-1?'disabled':''} onclick="nextAssignmentQ()">Next →</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function jumpAssignmentQ(idx){
+  if(!activeAssignmentRunner) return;
+  activeAssignmentRunner.curIndex = idx;
+  renderAssignmentRunner();
+}
+function prevAssignmentQ(){
+  if(!activeAssignmentRunner || activeAssignmentRunner.curIndex <= 0) return;
+  activeAssignmentRunner.curIndex--;
+  renderAssignmentRunner();
+}
+function nextAssignmentQ(){
+  if(!activeAssignmentRunner || activeAssignmentRunner.curIndex >= activeAssignmentRunner.questions.length - 1) return;
+  activeAssignmentRunner.curIndex++;
+  renderAssignmentRunner();
+}
+function setAssignmentAnswer(k){
+  if(!activeAssignmentRunner || activeAssignmentRunner.isReview) return;
+  const q = activeAssignmentRunner.questions[activeAssignmentRunner.curIndex];
+  activeAssignmentRunner.answers[q.id] = k;
+  renderAssignmentRunner();
+}
+function setAssignmentStructAnswer(partLabel, val){
+  if(!activeAssignmentRunner || activeAssignmentRunner.isReview) return;
+  const q = activeAssignmentRunner.questions[activeAssignmentRunner.curIndex];
+  activeAssignmentRunner.answers[q.id] = activeAssignmentRunner.answers[q.id] || {};
+  activeAssignmentRunner.answers[q.id][partLabel] = val;
+}
+
+async function submitActiveAssignment(){
+  if(!activeAssignmentRunner) return;
+  const { assign, questions, answers } = activeAssignmentRunner;
+
+  let answeredCount = 0;
+  questions.forEach(q => {
+    if(q.type === 'mc'){
+      if(answers[q.id]) answeredCount++;
+    } else {
+      if(answers[q.id] && Object.values(answers[q.id]).some(v => String(v).trim())) answeredCount++;
+    }
+  });
+
+  if(!confirm(`Submit this assignment now? You have answered ${answeredCount} of ${questions.length} questions.`)) return;
+
+  let totalScore = 0;
+  let maxScore = 0;
+  const results = {};
+
+  questions.forEach(q => {
+    maxScore += q.marks;
+    if(q.type === 'mc'){
+      const userAns = answers[q.id] || '';
+      const corr = userAns === q.markingScheme.answer;
+      const sc = corr ? q.marks : 0;
+      totalScore += sc;
+      results[q.id] = { answer: userAns, correct: corr, score: sc, maxScore: q.marks };
+    } else {
+      const partAns = answers[q.id] || {};
+      let qSc = 0;
+      q.parts.forEach(p => {
+        const text = String(partAns[p.label] || '').trim().toLowerCase();
+        let hit = false;
+        (p.markingScheme?.points || []).forEach(pt => {
+          const kw = pt.point.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+          if(kw.some(k => text.includes(k))) hit = true;
+        });
+        if(hit) qSc += p.marks;
+      });
+      qSc = Math.min(qSc, q.marks);
+      totalScore += qSc;
+      results[q.id] = { answers: partAns, correct: qSc * 2 >= q.marks, score: qSc, maxScore: q.marks };
+    }
+  });
+
+  const attemptData = {
+    assignmentId: assign.id,
+    title: assign.title.slice(0, 120),
+    results: results,
+    score: totalScore,
+    maxScore: maxScore,
+    answered: answeredCount,
+    status: 'completed',
+    submittedAt: FV().serverTimestamp(),
+    updatedAt: FV().serverTimestamp()
+  };
+
+  try{
+    await firebaseDb.collection('users').doc(firebaseUser.uid).collection('assignmentAttempts').doc(assign.id).set(attemptData);
+    studentAssignmentsState.attempts[assign.id] = attemptData;
+    activeAssignmentRunner.isReview = true;
+    renderAssignmentRunner();
+    alert(`Assignment submitted successfully! Your score: ${totalScore} / ${maxScore} marks.`);
+  }catch(e){
+    alert('Could not submit assignment: ' + (e.message || e));
+  }
+}
+
 document.addEventListener('DOMContentLoaded',updateNavAdminRole);

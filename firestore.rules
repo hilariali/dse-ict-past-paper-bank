@@ -44,6 +44,34 @@ service cloud.firestore {
     //   - createdAt: timestamp (required, immutable, recent on create)
     //   - updatedAt: timestamp (required)
     //
+    // Collection: assignments
+    // Document ID: {assignmentId}
+    // Fields:
+    //   - id: string (required, immutable, matches assignmentId, max 100 chars)
+    //   - title: string (required, 1-120 chars)
+    //   - description: string (optional, max 1000 chars)
+    //   - questionIds: list of strings (required, 1-150 items)
+    //   - classIds: list of strings (required, max 30 items)
+    //   - studentUids: list of strings (required, max 300 items)
+    //   - teacherId: string (required, immutable, max 128 chars)
+    //   - teacherName: string (required, 1-100 chars)
+    //   - dueDate: string (optional, max 20 chars)
+    //   - createdAt: timestamp (required, immutable, recent on create)
+    //   - updatedAt: timestamp (required)
+    //
+    // Collection: users/{userId}/assignmentAttempts
+    // Document ID: {assignmentId}
+    // Fields:
+    //   - assignmentId: string (required, immutable, matches assignmentId)
+    //   - title: string (optional, max 120 chars)
+    //   - results: map (required, max 150 items, per-question answer & score records)
+    //   - score: number (required, total marks earned >= 0)
+    //   - maxScore: number (required, total possible marks >= 0)
+    //   - answered: int (required, count of answered questions 0-150)
+    //   - status: string (optional, 'in_progress' | 'completed')
+    //   - submittedAt: timestamp (optional)
+    //   - updatedAt: timestamp (required)
+    //
     // ===============================================================
 
     // ===============================================================
@@ -134,6 +162,37 @@ service cloud.firestore {
         data.updatedAt is timestamp;
     }
 
+    function isValidAssignment(data, assignmentId) {
+      return data.keys().hasAll(['id', 'title', 'questionIds', 'classIds', 'studentUids', 'teacherId', 'teacherName', 'createdAt', 'updatedAt']) &&
+        data.keys().hasOnly(['id', 'title', 'description', 'questionIds', 'classIds', 'studentUids', 'teacherId', 'teacherName', 'dueDate', 'createdAt', 'updatedAt']) &&
+        data.id is string && data.id == assignmentId && data.id.size() <= 100 &&
+        data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+        (!('description' in data) || (data.description is string && data.description.size() <= 1000)) &&
+        data.questionIds is list && data.questionIds.size() >= 1 && data.questionIds.size() <= 150 &&
+        data.classIds is list && data.classIds.size() <= 30 &&
+        data.studentUids is list && data.studentUids.size() <= 300 &&
+        (data.classIds.size() + data.studentUids.size() >= 1) &&
+        data.teacherId is string && data.teacherId.size() >= 1 && data.teacherId.size() <= 128 &&
+        data.teacherName is string && data.teacherName.size() >= 1 && data.teacherName.size() <= 100 &&
+        (!('dueDate' in data) || (data.dueDate is string && data.dueDate.size() <= 20)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAssignmentAttempt(data, assignmentId) {
+      return data.keys().hasAll(['assignmentId', 'results', 'score', 'maxScore', 'answered', 'updatedAt']) &&
+        data.keys().hasOnly(['assignmentId', 'title', 'results', 'score', 'maxScore', 'answered', 'status', 'submittedAt', 'updatedAt']) &&
+        data.assignmentId is string && data.assignmentId == assignmentId && data.assignmentId.size() <= 100 &&
+        (!('title' in data) || (data.title is string && data.title.size() <= 120)) &&
+        data.results is map && data.results.keys().size() <= 150 &&
+        data.score is number && data.score >= 0 &&
+        data.maxScore is number && data.maxScore >= 0 &&
+        data.answered is int && data.answered >= 0 && data.answered <= 150 &&
+        (!('status' in data) || data.status in ['in_progress', 'completed']) &&
+        (!('submittedAt' in data) || data.submittedAt is timestamp) &&
+        data.updatedAt is timestamp;
+    }
+
     // ===============================================================
     // Rules
     // ===============================================================
@@ -193,6 +252,45 @@ service cloud.firestore {
         allow update: if isOwner(userId) && isValidAppData(request.resource.data);
         allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
       }
+
+      // -----------------------------------------------------------
+      // AssignmentAttempts Subcollection
+      // -----------------------------------------------------------
+      match /assignmentAttempts/{assignmentId} {
+        // Read: The student, or teachers/admins reviewing submissions
+        allow read: if isAuthenticated() && (isOwner(userId) || isTeacher() || isAdmin());
+
+        // Write: Only the student can submit or save their assignment attempts
+        allow create: if isOwner(userId) && isValidAssignmentAttempt(request.resource.data, assignmentId);
+        allow update: if isOwner(userId) && isValidAssignmentAttempt(request.resource.data, assignmentId);
+        allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      }
+    }
+
+    // -------------------------------------------------------------
+    // Assignments Collection
+    // -------------------------------------------------------------
+    match /assignments/{assignmentId} {
+      // Read: Any authenticated user can read assignments
+      allow read: if isAuthenticated();
+
+      // Create: Only teachers or admins can create assignments
+      allow create: if isAuthenticated() &&
+        (isTeacher() || isAdmin()) &&
+        isValidAssignment(request.resource.data, assignmentId) &&
+        isRecent(request.resource.data.createdAt) &&
+        (request.resource.data.teacherId == request.auth.uid || isAdmin());
+
+      // Update: Owning teacher or admin
+      allow update: if isAuthenticated() &&
+        isValidAssignment(request.resource.data, assignmentId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        (isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid && request.resource.data.teacherId == resource.data.teacherId));
+
+      // Delete: Owning teacher or admin
+      allow delete: if isAuthenticated() &&
+        (isAdmin() || (isTeacher() && resource.data.teacherId == request.auth.uid));
     }
 
     // -------------------------------------------------------------

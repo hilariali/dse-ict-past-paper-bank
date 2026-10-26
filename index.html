@@ -229,7 +229,7 @@ label.setlab{font-weight:700;font-size:14.5px}
 </style>
 </head>
 <body>
-<header class="top"><div class="top-inner"><div><div class="eyebrow">HKDSE • ICT • Past Papers</div><h1>Drill real papers.<br>Mark like an examiner.</h1></div><nav class="nav"><button id="nav-home" class="active" onclick="showView('home')">Questions</button><button id="nav-practice" onclick="showView('practice')">Practice Zone</button><button id="nav-analysis" onclick="showView('analysis')">Analysis</button><button id="nav-faq" onclick="showView('faq')">FAQ</button><button id="nav-results" onclick="showView('results')">Results <span id="nav-count"></span></button><button id="nav-admin" onclick="showView('admin')">Teacher Portal</button><button id="nav-settings" onclick="showView('settings')">&#9881; Settings</button><button id="nav-auth" onclick="toggleAuthFromNav()">Sign in</button></nav></div></header>
+<header class="top"><div class="top-inner"><div><div class="eyebrow">HKDSE • ICT • Past Papers</div><h1>Drill real papers.<br>Mark like an examiner.</h1></div><nav class="nav"><button id="nav-home" class="active" onclick="showView('home')">Questions</button><button id="nav-assignments" onclick="showView('assignments')">Assignments <span id="nav-assign-count"></span></button><button id="nav-practice" onclick="showView('practice')">Practice Zone</button><button id="nav-analysis" onclick="showView('analysis')">Analysis</button><button id="nav-faq" onclick="showView('faq')">FAQ</button><button id="nav-results" onclick="showView('results')">Results <span id="nav-count"></span></button><button id="nav-admin" onclick="showView('admin')">Teacher Portal</button><button id="nav-settings" onclick="showView('settings')">&#9881; Settings</button><button id="nav-auth" onclick="toggleAuthFromNav()">Sign in</button></nav></div></header>
 
 <main class="wrap">
 <!-- HOME -->
@@ -377,6 +377,20 @@ label.setlab{font-weight:700;font-size:14.5px}
   </div>
 </section>
 
+<!-- ASSIGNMENTS -->
+<section id="view-assignments" hidden>
+  <div class="drill-card">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+      <div>
+        <h2 style="font-family:Fraunces,serif;margin:0 0 4px;font-size:28px">Assignments &amp; Assessments</h2>
+        <p style="color:var(--muted);margin:0">Official tasks assigned by your teacher. Scores and attempts here are recorded separately from casual practice.</p>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="loadStudentAssignments(true)">Refresh</button>
+    </div>
+    <div id="assignments-root" style="margin-top:18px"></div>
+  </div>
+</section>
+
 <!-- TEACHER / ADMIN DASHBOARD -->
 <section id="view-admin" hidden>
   <div id="admin-root"></div>
@@ -405,7 +419,7 @@ const KEY='dse-ict-drill-v1';
 let store={}; try{ store=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ store={}; }
 let filterYear='All years', filterPaper='All papers', filterTopics=[], filterStatus='All', filterSearch='', currentId=null, selAnswer=null, selConf=null, submitted=false, queueMode=false, queueList=[], quickPickModule='All modules', quickPickPaperGroup='All papers', quickPickIds=[], selfCheckLocked=false;
 let firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseReady=false, authObserverSet=false, firebaseUser=null, cloudSyncBusy=false, cloudSyncTimer=null, cloudStatusMsg='not configured';
-let currentUserProfile=null, pendingRegistrationRole=null, adminDemoMode=false, adminTab='overview', adminState={classes:[], users:[], userProgressMap:{}, loading:false}, reportState={type:'class', selectedClassId:null, selectedStudentUid:null, teacherNotes:''}, studentDrillModalUid=null, adminFilterClass='all', adminStudentSearch='';
+let currentUserProfile=null, pendingRegistrationRole=null, adminDemoMode=false, adminTab='overview', adminState={classes:[], users:[], assignments:[], userProgressMap:{}, assignmentAttemptsMap:{}, loading:false}, studentAssignmentsState={list:[], attempts:{}, loading:false, error:''}, activeAssignmentRunner=null, reportState={type:'class', selectedClassId:null, selectedStudentUid:null, teacherNotes:''}, studentDrillModalUid=null, adminFilterClass='all', adminStudentSearch='';
 let panelOpen=false; try{ const _fp=localStorage.getItem('dse-ict-filterpanel-v1'); panelOpen = _fp===null ? (window.innerWidth>=820) : _fp==='1'; }catch(e){ panelOpen = window.innerWidth>=820; }
 let openModules={}, TOPIC_LIST=[], yearSig='';
 if(window.mermaid) mermaid.initialize({startOnLoad:false, theme:'default', securityLevel:'loose'});
@@ -516,7 +530,7 @@ function renderHome(){
   const list=filteredList();
   renderFilters(list);
   document.getElementById('list-label').textContent = quickPickIds.length ? `Random pick — showing ${list.length} question(s) from ${quickPickPaperGroup} / ${quickPickModule}` : (activeFilterCount()===0 ? bankHeadline() : `Showing ${list.length} of ${ALL.length} questions`);
-  document.getElementById('qlist').innerHTML=list.length? list.map(q=>{ const a=store[q.id]; const isS=q.type==='structured'; const pill=a? (a.rating? `<span class="pill ${a.rating.toLowerCase()}">${a.rating}</span>` : (isS? `<span class="pill shaky">Self-scored ${a.score} / ${q.marks}</span>` : `<span class="pill ${a.correct?'know':'gap'}">${a.correct?'Correct':'Incorrect'}</span>`)) : `<span class="pill none">Not attempted</span>`; const detail=a? (isS? `<div style="font-size:13.5px;color:var(--muted)">Self-score: <strong>${a.score} / ${q.marks} marks</strong>${a.confidence?` • Confidence: ${esc(a.confidence)}`:''} — ticked against the official marking points</div>` : `<div style="font-size:13.5px;color:var(--muted)">Your answer: <strong>${esc(a.answer)}</strong> ${a.confidence?`• Confidence: ${esc(a.confidence)}`:''} • Correct answer: <strong>${esc(q.markingScheme.answer)}</strong> — ${q.performance.correctPct!=null? q.performance.correctPct : (q.performance.optionStatsPct? q.performance.optionStatsPct[q.markingScheme.answer] : '')}% of ${yearOf(q)} candidates got it right</div>`) : ''; return `<article class="qcard"><div class="qcard-top"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Q.${esc(q.number)}</span>${pill}</div><div class="qtitle">${esc((q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text||'Question '+q.number)}</div><div class="topic">${esc(q.topics.join(' • '))} • ${q.marks} mark${q.marks!==1?'s':''} • ${isS?'Structured question':'Multiple choice'}</div>${detail}<div class="qfoot"><span style="font-size:13px;color:var(--muted)">${isS?'Type answers • self-mark with the official scheme':(q.stem.some(b=>b.type==='code')?'Includes pseudocode • ':'')+'Performance data included'}</span><button class="btn ${a?'btn-ghost':'btn-primary'}" onclick="startDrill('${q.id}')">${a?'Retry':'Start drill'} →</button></div></article>`}).join('') : `<div class="empty">No questions match these filters.<br><button class="btn btn-ghost" style="margin-top:10px;padding:8px 14px" onclick="resetFilters()">Reset all filters</button></div>`;
+  document.getElementById('qlist').innerHTML=list.length? list.map(q=>{ const a=store[q.id]; const isS=q.type==='structured'; const pill=a? (a.rating? `<span class="pill ${a.rating.toLowerCase()}">${a.rating}</span>` : (isS? `<span class="pill shaky">Self-scored ${a.score} / ${q.marks}</span>` : `<span class="pill ${a.correct?'know':'gap'}">${a.correct?'Correct':'Incorrect'}</span>`)) : `<span class="pill none">Not attempted</span>`; const detail=a? (isS? `<div style="font-size:13.5px;color:var(--muted)">Self-score: <strong>${a.score} / ${q.marks} marks</strong>${a.confidence?` • Confidence: ${esc(a.confidence)}`:''} — ticked against the official marking points</div>` : `<div style="font-size:13.5px;color:var(--muted)">Your answer: <strong>${esc(a.answer)}</strong> ${a.confidence?`• Confidence: ${esc(a.confidence)}`:''} • Correct answer: <strong>${esc(q.markingScheme.answer)}</strong> — ${q.performance.correctPct!=null? q.performance.correctPct : (q.performance.optionStatsPct? q.performance.optionStatsPct[q.markingScheme.answer] : '')}% of ${yearOf(q)} candidates got it right</div>`) : ''; return `<article class="qcard"><div class="qcard-top"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Q.${esc(q.number)}</span>${pill}</div><div class="qtitle">${esc((q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text||'Question '+q.number)}</div><div class="topic">${esc(q.topics.join(' • '))} • ${q.marks} mark${q.marks!==1?'s':''} • ${isS?'Structured question':'Multiple choice'}</div>${detail}<div class="qfoot"><span style="font-size:13px;color:var(--muted)">${isS?'Type answers • self-mark with the official scheme':(q.stem.some(b=>b.type==='code')?'Includes pseudocode • ':'')+'Performance data included'}</span><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-ghost" style="padding:8px 12px;font-size:13px" onclick="openQuestionExportModal('${q.id}')" title="Export or print this question">⎙ Export / Print</button><button class="btn ${a?'btn-ghost':'btn-primary'}" onclick="startDrill('${q.id}')">${a?'Retry':'Start drill'} →</button></div></div></article>`}).join('') : `<div class="empty">No questions match these filters.<br><button class="btn btn-ghost" style="margin-top:10px;padding:8px 14px" onclick="resetFilters()">Reset all filters</button></div>`;
 }
 function setYear(y){ filterYear=y; filterPaper='All papers'; renderHome(); }
 function setPaper(p){ filterPaper=p; renderHome(); }
@@ -540,11 +554,13 @@ function flipHomeFaq(){ homeFaqFlipped=!homeFaqFlipped; renderHomeFaqCard(); }
 function renderHomeFaqCard(){ const box=document.getElementById('home-faq-card'); if(!box) return; if(!FAQS.length){ box.innerHTML='<div class="mini-note">FAQ is not loaded yet.</div>'; return; } if(!homeFaqId || !FAQS.some(f=>f.id===homeFaqId)){ const f=randomFaqItem(); homeFaqId=f?f.id:null; homeFaqFlipped=false; } const item=FAQS.find(f=>f.id===homeFaqId); if(!item){ box.innerHTML='<div class="mini-note">FAQ is not loaded yet.</div>'; return; } box.innerHTML=`<div class="flash-head"><strong>Quick revision flashcard</strong><span class="mini-note">${esc(item.topic)}</span></div><div class="flash-face"><span class="label">${homeFaqFlipped?'Back · Standard answer':'Front · Question'}</span><div style="white-space:pre-wrap">${esc(homeFaqFlipped?item.answer:item.question)}</div>${homeFaqFlipped&&item.keywords&&item.keywords.length?`<div style="margin-top:10px">${item.keywords.map(k=>`<span class="kwchip">${esc(k)}</span>`).join('')}</div>`:''}</div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-primary" onclick="flipHomeFaq()">${homeFaqFlipped?'Show question':'Flip card'}</button><button class="btn btn-ghost" onclick="refreshHomeFaq()">New random card</button></div>`; }
 function toggleFilterPanel(){ panelOpen=!panelOpen; try{ localStorage.setItem('dse-ict-filterpanel-v1', panelOpen?'1':'0'); }catch(e){} renderHome(); }
 function showView(v){
-  ['home','drill','results','faq','settings','practice','analysis','admin'].forEach(x=>{
+  ['home','drill','assignments','results','faq','settings','practice','analysis','admin'].forEach(x=>{
     const el=document.getElementById('view-'+x);
     if(el) el.hidden = (x!==v);
   });
   document.getElementById('nav-home').classList.toggle('active',v==='home');
+  const navAss=document.getElementById('nav-assignments');
+  if(navAss) navAss.classList.toggle('active',v==='assignments');
   document.getElementById('nav-results').classList.toggle('active',v==='results');
   document.getElementById('nav-faq').classList.toggle('active',v==='faq');
   document.getElementById('nav-practice').classList.toggle('active',v==='practice');
@@ -553,6 +569,7 @@ function showView(v){
   if(navAdmin) navAdmin.classList.toggle('active',v==='admin');
   document.getElementById('nav-settings').classList.toggle('active',v==='settings');
   if(v==='drill') updateSaveBtn();
+  if(v==='assignments'){ if(typeof renderAssignments==='function') renderAssignments(); }
   if(v==='practice') renderPractice();
   if(v==='analysis') renderAnalysis();
   if(v==='admin') renderAdmin();
@@ -563,7 +580,7 @@ function showView(v){
   window.scrollTo({top:0,behavior:'smooth'});
 }
 function startDrill(id){ currentId=id; selAnswer=null; selConf=null; submitted=false; chatMsgs=[]; const q=ALL.find(x=>x.id===id); if(q.type==='structured'){ startStructured(q); return; } const prev=store[id];
-  document.getElementById('drill-root').innerHTML=`<div class="drill-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)}</span><span style="font-size:13px;color:var(--muted)">${esc(q.topics.join(' • '))} • ${q.marks} mark</span></div><div class="blocks" style="margin-top:16px">${renderBlocks(q.stem)}</div><div class="section-title" style="margin-top:8px">Choose one answer — marking scheme hidden</div><div class="options" id="opts">${q.options.map(o=>`<button class="opt" data-k="${o.key}" onclick="pickAnswer('${o.key}')"><span class="opt-key">${o.key}</span><span class="blocks">${renderBlocks(o.content)}</span></button>`).join('')}</div><div class="section-title">How confident are you?</div><div class="conf" id="conf"><button onclick="pickConf('Low')">Low — guessing</button><button onclick="pickConf('Medium')">Medium</button><button onclick="pickConf('High')">High — sure</button></div><button id="submitBtn" class="btn btn-primary" style="width:100%;padding:14px" disabled onclick="submitAnswer()">Submit answer & reveal marking</button>${aiZoneHtml()}<div id="reveal"></div></div>`;
+  document.getElementById('drill-root').innerHTML=`<div class="drill-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)}</span><div style="display:flex;gap:8px;align-items:center"><button class="btn btn-ghost btn-sm" onclick="openQuestionExportModal('${q.id}')">⎙ Export / Print</button><span style="font-size:13px;color:var(--muted)">${esc(q.topics.join(' • '))} • ${q.marks} mark</span></div></div><div class="blocks" style="margin-top:16px">${renderBlocks(q.stem)}</div><div class="section-title" style="margin-top:8px">Choose one answer — marking scheme hidden</div><div class="options" id="opts">${q.options.map(o=>`<button class="opt" data-k="${o.key}" onclick="pickAnswer('${o.key}')"><span class="opt-key">${o.key}</span><span class="blocks">${renderBlocks(o.content)}</span></button>`).join('')}</div><div class="section-title">How confident are you?</div><div class="conf" id="conf"><button onclick="pickConf('Low')">Low — guessing</button><button onclick="pickConf('Medium')">Medium</button><button onclick="pickConf('High')">High — sure</button></div><button id="submitBtn" class="btn btn-primary" style="width:100%;padding:14px" disabled onclick="submitAnswer()">Submit answer & reveal marking</button>${aiZoneHtml()}<div id="reveal"></div></div>`;
   showView('drill'); initMermaid();
   if(prev && !queueMode){ /* fresh attempt each time */ }
 }
@@ -586,7 +603,7 @@ function submitAnswer(){ const q=QUESTIONS.find(x=>x.id===currentId); submitted=
 function startStructured(q){
   chatMsgs=[];
   const partsHtml=q.parts.map((p,pi)=>`<div class="part"><div class="part-head"><strong>Part ${esc(p.label)}</strong><span style="font-size:13px;color:var(--muted)">${p.marks} mark${p.marks!==1?'s':''}</span></div><div class="blocks" style="margin-top:8px">${renderBlocks(p.stem)}</div><textarea class="answerbox" id="ans-${pi}" placeholder="Type your answer for part ${esc(p.label)} here — write it as you would in the exam." oninput="updateStructSubmit()"></textarea><div class="part-overlay" id="part-overlay-${pi}" hidden><div class="part-overlay-card"><span class="loading">AI marking Part ${esc(p.label)}…</span></div></div><div id="part-reveal-${pi}"></div><div id="aimark-${pi}"></div></div>`).join('');
-  document.getElementById('drill-root').innerHTML=`<div class="drill-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)}</span><span style="font-size:13px;color:var(--muted)">${esc(paperLabel(paperOf(q),yearOf(q)))} • ${esc(q.topics.join(' • '))} • ${q.marks} marks • Structured</span></div><div class="blocks" style="margin-top:16px">${renderBlocks(q.stem)}</div><div class="section-title" style="margin-top:8px">Answer every part — the marking scheme stays hidden until you submit</div><div id="ai-mark-live" class="marking-live" hidden></div>${partsHtml}<div class="section-title">How confident are you?</div><div class="conf" id="conf"><button onclick="pickConf('Low')">Low — guessing</button><button onclick="pickConf('Medium')">Medium</button><button onclick="pickConf('High')">High — sure</button></div><button id="submitBtn" class="btn btn-primary" style="width:100%;padding:14px" disabled onclick="submitStructured()">${aiUp?'Submit answers & AI mark':'Submit answers & reveal marking scheme'}</button>${aiZoneHtml()}<div id="reveal"></div></div>`;
+  document.getElementById('drill-root').innerHTML=`<div class="drill-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)}</span><div style="display:flex;gap:8px;align-items:center"><button class="btn btn-ghost btn-sm" onclick="openQuestionExportModal('${q.id}')">⎙ Export / Print</button><span style="font-size:13px;color:var(--muted)">${esc(paperLabel(paperOf(q),yearOf(q)))} • ${esc(q.topics.join(' • '))} • ${q.marks} marks • Structured</span></div></div><div class="blocks" style="margin-top:16px">${renderBlocks(q.stem)}</div><div class="section-title" style="margin-top:8px">Answer every part — the marking scheme stays hidden until you submit</div><div id="ai-mark-live" class="marking-live" hidden></div>${partsHtml}<div class="section-title">How confident are you?</div><div class="conf" id="conf"><button onclick="pickConf('Low')">Low — guessing</button><button onclick="pickConf('Medium')">Medium</button><button onclick="pickConf('High')">High — sure</button></div><button id="submitBtn" class="btn btn-primary" style="width:100%;padding:14px" disabled onclick="submitStructured()">${aiUp?'Submit answers & AI mark':'Submit answers & reveal marking scheme'}</button>${aiZoneHtml()}<div id="reveal"></div></div>`;
   showView('drill'); initMermaid();
 }
 function updateStructSubmit(){ const q=STRUCTURED.find(x=>x.id===currentId); if(!q) return; const any=q.parts.some((p,pi)=>{ const el=document.getElementById('ans-'+pi); return el && el.value.trim().length>0; }); const btn=document.getElementById('submitBtn'); if(btn) btn.disabled=!(any && selConf); }
@@ -1011,6 +1028,222 @@ async function generateAdvice(){ if(aiAdviceBusy) return; if(!aiUp) await probeA
   aiAdviceBusy=true; aiAdvice=''; renderAnalysis(); const box=document.getElementById('advice-box'); if(box) box.innerHTML='<span class="loading">AI is analysing your progress\u2026</span>';
   try{ aiAdvice=(await aiComplete([{role:'system',content:'You are a supportive HKDSE ICT tutor. From the student data, write concise study recommendations in plain text: 1) strengths, 2) priority weak areas, 3) comments on confidence calibration (over/under-confidence), 4) a practical 1-week study plan. Be specific and brief (under 300 words).'},{role:'user',content:prompt}],120000)).replace(/<think>[\s\S]*?<\/think>/g,'').trim(); }catch(e){ aiAdvice='AI analysis failed ('+e.message+'). Please try again.'; }
   aiAdviceBusy=false; renderAnalysis(); }
+
+/* ---------------- Question Export & Print ---------------- */
+function openQuestionExportModal(id){
+  const q=ALL.find(x=>x.id===id); if(!q) return;
+  const isS=q.type==='structured';
+  const stemSummary=(q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text || ('Question '+q.number);
+  const perfAvailable=!isS && q.performance && (q.performance.correctPct!=null || q.performance.commentary);
+  openModal(`<div style="max-width:680px">
+    <div style="border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:16px">
+      <div class="eyebrow">${yearOf(q)} • ${paperOf(q)} • Q.${esc(q.number)}</div>
+      <h2 style="font-family:Fraunces,serif;margin:4px 0 6px;font-size:24px">Export / Print Question</h2>
+      <div style="font-size:13.5px;color:var(--muted)">${esc(q.topics.join(' • '))} • <b>${q.marks} mark${q.marks!==1?'s':''}</b> • ${isS?'Structured question':'Multiple choice'}</div>
+    </div>
+    <div class="note" style="margin-bottom:16px;max-height:80px;overflow:hidden;text-overflow:ellipsis">
+      ${esc(stemSummary.slice(0, 220))}${stemSummary.length>220?'…':''}
+    </div>
+    <div class="section-title" style="margin-top:0">Export options</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:18px">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700">
+        <input type="checkbox" id="exp-inc-ms" checked style="width:18px;height:18px;accent-color:var(--teal)">
+        <span>Include Official Marking Scheme &amp; Answers</span>
+      </label>
+      ${perfAvailable ? `<label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:700">
+        <input type="checkbox" id="exp-inc-perf" checked style="width:18px;height:18px;accent-color:var(--teal)">
+        <span>Include Examiner Commentary &amp; Candidate Statistics</span>
+      </label>` : ''}
+    </div>
+    <div class="section-title">Choose format to export / print</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:18px">
+      <button class="btn btn-primary" style="padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px" onclick="printQuestion('${esc(q.id)}')">
+        <span style="font-size:16px">🖨️ Print / Save as PDF</span>
+        <span style="font-size:12px;opacity:.9;font-weight:400">Direct print or PDF export with clean worksheet layout</span>
+      </button>
+      <button class="btn btn-navy" style="padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px" onclick="downloadQuestionDoc('${esc(q.id)}')">
+        <span style="font-size:16px">📄 Word Document (.doc)</span>
+        <span style="font-size:12px;opacity:.9;font-weight:400">Formatted Microsoft Word document with tables &amp; styles</span>
+      </button>
+      <button class="btn btn-ghost" style="padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px" onclick="downloadQuestionJson('${esc(q.id)}')">
+        <span style="font-size:16px">📋 Export JSON (.json)</span>
+        <span style="font-size:12px;color:var(--muted);font-weight:400">Standard structured question schema</span>
+      </button>
+      <button class="btn btn-ghost" style="padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px" id="btn-copy-text" onclick="copyQuestionText('${esc(q.id)}')">
+        <span style="font-size:16px">📝 Copy Text</span>
+        <span style="font-size:12px;color:var(--muted);font-weight:400">Formatted plain text to clipboard</span>
+      </button>
+    </div>
+    <div style="display:flex;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+    </div>
+  </div>`);
+}
+
+function generateQuestionPrintHtml(q, incMs, incPerf){
+  const isS=q.type==='structured';
+  let bodyHtml=`<div class="stem">${renderBlocks(q.stem)}</div>`;
+  if(!isS && q.options){
+    bodyHtml+=`<div class="options-list">${q.options.map(o=>`
+      <div style="display:flex;gap:12px;margin:8px 0;align-items:flex-start">
+        <span style="font-weight:bold;width:26px;height:26px;border:1px solid #333;border-radius:50%;display:inline-grid;place-items:center;flex-shrink:0">${esc(o.key)}</span>
+        <div style="flex:1">${renderBlocks(o.content)}</div>
+      </div>`).join('')}</div>`;
+  } else if(isS && q.parts){
+    bodyHtml+=`<div class="parts-list">${q.parts.map(p=>`
+      <div style="margin-top:16px;border-top:1px dashed #ccc;padding-top:12px">
+        <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:6px">
+          <span>Part (${esc(p.label)})</span>
+          <span>[${p.marks} mark${p.marks!==1?'s':''}]</span>
+        </div>
+        <div class="stem">${renderBlocks(p.stem)}</div>
+        <div style="margin-top:12px">
+          <div style="border-bottom:1px dashed #999;height:28px"></div>
+          <div style="border-bottom:1px dashed #999;height:28px"></div>
+          <div style="border-bottom:1px dashed #999;height:28px"></div>
+        </div>
+      </div>`).join('')}</div>`;
+  }
+
+  let msHtml='';
+  if(incMs){
+    if(!isS && q.markingScheme){
+      msHtml=`<div style="margin-top:24px;border:2px solid #0E7C6B;background:#F0FDF4;padding:14px;border-radius:8px;page-break-inside:avoid">
+        <h3 style="margin:0 0 8px;color:#0E7C6B;font-size:14pt">Official Marking Scheme</h3>
+        <p style="margin:0;font-size:12pt"><strong>Correct Answer:</strong> <span style="display:inline-block;padding:2px 8px;background:#0E7C6B;color:#fff;border-radius:4px;font-weight:bold">${esc(q.markingScheme.answer)}</span></p>
+      </div>`;
+    } else if(isS && q.parts){
+      msHtml=`<div style="margin-top:24px;border:2px solid #0E7C6B;background:#F0FDF4;padding:14px;border-radius:8px;page-break-inside:avoid">
+        <h3 style="margin:0 0 10px;color:#0E7C6B;font-size:14pt">Official Marking Scheme &amp; Guidelines</h3>
+        ${q.parts.map(p=>{
+          const ms=p.markingScheme||{};
+          return `<div style="margin-top:10px;border-top:1px solid #A7F3D0;padding-top:8px">
+            <b>Part (${esc(p.label)}) [${p.marks} mark${p.marks!==1?'s':''}]</b>
+            ${ms.modelAnswer?`<div style="background:#fff;border:1px solid #D1FAE5;padding:8px;margin:6px 0;border-radius:6px;font-family:monospace;white-space:pre-wrap"><b>Model Answer:</b><br>${esc(ms.modelAnswer)}</div>`:''}
+            ${(ms.points||[]).length?`<ul style="margin:6px 0 6px 20px;padding:0">${ms.points.map(pt=>`<li>${esc(pt.point)} <b>[${pt.marks} mark${pt.marks!==1?'s':''}]</b></li>`).join('')}</ul>`:''}
+            ${(ms.unacceptable||[]).length?`<div style="color:#B42318;font-size:10pt">✕ Not accepted: ${esc(ms.unacceptable.join('; '))}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+  }
+
+  let perfHtml='';
+  if(incPerf && q.performance){
+    perfHtml=`<div style="margin-top:18px;border:1px solid #FCD34D;background:#FEFCE8;padding:14px;border-radius:8px;page-break-inside:avoid">
+      <h4 style="margin:0 0 6px;color:#92400E">Examiner Commentary &amp; Candidate Performance</h4>
+      ${q.performance.correctPct!=null?`<p style="margin:4px 0"><strong>Candidates correct:</strong> ${q.performance.correctPct}%</p>`:''}
+      ${q.performance.optionStatsPct?`<p style="margin:4px 0"><strong>Option choice distribution:</strong> ${Object.entries(q.performance.optionStatsPct).map(([k,v])=>`${k}: ${v}%`).join(' • ')}</p>`:''}
+      ${q.performance.commentary?`<p style="margin:6px 0;font-style:italic">"${esc(q.performance.commentary)}"</p>`:''}
+      ${(q.performance.commonErrors||[]).length?`<p style="margin:4px 0 2px"><strong>Common mistakes:</strong></p><ul style="margin:0 0 0 20px;padding:0">${q.performance.commonErrors.map(e=>`<li>${esc(e)}</li>`).join('')}</ul>`:''}
+    </div>`;
+  }
+
+  return `<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${esc(q.id)} - Question Paper</title>
+<style>
+  @page { size: A4; margin: 16mm 14mm; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; font-size: 11pt; line-height: 1.5; color: #111; margin: 0; padding: 12px; }
+  .header { border-bottom: 2px solid #0F2A44; padding-bottom: 8px; margin-bottom: 14px; }
+  .exam-title { font-size: 13pt; font-weight: bold; color: #0F2A44; text-transform: uppercase; letter-spacing: 0.05em; }
+  .paper-title { font-size: 10.5pt; color: #555; }
+  .qtitle { font-size: 13.5pt; font-weight: bold; margin: 10px 0 4px; }
+  .qmeta { font-size: 10pt; color: #666; margin-bottom: 14px; }
+  .stem { font-size: 11.5pt; }
+  table { border-collapse: collapse; width: 100%; margin: 10px 0; }
+  th, td { border: 1px solid #444; padding: 6px 10px; text-align: left; font-size: 10pt; }
+  th { background-color: #f2f2f2; font-weight: bold; }
+  pre, code { font-family: "JetBrains Mono", Consolas, monospace; background: #f4f6f8; padding: 6px; border: 1px solid #ccc; font-size: 10pt; }
+  .diagram { border: 1px solid #bbb; padding: 10px; margin: 10px 0; background: #fafafa; border-radius: 6px; }
+  @media print { body { padding: 0; } .no-print { display: none !important; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="exam-title">Hong Kong Diploma of Secondary Education Examination</div>
+    <div class="paper-title">Information and Communication Technology • Question Worksheet</div>
+  </div>
+  <div class="qtitle">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)} [${q.marks} Mark${q.marks!==1?'s':''}]</div>
+  <div class="qmeta">Topics: ${esc(q.topics.join(' • '))}</div>
+  ${bodyHtml}
+  ${msHtml}
+  ${perfHtml}
+</body>
+</html>`;
+}
+
+function printQuestion(id){
+  const q=ALL.find(x=>x.id===id); if(!q) return;
+  const incMs=(document.getElementById('exp-inc-ms')||{}).checked!==false;
+  const incPerf=(document.getElementById('exp-inc-perf')||{}).checked!==false;
+  const html=generateQuestionPrintHtml(q, incMs, incPerf);
+  let iframe=document.getElementById('print-sandbox-iframe');
+  if(!iframe){
+    iframe=document.createElement('iframe');
+    iframe.id='print-sandbox-iframe';
+    iframe.style.position='fixed'; iframe.style.right='0'; iframe.style.bottom='0'; iframe.style.width='0'; iframe.style.height='0'; iframe.style.border='0';
+    document.body.appendChild(iframe);
+  }
+  const doc=iframe.contentWindow.document;
+  doc.open(); doc.write(html); doc.close();
+  setTimeout(()=>{ iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 400);
+}
+
+function downloadQuestionDoc(id){
+  const q=ALL.find(x=>x.id===id); if(!q) return;
+  const incMs=(document.getElementById('exp-inc-ms')||{}).checked!==false;
+  const incPerf=(document.getElementById('exp-inc-perf')||{}).checked!==false;
+  const html=generateQuestionPrintHtml(q, incMs, incPerf);
+  const docHtml=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>${html.slice(html.indexOf('<head>'))}`;
+  const blob=new Blob(['\ufeff'+docHtml],{type:'application/msword;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${q.id}.doc`; a.click();
+}
+
+function downloadQuestionJson(id){
+  const q=ALL.find(x=>x.id===id); if(!q) return;
+  const jsonStr=JSON.stringify(q,null,2);
+  const blob=new Blob([jsonStr],{type:'application/json;charset=utf-8'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`${q.id}.json`; a.click();
+}
+
+function copyQuestionText(id){
+  const q=ALL.find(x=>x.id===id); if(!q) return;
+  const incMs=(document.getElementById('exp-inc-ms')||{}).checked!==false;
+  const incPerf=(document.getElementById('exp-inc-perf')||{}).checked!==false;
+  let text=`HKDSE ICT ${yearOf(q)} ${paperOf(q)} Q.${q.number} (${q.marks} mark${q.marks!==1?'s':''})\nTopics: ${q.topics.join('; ')}\n\n${blocksToText(q.stem)}\n`;
+  if(q.type==='mc'&&q.options){
+    text+='\n'+q.options.map(o=>`${o.key}. ${blocksToText(o.content)}`).join('\n')+'\n';
+  } else if(q.type==='structured'&&q.parts){
+    text+='\n'+q.parts.map(p=>`Part (${p.label}) [${p.marks} marks]:\n${blocksToText(p.stem)}`).join('\n\n')+'\n';
+  }
+  if(incMs){
+    text+='\n--- OFFICIAL MARKING SCHEME ---\n';
+    if(q.type==='mc'){ text+=`Correct Option: ${q.markingScheme.answer}\n`; }
+    else if(q.parts){
+      q.parts.forEach(p=>{
+        text+=`\nPart (${p.label}):\n`;
+        if(p.markingScheme?.modelAnswer) text+=`Model Answer:\n${p.markingScheme.modelAnswer}\n`;
+        if(p.markingScheme?.points) text+=p.markingScheme.points.map((pt,i)=>`${i+1}. [${pt.marks}m] ${pt.point}`).join('\n')+'\n';
+      });
+    }
+  }
+  if(incPerf&&q.performance){
+    text+='\n--- CANDIDATE PERFORMANCE & COMMENTARY ---\n';
+    if(q.performance.correctPct!=null) text+=`Correct Rate: ${q.performance.correctPct}%\n`;
+    if(q.performance.commentary) text+=`Examiner: ${q.performance.commentary}\n`;
+  }
+  navigator.clipboard.writeText(text).then(()=>{
+    const b=document.getElementById('btn-copy-text');
+    if(b){
+      const prev=b.innerHTML;
+      b.innerHTML='<span style="font-size:16px">✓ Copied!</span><span style="font-size:12px;color:var(--green)">Text copied to clipboard</span>';
+      setTimeout(()=>{ b.innerHTML=prev; }, 2000);
+    }
+  });
+}
 
 async function boot(){ await loadFirebaseConfigFromEndpoint(); renderSettings(); initFirebaseFromSettings(); updateBankStatus(); probeAI(); const bu=settings.bankUrl||DEFAULT_BANK_URL, bGh=!settings.bankUrl; let bErr=''; try{ const d=await fetchJsonT(bu, 5000); if(validBank(d)) applyBank(d, bGh?'loaded from GitHub':'loaded from URL'); else bErr= bGh?'The GitHub question bank did not return a valid bank':'The saved question-bank URL did not return a valid bank'; }catch(e){ bErr= bGh?'Could not load the question bank from GitHub':'Could not load the question bank from the saved URL'; } if(bErr){ if(bankSource==='built-in copy'){ try{ const d=await fetchJsonT('question-bank.json', 5000); if(validBank(d)) applyBank(d,'loaded from question-bank.json beside the page'); }catch(e){} } bankNote= bankSource==='built-in copy'? bErr+' — using the built-in copy.' : bErr+' — using the copy of question-bank.json beside the page.'; } const fu=settings.faqUrl||DEFAULT_FAQ_URL, fGh=!settings.faqUrl; let fErr=''; try{ const d=await fetchJsonT(fu, 5000); if(validFaq(d)) applyFaq(d, fGh?'loaded from GitHub':'loaded from URL'); else fErr= fGh?'The GitHub FAQ did not return a valid faq.json':'The saved FAQ URL did not return a valid faq.json'; }catch(e){ fErr= fGh?'Could not load the FAQ from GitHub':'Could not load the FAQ from the saved URL'; } if(fErr){ if(faqSource==='built-in copy'){ try{ const d=await fetchJsonT('faq.json', 5000); if(validFaq(d)) applyFaq(d,'loaded from faq.json beside the page'); }catch(e){} } faqNote= faqSource==='built-in copy'? fErr+' — using the built-in copy.' : fErr+' — using the copy of faq.json beside the page.'; } renderBankSettingsStatus(); renderHome(); }
 renderHome(); boot();
