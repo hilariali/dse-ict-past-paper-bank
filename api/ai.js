@@ -61,6 +61,20 @@ module.exports = async function handler(req, res) {
   const body = req.body && typeof req.body === 'object' ? req.body : {};
   const messages = Array.isArray(body.messages) ? body.messages : null;
   if (!messages || !messages.length) return json(res, 400, { ok: false, error: 'messages is required' });
+  if (messages.length > 40) return json(res, 400, { ok: false, error: 'Too many messages in conversation (max 40)' });
+
+  const rawPayload = JSON.stringify(messages);
+  if (rawPayload.length > 60000) {
+    return json(res, 413, { ok: false, error: 'Request payload exceeds maximum allowed size' });
+  }
+
+  for (const m of messages) {
+    if (!m || typeof m !== 'object' || typeof m.content !== 'string' || typeof m.role !== 'string') {
+      return json(res, 400, { ok: false, error: 'Each message must have valid role and content strings' });
+    }
+  }
+
+  const safeTemp = typeof body.temperature === 'number' && body.temperature >= 0 && body.temperature <= 1 ? body.temperature : 0.3;
 
   try {
     const upstream = await forwardToProvider({
@@ -68,7 +82,7 @@ module.exports = async function handler(req, res) {
       model,
       apiKey,
       messages,
-      temperature: body.temperature,
+      temperature: safeTemp,
     });
     const content = upstream && upstream.choices && upstream.choices[0] && upstream.choices[0].message && upstream.choices[0].message.content;
     if (typeof content !== 'string' || !content.trim()) {

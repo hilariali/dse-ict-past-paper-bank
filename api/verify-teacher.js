@@ -21,8 +21,16 @@ module.exports = async function handler(req, res) {
     body = body || {};
 
     const accessKey = String(body.accessKey || '').trim();
-    const expectedTeacherKey = (process.env.TEACHER_ACCESS_KEY || 'DSE_TEACHER_2025').trim();
-    const expectedAdminKey = (process.env.ADMIN_ACCESS_KEY || 'DSE_ADMIN_2025').trim();
+    const expectedTeacherKey = (process.env.TEACHER_ACCESS_KEY || '').trim();
+    const expectedAdminKey = (process.env.ADMIN_ACCESS_KEY || '').trim();
+
+    if (!expectedTeacherKey && !expectedAdminKey) {
+      return json(res, 503, {
+        ok: false,
+        valid: false,
+        error: 'Teacher access key is not configured in server environment. Please contact administrator.'
+      });
+    }
 
     if (!accessKey) {
       return json(res, 400, { ok: false, valid: false, error: 'Teacher or Admin access key is required' });
