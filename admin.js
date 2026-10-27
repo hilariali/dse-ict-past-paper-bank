@@ -372,7 +372,14 @@ function openCreateAssignmentModal(){
       <div style="border-top:1px solid var(--line);padding-top:14px;margin-top:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
           <label style="font-weight:800;font-size:13.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--teal)">Select Questions &amp; Preview</label>
-          <span id="assign-selected-summary" class="mini-note">Selected: <b>0</b> question(s) • <b>0</b> total marks</span>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span id="assign-selected-summary" class="mini-note">Selected: <b>0</b> question(s) • <b>0</b> total marks</span>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="previewAllSelectedAssignQuestions()" style="font-size:12px;padding:3px 9px">👁️ Preview All Selected</button>
+          </div>
+        </div>
+
+        <div style="background:var(--teal-light);border:1px solid var(--teal);padding:8px 12px;border-radius:8px;margin-bottom:10px;font-size:12.5px;color:var(--navy);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <span>💡 <b>Teacher Guide:</b> Click <b>"👁️ Preview Question"</b> on any question below to inspect full text, diagrams, and marking schemes before assigning.</span>
         </div>
 
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
@@ -383,7 +390,7 @@ function openCreateAssignmentModal(){
           </select>
         </div>
 
-        <div id="assign-question-list-inner" style="max-height:min(440px,50vh);overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;padding:6px;background:var(--surface)"></div>
+        <div id="assign-question-list-inner" style="max-height:min(440px,50vh);overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface)"></div>
       </div>
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px">
@@ -436,27 +443,30 @@ function updateAssignmentQuestionList(){
     const isPrev = window._assignPreviewOpenIds.has(q.id);
     const textSnippet = (q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text || ('Question '+q.number);
     return `
-      <div id="assign-q-row-${esc(q.id)}" style="border-bottom:1px solid var(--line);padding:9px 8px;background:${isSel?'var(--teal-light)':'transparent'};border-radius:8px;margin-bottom:4px;transition:background .15s">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <input type="checkbox" id="assign-chk-${esc(q.id)}" ${isSel?'checked':''} onchange="toggleAssignQ('${esc(q.id)}')" style="margin-top:4px;accent-color:var(--teal);cursor:pointer;width:17px;height:17px;flex-shrink:0">
-          <div style="flex:1;min-width:0;cursor:pointer" onclick="toggleAssignQ('${esc(q.id)}')">
+      <div id="assign-q-row-${esc(q.id)}" style="border:1.5px solid ${isSel?'var(--teal)':'var(--line)'};padding:12px;background:${isSel?'var(--teal-light)':'var(--surface)'};border-radius:10px;margin-bottom:8px;transition:all .15s">
+        <div style="display:flex;align-items:flex-start;gap:12px">
+          <input type="checkbox" id="assign-chk-${esc(q.id)}" ${isSel?'checked':''} onchange="toggleAssignQ('${esc(q.id)}')" style="margin-top:3px;accent-color:var(--teal);cursor:pointer;width:19px;height:19px;flex-shrink:0">
+          <div style="flex:1;min-width:0">
             <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
-              <span>
-                <b>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}</b>
-                <span class="pill none" style="font-size:11px;margin-left:4px">${q.marks}m</span>
-                <span class="pill" style="font-size:10.5px;text-transform:uppercase;margin-left:4px">${q.type==='structured'?'Structured':'MCQ'}</span>
-              </span>
-              <span class="mini-note" style="white-space:nowrap">${esc(q.topics[0]||'')}</span>
+              <label for="assign-chk-${esc(q.id)}" style="cursor:pointer;margin:0;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">
+                <span style="font-weight:800;font-size:14px;color:var(--navy)">${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}</span>
+                <span class="pill none" style="font-size:11px">${q.marks} mark${q.marks!==1?'s':''}</span>
+                <span class="pill" style="font-size:10px;text-transform:uppercase;background:var(--surface2)">${q.type==='structured'?'Structured':'MCQ'}</span>
+              </label>
+              <span class="mini-note" style="color:var(--muted)">${esc(q.topics[0]||'')}</span>
             </div>
-            <div style="color:var(--muted);font-size:12.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(textSnippet)}</div>
-          </div>
-          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
-            <button type="button" class="btn btn-ghost btn-sm" id="btn-prev-${esc(q.id)}" style="padding:4px 9px;font-size:12px;font-weight:600" onclick="toggleAssignPreview('${esc(q.id)}')">
-              ${isPrev ? '✕ Hide' : '👁️ Preview'}
-            </button>
+            <div style="color:var(--muted);font-size:13px;margin:5px 0 10px;line-height:1.45">${esc(textSnippet)}</div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+              <button type="button" class="btn btn-sm" id="btn-prev-${esc(q.id)}" style="background:${isPrev?'var(--navy)':'var(--teal)'};color:#fff;border-radius:6px;font-weight:700;padding:6px 14px;font-size:12.5px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;border:none;box-shadow:0 1px 3px rgba(0,0,0,0.15)" onclick="toggleAssignPreview('${esc(q.id)}')">
+                <span>${isPrev ? '✕ Close Preview' : '👁️ Preview Question'}</span>
+              </button>
+              <button type="button" class="btn btn-ghost btn-sm" style="font-size:12px;padding:5px 12px" onclick="toggleAssignQ('${esc(q.id)}')">
+                ${isSel ? '✓ Selected in Assignment' : '＋ Select for Assignment'}
+              </button>
+            </div>
           </div>
         </div>
-        <div id="assign-q-prev-box-${esc(q.id)}" style="display:${isPrev?'block':'none'};margin-top:10px;border-top:1px dashed var(--line);padding-top:10px">
+        <div id="assign-q-prev-box-${esc(q.id)}" style="display:${isPrev?'block':'none'};margin-top:14px;border-top:1.5px dashed var(--line);padding-top:14px">
           ${isPrev ? renderAssignQuestionPreview(q) : ''}
         </div>
       </div>
@@ -466,6 +476,59 @@ function updateAssignmentQuestionList(){
   if(window._assignPreviewOpenIds.size > 0 && typeof initMermaid === 'function'){
     initMermaid();
   }
+}
+
+function previewAllSelectedAssignQuestions(){
+  if(!window._assignSelectedQIds || !window._assignSelectedQIds.length){
+    alert('Please select at least one question first by ticking its checkbox.');
+    return;
+  }
+  const questions = window._assignSelectedQIds.map(id => ALL.find(x => x.id === id)).filter(Boolean);
+  const totalMarks = questions.reduce((s, q) => s + (q.marks || 0), 0);
+  openModal(`
+    <div style="max-width:860px;width:100%">
+      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--line);padding-bottom:10px;margin-bottom:14px">
+        <div>
+          <span class="eyebrow">Assignment Preview</span>
+          <h2 style="font-family:Fraunces,serif;margin:2px 0 0;font-size:22px">Selected Questions (${questions.length})</h2>
+          <span class="mini-note">Total: <b>${totalMarks}</b> marks</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕ Back to Assignment Creator</button>
+      </div>
+      <div style="max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:6px">
+        ${questions.map((q, idx) => `
+          <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--surface)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <b>Question ${idx + 1} (${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)})</b>
+              <span class="pill none">${q.marks} mark${q.marks!==1?'s':''}</span>
+            </div>
+            ${renderAssignQuestionPreview(q)}
+          </div>
+        `).join('')}
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px">
+        <button class="btn btn-primary" onclick="closeModal()">Back to Assignment</button>
+      </div>
+    </div>
+  `);
+  if(typeof initMermaid === 'function') initMermaid();
+}
+
+function quickAssignQuestion(qid){
+  if(!firebaseUser){
+    openAuthModal('teacher');
+    return;
+  }
+  openCreateAssignmentModal();
+  window._assignSelectedQIds = [qid];
+  window._assignPreviewOpenIds = new Set([qid]);
+  const q = ALL.find(x => x.id === qid);
+  const titleInp = document.getElementById('new-assign-title');
+  if(titleInp && q){
+    titleInp.value = `${yearOf(q)} ${paperOf(q)} Q.${q.number} Practice`;
+  }
+  updateAssignmentQuestionList();
+  updateAssignmentSummaryLabel();
 }
 
 function renderAssignQuestionPreview(q){
@@ -1026,8 +1089,23 @@ function renderAssignments(){
 
   const list = studentAssignmentsState.list || [];
   const attempts = studentAssignmentsState.attempts || {};
+  const isTeacher = isStaffRole();
+  const teacherHeader = isTeacher ? `
+    <div style="background:var(--teal-light);border:2px solid var(--teal);border-radius:14px;padding:16px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div>
+        <div class="eyebrow" style="color:var(--teal)">Teacher Management</div>
+        <h3 style="font-family:Fraunces,serif;margin:4px 0 2px;font-size:20px;color:var(--navy)">Teacher Assignment Hub</h3>
+        <p class="mini-note" style="margin:0">Create and distribute assignments with full question previews, marking schemes, and student gradebooks.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="openCreateAssignmentModal()">+ Create New Assignment</button>
+        <button class="btn btn-navy" onclick="showView('admin');setAdminTab('assignments')">Open Teacher Portal →</button>
+      </div>
+    </div>
+  ` : '';
 
   root.innerHTML = `
+    ${teacherHeader}
     ${studentAssignmentsState.error ? `<div class="note" style="color:var(--red)">${esc(studentAssignmentsState.error)}</div>` : ''}
     ${studentAssignmentsState.loading ? '<p class="loading">Loading assignments…</p>' : `
       <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
