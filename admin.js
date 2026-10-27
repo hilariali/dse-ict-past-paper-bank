@@ -824,17 +824,22 @@ async function openAssignmentSubmissionsModal(assignId){
           <tbody>
             ${subs.map(({u, attempt}) => {
               const isDone = attempt && attempt.status === 'completed';
-              const pct = isDone && maxPossibleMarks ? Math.round((attempt.score||0)/maxPossibleMarks*100)+'%' : '—';
+              const hasTeacherScore = isDone && attempt.teacherScore != null;
+              const displayScore = hasTeacherScore ? attempt.teacherScore : (attempt ? attempt.score : 0);
+              const pct = isDone && maxPossibleMarks ? Math.round(displayScore / maxPossibleMarks * 100) + '%' : '—';
               return `
                 <tr>
                   <td><b>${esc(u.displayName||'')}</b><br><span class="mini-note">${esc(u.email||'')}</span></td>
                   <td>${esc(u.className||'—')}</td>
-                  <td>${isDone ? '<span class="pill know">Submitted</span>' : '<span class="pill none">Not Started</span>'}</td>
-                  <td><b>${isDone ? (attempt.score||0) + ' / ' + maxPossibleMarks : '—'}</b></td>
+                  <td>${isDone ? (hasTeacherScore ? '<span class="pill know">Graded</span>' : '<span class="pill know">Submitted</span>') : '<span class="pill none">Not Started</span>'}</td>
+                  <td>
+                    <b>${isDone ? displayScore + ' / ' + maxPossibleMarks : '—'}</b>
+                    ${hasTeacherScore ? `<br><span class="mini-note">AI: ${attempt.score}</span>` : ''}
+                  </td>
                   <td>${pct}</td>
                   <td>${isDone && attempt.submittedAt ? fmtDate(attempt.submittedAt) : '—'}</td>
                   <td>
-                    ${isDone ? `<button class="btn btn-primary btn-sm" onclick="openStudentAssignmentAttemptModal('${esc(assignId)}','${esc(u.uid)}')">View Attempt</button>` : '<span class="mini-note">—</span>'}
+                    ${isDone ? `<button class="btn btn-primary btn-sm" onclick="openStudentAssignmentAttemptModal('${esc(assignId)}','${esc(u.uid)}')">${hasTeacherScore ? 'Edit Grade &amp; Notes' : 'Grade &amp; Feedback'}</button>` : '<span class="mini-note">—</span>'}
                   </td>
                 </tr>
               `;
@@ -874,54 +879,253 @@ async function openStudentAssignmentAttemptModal(assignId, uid){
     const results = attempt.results || {};
     const questions = (a.questionIds||[]).map(qid => ALL.find(x => x.id === qid)).filter(Boolean);
 
+    const effectiveScore = attempt.teacherScore != null ? attempt.teacherScore : attempt.score;
+    const maxPossibleMarks = attempt.maxScore || (questions.map(q => q.marks).reduce((x, y) => x + y, 0));
+
     openModal(`
-      <div style="max-width:840px">
+      <div style="max-width:880px">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:14px">
           <div>
-            <h2 style="font-family:Fraunces,serif;margin:0 0 4px;font-size:24px">Submission: ${esc(u.displayName||'')}</h2>
+            <div class="eyebrow" style="color:var(--teal)">Teacher Marking &amp; Feedback</div>
+            <h2 style="font-family:Fraunces,serif;margin:2px 0 4px;font-size:24px">Submission: ${esc(u.displayName||'')}</h2>
             <div class="mini-note">Assignment: <b>${esc(a.title)}</b> • Submitted: ${fmtDate(attempt.submittedAt)}</div>
           </div>
-          <div style="font-size:20px;font-weight:bold;color:var(--teal)">
-            Score: ${attempt.score} / ${attempt.maxScore} marks (${Math.round((attempt.score||0)/(attempt.maxScore||1)*100)}%)
+          <div style="text-align:right">
+            <div style="font-size:22px;font-weight:bold;color:var(--teal)">
+              Score: <span id="teacher-modal-total-score">${effectiveScore}</span> / ${maxPossibleMarks} marks
+            </div>
+            <div class="mini-note" id="teacher-modal-score-note">
+              ${attempt.teacherScore != null ? `(Teacher Adjusted • Original AI: ${attempt.score}/${maxPossibleMarks})` : `(AI Marked: ${attempt.score}/${maxPossibleMarks})`}
+            </div>
           </div>
         </div>
 
-        <div style="display:flex;flex-direction:column;gap:14px">
+        <!-- Overall Teacher Feedback card -->
+        <div style="background:var(--surface2);border:2px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:18px">
+          <label style="font-weight:700;font-size:14px;color:var(--navy);display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <span>📝 Overall Teacher Feedback for Student:</span>
+            ${attempt.gradedBy ? `<span class="mini-note">Graded by ${esc(attempt.gradedBy)}${attempt.gradedAt ? ' • ' + fmtDate(attempt.gradedAt) : ''}</span>` : ''}
+          </label>
+          <textarea id="teacher-overall-feedback" class="answerbox" rows="3" style="width:100%;margin-top:0" placeholder="Write overall comments, praise, or guidance for the student on this assignment...">${esc(attempt.teacherFeedback||'')}</textarea>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:16px">
           ${questions.map((q, idx) => {
             const res = results[q.id] || {};
             const isS = q.type === 'structured';
-            return `
-              <div class="part" style="margin-top:0">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                  <b>Q${idx+1}. ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} [${q.marks} mark${q.marks!==1?'s':''}]</b>
-                  <span class="pill ${res.correct?'know':'gap'}">${res.score||0} / ${q.marks} marks</span>
-                </div>
-                <div class="stem" style="font-size:14px">${renderBlocks(q.stem)}</div>
+            const curQScore = res.teacherScore != null ? res.teacherScore : (res.score != null ? res.score : 0);
 
-                <div style="margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--surface2)">
-                  ${!isS ? `
-                    <div><b>Student's answer:</b> <span style="font-weight:bold;color:${res.correct?'var(--green)':'var(--red)'}">${esc(res.answer||'(blank)')}</span> • <b>Official answer:</b> ${esc(q.markingScheme.answer)}</div>
-                  ` : `
-                    <div><b>Student's answers:</b></div>
-                    ${Object.entries(res.answers||{}).map(([lbl, val]) => `
-                      <div style="margin-top:6px;padding:6px;background:var(--surface);border-radius:6px">
-                        <b>Part (${esc(lbl)}):</b> <pre style="margin:4px 0;white-space:pre-wrap;font-family:inherit">${esc(val||'(blank)')}</pre>
-                      </div>
-                    `).join('') || '<span class="mini-note">No written answers.</span>'}
-                  `}
+            return `
+              <div class="drill-card" style="margin-top:0;border:1px solid var(--line);background:var(--surface)">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px">
+                  <div>
+                    <span class="qnum">Q${idx+1}. ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}</span>
+                    <span style="font-size:13px;color:var(--muted);margin-left:8px">[${q.marks} mark${q.marks!==1?'s':''}]</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px">
+                    <span style="font-size:13.5px;font-weight:700">Question Mark:</span>
+                    <input type="number" step="0.5" min="0" max="${q.marks}"
+                      class="teacher-q-score-input"
+                      id="teacher-q-score-${q.id}"
+                      data-qid="${q.id}"
+                      data-max="${q.marks}"
+                      value="${curQScore}"
+                      ${isS ? 'readonly style="background:var(--surface2);width:68px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);font-weight:bold;text-align:center"' : 'style="width:68px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);font-weight:bold;text-align:center" oninput="onTeacherScoreChanged()"'}
+                    />
+                    <span style="font-size:13px;color:var(--muted)">/ ${q.marks}</span>
+                  </div>
+                </div>
+
+                <div class="blocks" style="font-size:14px;margin-bottom:12px">${renderBlocks(q.stem)}</div>
+
+                ${!isS ? `
+                  <div style="padding:10px 12px;border-radius:10px;background:var(--surface2);margin-bottom:10px">
+                    <div><b>Student Answer:</b> <span style="font-weight:bold;color:${res.correct?'var(--green)':'var(--red)'}">${esc(res.answer||'(blank)')}</span> • <b>Official Answer:</b> ${esc(q.markingScheme.answer)}</div>
+                  </div>
+                ` : `
+                  <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:12px">
+                    ${q.parts.map((p) => {
+                      const userPartAns = (res.answers && res.answers[p.label]) || '';
+                      const partInfo = (res.parts && res.parts[p.label]) || {};
+                      const ms = p.markingScheme || {};
+                      const teacherPartScore = (res.teacherParts && res.teacherParts[p.label] != null)
+                        ? res.teacherParts[p.label]
+                        : (partInfo.score != null ? partInfo.score : (res.score != null ? res.score : 0));
+
+                      return `
+                        <div class="part" style="background:var(--surface2);padding:12px;border-radius:10px">
+                          <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+                            <strong>Part (${esc(p.label)}) [${p.marks} mark${p.marks!==1?'s':''}]</strong>
+                            <div style="display:flex;align-items:center;gap:6px">
+                              <span style="font-size:13px;font-weight:700">Teacher Part Mark:</span>
+                              <input type="number" step="0.5" min="0" max="${p.marks}"
+                                class="teacher-part-score-input"
+                                data-qid="${q.id}"
+                                data-part="${p.label}"
+                                data-max="${p.marks}"
+                                value="${teacherPartScore}"
+                                style="width:64px;padding:4px 8px;border-radius:6px;border:1px solid var(--line);font-weight:bold;text-align:center"
+                                oninput="onTeacherPartScoreChanged('${q.id}')"
+                              />
+                              <span style="font-size:12.5px;color:var(--muted)">/ ${p.marks}</span>
+                            </div>
+                          </div>
+                          <div class="blocks" style="margin-top:6px;font-size:13.5px">${renderBlocks(p.stem)}</div>
+
+                          <div style="margin-top:8px;padding:8px 10px;background:var(--surface);border-radius:6px;border:1px solid var(--line)">
+                            <div style="font-size:12.5px;font-weight:700;color:var(--muted)">Student's Written Answer:</div>
+                            <pre style="margin:4px 0;white-space:pre-wrap;font-family:inherit;font-size:13.5px">${esc(userPartAns||'(blank)')}</pre>
+                          </div>
+
+                          <div style="margin-top:8px;padding:8px 10px;background:var(--teal-light);border-radius:6px;font-size:13px">
+                            <b>Official Model Answer:</b> ${esc(ms.modelAnswer||'(None)')}
+                            ${ms.points && ms.points.length ? `
+                              <div style="margin-top:4px">
+                                <b>Marking Points:</b>
+                                <ul style="margin:2px 0 0 16px;padding:0">
+                                  ${ms.points.map((pt,pi)=>`<li>[${pt.marks}m] ${esc(pt.point)}</li>`).join('')}
+                                </ul>
+                              </div>
+                            ` : ''}
+                          </div>
+
+                          <!-- AI Examiner assessment info -->
+                          ${partInfo.score != null || partInfo.feedback ? `
+                            <div style="margin-top:8px;padding:8px 10px;background:#eef7ff;border-left:3px solid var(--teal);border-radius:6px;font-size:12.5px">
+                              <b>🤖 AI Examiner:</b> ${partInfo.score != null ? partInfo.score + ' / ' + p.marks + ' marks' : ''}
+                              ${partInfo.feedback ? ` — <em>${esc(partInfo.feedback)}</em>` : ''}
+                              ${partInfo.hits && Array.isArray(partInfo.hits) && ms.points ? `
+                                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px">
+                                  ${partInfo.hits.map((h,hi)=>`<span style="color:${h?'var(--green)':'var(--red)'};font-weight:600">${h?'✓':'✗'} Point ${hi+1}</span>`).join('')}
+                                </div>
+                              ` : ''}
+                            </div>
+                          ` : ''}
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+                `}
+
+                <!-- Per-Question Teacher Feedback -->
+                <div style="margin-top:8px">
+                  <label style="font-size:12.5px;font-weight:700;color:var(--muted);display:block;margin-bottom:4px">Question Feedback / Teacher Notes (optional):</label>
+                  <input type="text"
+                    class="teacher-q-feedback-input"
+                    id="teacher-q-feedback-${q.id}"
+                    data-qid="${q.id}"
+                    placeholder="E.g. Clear explanation in part (a), review memory hierarchy definitions for part (b)..."
+                    value="${esc(res.teacherFeedback||'')}"
+                    style="width:100%;padding:8px 10px;border-radius:6px;border:1px solid var(--line);font-size:13px"
+                  />
                 </div>
               </div>
             `;
           }).join('')}
         </div>
 
-        <div style="margin-top:16px;display:flex;justify-content:flex-end">
+        <div style="margin-top:20px;padding-top:14px;border-top:2px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
           <button class="btn btn-ghost" onclick="openAssignmentSubmissionsModal('${esc(assignId)}')">← Back to Gradebook</button>
+          <button class="btn btn-primary" onclick="saveTeacherGrading('${esc(assignId)}', '${esc(uid)}')">💾 Save Marks &amp; Feedback</button>
         </div>
       </div>
     `);
   }catch(e){
     alert('Error loading attempt: ' + (e.message || e));
+  }
+}
+
+function onTeacherPartScoreChanged(qid){
+  const partInputs = document.querySelectorAll(`.teacher-part-score-input[data-qid="${qid}"]`);
+  let qSum = 0;
+  partInputs.forEach(inp => {
+    qSum += parseFloat(inp.value) || 0;
+  });
+  const qScoreInput = document.getElementById(`teacher-q-score-${qid}`);
+  if(qScoreInput){
+    const max = parseFloat(qScoreInput.dataset.max) || 0;
+    qSum = Math.min(max, Math.round(qSum * 2) / 2);
+    qScoreInput.value = qSum;
+  }
+  onTeacherScoreChanged();
+}
+
+function onTeacherScoreChanged(){
+  const qInputs = document.querySelectorAll('.teacher-q-score-input');
+  let total = 0;
+  qInputs.forEach(inp => {
+    total += parseFloat(inp.value) || 0;
+  });
+  const totalEl = document.getElementById('teacher-modal-total-score');
+  if(totalEl) totalEl.textContent = Math.round(total * 2) / 2;
+}
+
+async function saveTeacherGrading(assignId, uid){
+  const a = (adminState.assignments||[]).find(x => x.id === assignId);
+  if(!a) return;
+  const snap = await firebaseDb.collection('users').doc(uid).collection('assignmentAttempts').doc(assignId).get();
+  if(!snap.exists){
+    alert('Submission document not found.');
+    return;
+  }
+  const attempt = snap.data();
+  const results = attempt.results || {};
+  const questions = (a.questionIds||[]).map(qid => ALL.find(x => x.id === qid)).filter(Boolean);
+
+  let newTotal = 0;
+  questions.forEach(q => {
+    results[q.id] = results[q.id] || {};
+    const qFeedInput = document.getElementById(`teacher-q-feedback-${q.id}`);
+    if(qFeedInput) results[q.id].teacherFeedback = qFeedInput.value.trim().slice(0, 500);
+
+    if(q.type === 'structured'){
+      const partInputs = document.querySelectorAll(`.teacher-part-score-input[data-qid="${q.id}"]`);
+      results[q.id].teacherParts = results[q.id].teacherParts || {};
+      let qSum = 0;
+      partInputs.forEach(inp => {
+        const pLabel = inp.dataset.part;
+        const pMax = parseFloat(inp.dataset.max) || 0;
+        const pVal = Math.max(0, Math.min(pMax, parseFloat(inp.value) || 0));
+        results[q.id].teacherParts[pLabel] = pVal;
+        qSum += pVal;
+      });
+      qSum = Math.min(q.marks, Math.round(qSum * 2) / 2);
+      results[q.id].teacherScore = qSum;
+      newTotal += qSum;
+    } else {
+      const qScoreInput = document.getElementById(`teacher-q-score-${q.id}`);
+      const val = qScoreInput ? Math.max(0, Math.min(q.marks, parseFloat(qScoreInput.value) || 0)) : (results[q.id].score || 0);
+      results[q.id].teacherScore = val;
+      newTotal += val;
+    }
+  });
+
+  newTotal = Math.round(newTotal * 2) / 2;
+  const overallFeedback = (document.getElementById('teacher-overall-feedback')?.value || '').trim().slice(0, 2000);
+  const teacherName = (currentUserProfile?.displayName || firebaseUser.displayName || firebaseUser.email || 'Teacher').slice(0, 100);
+
+  const updateData = {
+    assignmentId: assignId,
+    results: results,
+    score: attempt.score,
+    maxScore: attempt.maxScore,
+    answered: attempt.answered,
+    teacherScore: newTotal,
+    teacherFeedback: overallFeedback,
+    gradedBy: teacherName,
+    gradedAt: FV().serverTimestamp(),
+    updatedAt: FV().serverTimestamp()
+  };
+
+  try{
+    await firebaseDb.collection('users').doc(uid).collection('assignmentAttempts').doc(assignId).set(updateData, { merge: true });
+    if(studentAssignmentsState.attempts[assignId]){
+      studentAssignmentsState.attempts[assignId] = { ...studentAssignmentsState.attempts[assignId], ...updateData };
+    }
+    alert('✅ Marks and feedback saved successfully!');
+    openStudentAssignmentAttemptModal(assignId, uid);
+  }catch(e){
+    alert('Could not save teacher grading: ' + (e.message || e));
   }
 }
 
@@ -1114,6 +1318,8 @@ function renderAssignments(){
         ${list.map(a => {
           const att = attempts[a.id];
           const isDone = att && att.status === 'completed';
+          const hasTeacherGraded = isDone && att.teacherScore != null;
+          const displayScore = hasTeacherGraded ? att.teacherScore : (att ? att.score : 0);
           const qCount = (a.questionIds || []).length;
           const maxMarks = (a.questionIds || []).map(qid => (ALL.find(x => x.id === qid) || {}).marks || 0).reduce((x, y) => x + y, 0);
 
@@ -1124,15 +1330,21 @@ function renderAssignments(){
                   <span class="qnum" style="background:var(--navy);color:#fff">Assignment</span>
                   <span style="font-weight:700;font-size:17px;margin-left:8px">${esc(a.title)}</span>
                 </div>
-                ${isDone ? `<span class="pill know">Completed • ${att.score} / ${att.maxScore} marks</span>` : `<span class="pill ${a.dueDate?'shaky':'none'}">${a.dueDate?'Due '+esc(a.dueDate):'No due date'}</span>`}
+                ${isDone ? `
+                  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                    <span class="pill know">Score: ${displayScore} / ${att.maxScore || maxMarks}</span>
+                    ${hasTeacherGraded ? '<span class="pill" style="background:#e6f4ea;color:#137333;font-size:11.5px">Teacher Graded</span>' : '<span class="pill" style="background:var(--teal-light);color:var(--teal);font-size:11.5px">AI Marked</span>'}
+                    ${att.teacherFeedback ? '<span class="pill" style="background:#fff3cd;color:#856404;font-size:11.5px">📝 Feedback</span>' : ''}
+                  </div>
+                ` : `<span class="pill ${a.dueDate?'shaky':'none'}">${a.dueDate?'Due '+esc(a.dueDate):'No due date'}</span>`}
               </div>
               ${a.description ? `<p style="margin:4px 0;font-size:14.5px;color:var(--muted)">${esc(a.description)}</p>` : ''}
               <div class="topic">Teacher: <b>${esc(a.teacherName||'Teacher')}</b> • ${qCount} questions • ${maxMarks} marks total</div>
               <div class="qfoot">
-                <span style="font-size:13px;color:var(--muted)">${isDone ? 'Submitted on ' + fmtDate(att.submittedAt) + ' — assignment score recorded separately' : 'Unsubmitted assignment'}</span>
+                <span style="font-size:13px;color:var(--muted)">${isDone ? (hasTeacherGraded ? 'Teacher reviewed & feedback provided' : 'AI evaluation completed on ' + fmtDate(att.submittedAt)) : 'Unsubmitted assignment'}</span>
                 <div style="display:flex;gap:8px">
                   ${isDone ? `
-                    <button class="btn btn-ghost" onclick="startAssignmentRunner('${esc(a.id)}', true)">Review Submission →</button>
+                    <button class="btn btn-ghost" onclick="startAssignmentRunner('${esc(a.id)}', true)">Review Submission &amp; Feedback →</button>
                   ` : `
                     <button class="btn btn-primary" onclick="startAssignmentRunner('${esc(a.id)}', false)">${att?'Resume Assignment':'Start Assignment'} →</button>
                   `}
@@ -1146,11 +1358,21 @@ function renderAssignments(){
   `;
 }
 
-function startAssignmentRunner(assignId, isReview){
+async function startAssignmentRunner(assignId, isReview){
   const a = studentAssignmentsState.list.find(x => x.id === assignId) || (adminState.assignments||[]).find(x => x.id === assignId);
   if(!a) return;
   const questions = (a.questionIds || []).map(qid => ALL.find(x => x.id === qid)).filter(Boolean);
-  const prevAttempt = studentAssignmentsState.attempts[assignId] || null;
+
+  let prevAttempt = studentAssignmentsState.attempts[assignId] || null;
+  if(isReview && !prevAttempt && firebaseUser){
+    try{
+      const snap = await firebaseDb.collection('users').doc(firebaseUser.uid).collection('assignmentAttempts').doc(assignId).get();
+      if(snap.exists){
+        prevAttempt = snap.data();
+        studentAssignmentsState.attempts[assignId] = prevAttempt;
+      }
+    }catch(e){}
+  }
 
   activeAssignmentRunner = {
     assign: a,
@@ -1166,6 +1388,108 @@ function startAssignmentRunner(assignId, isReview){
 function exitAssignmentRunner(){
   activeAssignmentRunner = null;
   renderAssignments();
+}
+
+let assignChatHistory = {};
+let assignChatOpen = {};
+let assignChatBusy = false;
+
+function toggleAssignChat(qid){
+  if(!activeAssignmentRunner) return;
+  const key = `${activeAssignmentRunner.assign.id}_${qid}`;
+  assignChatOpen[key] = !assignChatOpen[key];
+  const el = document.getElementById(`assign-chat-${qid}`);
+  if(el){
+    el.hidden = !assignChatOpen[key];
+    if(!el.hidden){
+      renderAssignChatMsgs(qid);
+      const inp = document.getElementById(`assign-chat-input-${qid}`);
+      if(inp) inp.focus();
+    }
+  }
+}
+
+function sendAssignQuickPrompt(qid, promptText){
+  const inp = document.getElementById(`assign-chat-input-${qid}`);
+  if(inp) inp.value = promptText;
+  sendAssignChat(qid);
+}
+
+function renderAssignChatMsgs(qid){
+  if(!activeAssignmentRunner) return;
+  const key = `${activeAssignmentRunner.assign.id}_${qid}`;
+  const el = document.getElementById(`assign-chat-msgs-${qid}`);
+  if(!el) return;
+  const msgs = assignChatHistory[key] || [];
+  el.innerHTML = msgs.map(m => `
+    <div class="chatmsg ${m.role==='user'?'user':'ai'}">
+      <strong>${m.role==='user'?'You':'AI Tutor'}</strong>
+      <div style="white-space:pre-wrap;margin-top:2px;font-size:13.5px">${esc(m.content)}</div>
+    </div>
+  `).join('') || '<div class="mini-note" style="padding:8px">No chat messages yet. Ask a question or click a prompt above.</div>';
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendAssignChat(qid){
+  if(assignChatBusy || !activeAssignmentRunner) return;
+  const q = activeAssignmentRunner.questions.find(x => x.id === qid);
+  if(!q) return;
+  const inp = document.getElementById(`assign-chat-input-${qid}`);
+  const text = ((inp && inp.value) || '').trim();
+  if(!text) return;
+  inp.value = '';
+
+  const key = `${activeAssignmentRunner.assign.id}_${qid}`;
+  assignChatHistory[key] = assignChatHistory[key] || [];
+  assignChatHistory[key].push({ role: 'user', content: text });
+  renderAssignChatMsgs(qid);
+
+  assignChatBusy = true;
+  const sendBtn = document.getElementById(`assign-chat-send-${qid}`);
+  const noteEl = document.getElementById(`assign-chat-note-${qid}`);
+  if(sendBtn){ sendBtn.disabled = true; sendBtn.textContent = 'Thinking…'; }
+  if(inp) inp.disabled = true;
+  if(noteEl) noteEl.innerHTML = '<span class="loading">AI tutor is thinking…</span>';
+
+  const isReview = activeAssignmentRunner.isReview;
+  const curAns = activeAssignmentRunner.answers[q.id];
+  let answerSummary = '';
+  if(q.type === 'mc'){
+    answerSummary = `The student selected option: ${curAns || '(none)'}.`;
+  } else {
+    answerSummary = `Student's written answers:\n` + Object.entries(curAns || {}).map(([lbl, val]) => `Part (${lbl}): ${val || '(blank)'}`).join('\n');
+  }
+
+  const sys = isReview
+    ? `You are an expert tutor for HKDSE ICT students. The student has submitted this assignment question, and the official HKDSE marking scheme and model answers are now revealed.
+Explain the official answers, marking scheme points, and marking criteria clearly.
+Point out where the student earned or missed marks based on their answers, and provide actionable advice on how to structure HKDSE answers for full marks.
+OFFICIAL MARKING INFORMATION:
+${schemeContext(q)}
+
+STUDENT'S ANSWERS:
+${answerSummary}`
+    : `You are an expert tutor for HKDSE ICT students. The student is currently attempting this assignment question and has NOT yet submitted.
+Explain what the question is asking, clarify syllabus concepts, give helpful hints, and guide the student with leading questions.
+CRITICAL EXAMINATION INTEGRITY RULE: You must NOT reveal, quote, or state the correct answer, the official marking scheme, model answers, or which option is right, even if the student asks directly. If asked for answers, politely decline and provide another hint or conceptual explanation.
+
+STUDENT'S CURRENT ANSWERS:
+${answerSummary}`;
+
+  try{
+    const reply = await aiComplete([
+      { role: 'system', content: sys + '\n\nQUESTION CONTEXT:\n' + questionContext(q) },
+      ...assignChatHistory[key]
+    ]);
+    assignChatHistory[key].push({ role: 'assistant', content: reply });
+    if(noteEl) noteEl.innerHTML = '';
+  }catch(e){
+    if(noteEl) noteEl.innerHTML = `<div class="note" style="color:var(--red)">AI tutor temporarily unavailable (${esc(e.message || 'network')}). The official marking scheme is available upon submission.</div>`;
+  }
+  assignChatBusy = false;
+  if(sendBtn){ sendBtn.disabled = false; sendBtn.textContent = 'Send'; }
+  if(inp) inp.disabled = false;
+  renderAssignChatMsgs(qid);
 }
 
 function renderAssignmentRunner(){
@@ -1190,6 +1514,10 @@ function renderAssignmentRunner(){
     `;
   }).join('');
 
+  const chatKey = `${assign.id}_${q.id}`;
+  const isChatOpen = !!assignChatOpen[chatKey];
+  const chatMsgs = assignChatHistory[chatKey] || [];
+
   root.innerHTML = `
     <div style="border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
       <div>
@@ -1200,6 +1528,30 @@ function renderAssignmentRunner(){
       <button class="btn btn-ghost btn-sm" onclick="exitAssignmentRunner()">← Exit Assignment</button>
     </div>
 
+    ${isReview && prevAttempt ? `
+      <div style="border-radius:12px;padding:14px 18px;margin-bottom:16px;${prevAttempt.teacherScore != null ? 'background:var(--teal-light);border:2px solid var(--teal)' : 'background:var(--surface2);border:1px solid var(--line)'}">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <div class="eyebrow" style="color:var(--navy)">${prevAttempt.teacherScore != null ? 'Teacher Evaluation &amp; Feedback' : 'AI Evaluation Result'}</div>
+            <div style="font-size:20px;font-weight:800;color:var(--teal);margin-top:2px">
+              Final Score: ${prevAttempt.teacherScore != null ? prevAttempt.teacherScore : prevAttempt.score} / ${prevAttempt.maxScore} marks (${Math.round(((prevAttempt.teacherScore != null ? prevAttempt.teacherScore : prevAttempt.score)/(prevAttempt.maxScore||1))*100)}%)
+            </div>
+            ${prevAttempt.teacherScore != null ? `<div class="mini-note">Initial AI Examiner Score: ${prevAttempt.score} / ${prevAttempt.maxScore} marks</div>` : '<div class="mini-note">Graded by AI examiner against official HKDSE marking criteria.</div>'}
+          </div>
+          <div style="font-size:12.5px;color:var(--muted);text-align:right">
+            ${prevAttempt.gradedBy ? `Graded by <b>${esc(prevAttempt.gradedBy)}</b><br>` : ''}
+            Submitted: ${fmtDate(prevAttempt.submittedAt)}
+          </div>
+        </div>
+        ${prevAttempt.teacherFeedback ? `
+          <div style="margin-top:10px;padding:10px 14px;background:#fff;border-radius:8px;border:1px solid var(--teal)">
+            <b style="color:var(--navy);font-size:13.5px">👨‍🏫 Teacher's Overall Feedback:</b>
+            <div style="margin-top:4px;white-space:pre-wrap;font-size:14px">${esc(prevAttempt.teacherFeedback)}</div>
+          </div>
+        ` : ''}
+      </div>
+    ` : ''}
+
     <div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:4px 2px 10px;margin-bottom:18px">
       ${pillsHtml}
     </div>
@@ -1207,7 +1559,14 @@ function renderAssignmentRunner(){
     <div class="drill-card" style="border:1px solid var(--line);background:var(--surface)">
       <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px">
         <span class="qnum">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)}</span>
-        <span style="font-size:13px;color:var(--muted)">${esc(q.topics.join(' • '))} • ${q.marks} mark${q.marks!==1?'s':''}</span>
+        <div style="display:flex;gap:8px;align-items:center">
+          ${isReview && qResult ? `
+            <span class="pill ${qResult.correct ? 'know' : 'gap'}">
+              ${(qResult.teacherScore != null ? qResult.teacherScore : qResult.score) || 0} / ${q.marks} marks
+            </span>
+          ` : ''}
+          <span style="font-size:13px;color:var(--muted)">${esc(q.topics.join(' • '))} • ${q.marks} mark${q.marks!==1?'s':''}</span>
+        </div>
       </div>
 
       <div class="blocks" style="margin-top:16px">${renderBlocks(q.stem)}</div>
@@ -1239,6 +1598,9 @@ function renderAssignmentRunner(){
         ${q.parts.map((p, pi) => {
           const userAns = (answers[q.id] && answers[q.id][p.label]) || '';
           const ms = p.markingScheme || {};
+          const partRes = qResult && qResult.parts && qResult.parts[p.label];
+          const teacherPartScore = qResult && qResult.teacherParts && qResult.teacherParts[p.label] != null ? qResult.teacherParts[p.label] : null;
+
           return `
             <div class="part">
               <div class="part-head">
@@ -1247,16 +1609,110 @@ function renderAssignmentRunner(){
               </div>
               <div class="blocks" style="margin-top:8px">${renderBlocks(p.stem)}</div>
               <textarea class="answerbox" ${isReview?'disabled':''} placeholder="Type your answer for part ${esc(p.label)} here…" oninput="setAssignmentStructAnswer('${esc(p.label)}', this.value)">${esc(userAns)}</textarea>
+
               ${isReview ? `
-                <div style="margin-top:10px;padding:10px;background:var(--teal-light);border-radius:10px">
-                  <b>Model Answer:</b>
-                  <pre style="margin:4px 0;font-family:inherit;white-space:pre-wrap">${esc(ms.modelAnswer||'(No model answer published)')}</pre>
+                <div style="margin-top:10px;padding:12px 14px;background:var(--teal-light);border-radius:10px;font-size:13.5px">
+                  <b>Official Model Answer:</b>
+                  <pre style="margin:4px 0 8px;font-family:inherit;white-space:pre-wrap">${esc(ms.modelAnswer||'(No model answer published)')}</pre>
+                  ${ms.points && ms.points.length ? `
+                    <b>Official Marking Points:</b>
+                    <ul style="margin:4px 0 0 18px;padding:0">
+                      ${ms.points.map((pt, i) => `<li>[${pt.marks} mark${pt.marks!==1?'s':''}] ${esc(pt.point)}</li>`).join('')}
+                    </ul>
+                  ` : ''}
                 </div>
+
+                <!-- AI Examiner assessment box -->
+                ${partRes ? `
+                  <div class="aimarkbox" style="margin-top:10px;padding:12px 14px;background:var(--surface2);border-radius:10px;border-left:4px solid var(--teal)">
+                    <div style="font-weight:bold;color:var(--navy);font-size:14px">🤖 AI Examiner Mark: ${partRes.score} / ${p.marks} marks</div>
+                    ${partRes.feedback ? `<div style="margin-top:4px;font-size:13.5px;color:var(--ink)"><b>Feedback:</b> ${esc(partRes.feedback)}</div>` : ''}
+                    ${partRes.hits && Array.isArray(partRes.hits) && ms.points ? `
+                      <div style="margin-top:8px;font-size:13px">
+                        <b>Marking Points Checklist:</b>
+                        <div style="display:grid;gap:4px;margin-top:4px">
+                          ${partRes.hits.map((hit, hi) => {
+                            const ptObj = ms.points[hi] || { marks: 1, point: 'Point ' + (hi + 1) };
+                            return `
+                              <div style="display:flex;gap:6px;align-items:baseline;color:${hit ? 'var(--green)' : 'var(--red)'}">
+                                <span style="font-weight:bold">${hit ? '✓' : '✗'}</span>
+                                <span>[${ptObj.marks}m] ${esc(ptObj.point)}</span>
+                              </div>
+                            `;
+                          }).join('')}
+                        </div>
+                      </div>
+                    ` : ''}
+                  </div>
+                ` : ''}
+
+                <!-- Teacher adjusted mark if present -->
+                ${teacherPartScore != null ? `
+                  <div style="margin-top:8px;padding:8px 12px;background:#fff8e6;border-left:4px solid var(--orange);border-radius:8px;font-size:13.5px">
+                    <b>👨‍🏫 Teacher's Adjusted Mark:</b> <span style="font-weight:bold;color:var(--orange)">${teacherPartScore} / ${p.marks} marks</span>
+                  </div>
+                ` : ''}
               ` : ''}
             </div>
           `;
         }).join('')}
       `}
+
+      <!-- Per-question Teacher Feedback in Review Mode -->
+      ${isReview && qResult && qResult.teacherFeedback ? `
+        <div style="margin-top:14px;padding:10px 14px;background:#f0f8ff;border-left:4px solid var(--navy);border-radius:8px">
+          <b style="color:var(--navy);font-size:13.5px">👨‍🏫 Teacher Feedback for Q.${esc(q.number)}:</b>
+          <div style="margin-top:4px;white-space:pre-wrap;font-size:13.5px">${esc(qResult.teacherFeedback)}</div>
+        </div>
+      ` : ''}
+
+      <!-- Interactive AI Tutor Zone in Assignment Runner -->
+      <div style="margin-top:20px;border-top:2px solid var(--line);padding-top:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+          <div>
+            <strong style="font-size:14.5px;color:var(--navy)">🤖 Ask AI Tutor</strong>
+            <span class="mini-note" style="margin-left:6px">${isReview ? 'Clarify marking schemes & learn how to improve' : 'Ask for hints & concept explanations without spoilers'}</span>
+          </div>
+          <button class="btn btn-navy btn-sm" onclick="toggleAssignChat('${esc(q.id)}')">${isChatOpen ? 'Hide AI Chat' : 'Ask AI Tutor'}</button>
+        </div>
+
+        <div id="assign-chat-${esc(q.id)}" ${isChatOpen ? '' : 'hidden'} style="margin-top:14px">
+          <div id="assign-chat-msgs-${esc(q.id)}" style="display:grid;gap:8px;max-height:280px;overflow-y:auto;padding-right:4px">
+            ${chatMsgs.map(m => `
+              <div class="chatmsg ${m.role==='user'?'user':'ai'}">
+                <strong>${m.role==='user'?'You':'AI Tutor'}</strong>
+                <div style="white-space:pre-wrap;margin-top:2px;font-size:13.5px">${esc(m.content)}</div>
+              </div>
+            `).join('') || `
+              <div class="mini-note" style="padding:10px;background:var(--surface2);border-radius:8px">
+                ${isReview
+                  ? '💡 Ask anything about the marking scheme, model answer, or how marks are awarded.'
+                  : '💡 Ask for hints, syllabus definitions, or clarifying questions without giving away answers.'}
+              </div>
+            `}
+          </div>
+
+          <div id="assign-chat-note-${esc(q.id)}" style="margin-top:6px"></div>
+
+          <!-- Quick prompt chips -->
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+            ${isReview ? `
+              <button class="btn btn-ghost btn-sm" style="font-size:12px;padding:3px 9px" onclick="sendAssignQuickPrompt('${esc(q.id)}', 'Can you explain the official model answer and key requirements clearly?')">Explain model answer</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:12px;padding:3px 9px" onclick="sendAssignQuickPrompt('${esc(q.id)}', 'What specific keywords or points are needed to get full marks for this question?')">Key points for full marks</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:12px;padding:3px 9px" onclick="sendAssignQuickPrompt('${esc(q.id)}', 'How can I improve my written answer next time?')">How to improve answer</button>
+            ` : `
+              <button class="btn btn-ghost btn-sm" style="font-size:12px;padding:3px 9px" onclick="sendAssignQuickPrompt('${esc(q.id)}', 'Can you give me a hint on how to think about this question without giving away the answer?')">Give me a hint</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:12px;padding:3px 9px" onclick="sendAssignQuickPrompt('${esc(q.id)}', 'What syllabus concepts and topics are being tested here?')">Explain core concepts</button>
+              <button class="btn btn-ghost btn-sm" style="font-size:12px;padding:3px 9px" onclick="sendAssignQuickPrompt('${esc(q.id)}', 'What should I pay attention to in the question stem?')">Guide me through stem</button>
+            `}
+          </div>
+
+          <div style="display:flex;gap:8px;margin-top:10px;align-items:flex-start">
+            <textarea id="assign-chat-input-${esc(q.id)}" class="answerbox" style="min-height:50px;flex:1;margin-top:0" placeholder="${isReview ? 'Ask anything about the marking scheme, model answer, or your mistakes…' : 'Ask about concepts or for a hint (AI will not spoil the answer)…'}"></textarea>
+            <button class="btn btn-primary" id="assign-chat-send-${esc(q.id)}" onclick="sendAssignChat('${esc(q.id)}')">Send</button>
+          </div>
+        </div>
+      </div>
 
       <div class="assign-runner-foot" style="display:flex;justify-content:space-between;align-items:center;margin-top:22px;flex-wrap:wrap;gap:10px">
         <button class="btn btn-ghost" ${curIndex===0?'disabled':''} onclick="prevAssignmentQ()">← Previous</button>
@@ -1310,14 +1766,35 @@ async function submitActiveAssignment(){
     }
   });
 
-  if(!confirm(`Submit this assignment now? You have answered ${answeredCount} of ${questions.length} questions.`)) return;
+  if(!confirm(`Submit this assignment now? You have answered ${answeredCount} of ${questions.length} questions.\n\nUpon submission, written answers are evaluated by the AI examiner against official HKDSE marking points.`)) return;
+
+  // Show AI grading progress modal
+  openModal(`
+    <div style="text-align:center;padding:26px 16px;max-width:500px">
+      <div style="font-size:32px;margin-bottom:8px">🤖</div>
+      <h3 style="font-family:Fraunces,serif;margin:0 0 6px;font-size:22px">Marking Assignment with AI</h3>
+      <p class="mini-note" id="assign-marking-status" style="margin:0 0 16px">Initializing AI examiner…</p>
+      <div style="width:100%;height:10px;background:var(--line);border-radius:6px;overflow:hidden;margin-bottom:8px">
+        <div id="assign-marking-bar" style="width:5%;height:100%;background:var(--teal);transition:width .25s ease"></div>
+      </div>
+      <div class="mini-note" style="font-size:12px;color:var(--muted)">Assessing against HKDSE marking schemes &amp; awarding points…</div>
+    </div>
+  `);
+
+  const statusEl = document.getElementById('assign-marking-status');
+  const barEl = document.getElementById('assign-marking-bar');
 
   let totalScore = 0;
   let maxScore = 0;
   const results = {};
 
-  questions.forEach(q => {
+  for(let i = 0; i < questions.length; i++){
+    const q = questions[i];
     maxScore += q.marks;
+    const progressPct = Math.round(((i + 0.3) / questions.length) * 90);
+    if(barEl) barEl.style.width = progressPct + '%';
+    if(statusEl) statusEl.textContent = `Assessing Question ${i + 1} of ${questions.length} (${yearOf(q)} Q.${q.number})…`;
+
     if(q.type === 'mc'){
       const userAns = answers[q.id] || '';
       const corr = userAns === q.markingScheme.answer;
@@ -1326,21 +1803,64 @@ async function submitActiveAssignment(){
       results[q.id] = { answer: userAns, correct: corr, score: sc, maxScore: q.marks };
     } else {
       const partAns = answers[q.id] || {};
+      const partResults = {};
       let qSc = 0;
-      q.parts.forEach(p => {
-        const text = String(partAns[p.label] || '').trim().toLowerCase();
-        let hit = false;
-        (p.markingScheme?.points || []).forEach(pt => {
-          const kw = pt.point.toLowerCase().split(/\s+/).filter(w => w.length > 3);
-          if(kw.some(k => text.includes(k))) hit = true;
-        });
-        if(hit) qSc += p.marks;
-      });
-      qSc = Math.min(qSc, q.marks);
+
+      for(let pi = 0; pi < (q.parts || []).length; pi++){
+        const p = q.parts[pi];
+        const userText = String(partAns[p.label] || '').trim();
+        if(statusEl) statusEl.textContent = `AI marking Question ${i + 1} Part (${p.label}) / ${q.parts.length}…`;
+
+        if(!userText){
+          partResults[p.label] = {
+            score: 0,
+            maxScore: p.marks,
+            hits: (p.markingScheme?.points || []).map(() => false),
+            feedback: 'No answer submitted for this part.'
+          };
+        } else {
+          try{
+            const res = await aiMarkPart(q, p, userText);
+            partResults[p.label] = {
+              score: res.score != null ? res.score : 0,
+              maxScore: p.marks,
+              hits: res.hits,
+              feedback: res.feedback || ''
+            };
+            qSc += partResults[p.label].score;
+          }catch(err){
+            // Fallback heuristic scoring if AI offline/busy
+            const pts = p.markingScheme?.points || [];
+            let hits = pts.map(pt => {
+              const kw = (pt.point || '').toLowerCase().split(/\s+/).filter(w => w.length > 3);
+              return kw.some(k => userText.toLowerCase().includes(k));
+            });
+            let hitMarks = pts.reduce((sum, pt, idx) => sum + (hits[idx] ? pt.marks : 0), 0);
+            const fbScore = Math.min(p.marks, hitMarks);
+            partResults[p.label] = {
+              score: fbScore,
+              maxScore: p.marks,
+              hits: hits,
+              feedback: 'Marked by heuristic (' + (err.message || 'AI busy') + '). Full official model answer available below.'
+            };
+            qSc += fbScore;
+          }
+        }
+      }
+      qSc = Math.min(q.marks, qSc);
       totalScore += qSc;
-      results[q.id] = { answers: partAns, correct: qSc * 2 >= q.marks, score: qSc, maxScore: q.marks };
+      results[q.id] = {
+        answers: partAns,
+        correct: qSc * 2 >= q.marks,
+        score: qSc,
+        maxScore: q.marks,
+        parts: partResults
+      };
     }
-  });
+  }
+
+  if(barEl) barEl.style.width = '100%';
+  if(statusEl) statusEl.textContent = 'Saving submission to your student profile…';
 
   const attemptData = {
     assignmentId: assign.id,
@@ -1358,9 +1878,11 @@ async function submitActiveAssignment(){
     await firebaseDb.collection('users').doc(firebaseUser.uid).collection('assignmentAttempts').doc(assign.id).set(attemptData);
     studentAssignmentsState.attempts[assign.id] = attemptData;
     activeAssignmentRunner.isReview = true;
+    closeModal();
     renderAssignmentRunner();
-    alert(`Assignment submitted successfully! Your score: ${totalScore} / ${maxScore} marks.`);
+    alert(`🎉 Assignment submitted and AI marked successfully!\nYour score: ${totalScore} / ${maxScore} marks (${Math.round((totalScore/(maxScore||1))*100)}%).\n\nYou can now review each question, see model answers, and check AI feedback.`);
   }catch(e){
+    closeModal();
     alert('Could not submit assignment: ' + (e.message || e));
   }
 }

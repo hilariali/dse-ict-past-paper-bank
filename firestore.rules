@@ -71,6 +71,10 @@ service cloud.firestore {
     //   - status: string (optional, 'in_progress' | 'completed')
     //   - submittedAt: timestamp (optional)
     //   - updatedAt: timestamp (required)
+    //   - teacherFeedback: string (optional, max 2000 chars)
+    //   - teacherScore: number (optional, >= 0)
+    //   - gradedBy: string (optional, max 100 chars)
+    //   - gradedAt: timestamp (optional)
     //
     // ===============================================================
 
@@ -181,7 +185,7 @@ service cloud.firestore {
 
     function isValidAssignmentAttempt(data, assignmentId) {
       return data.keys().hasAll(['assignmentId', 'results', 'score', 'maxScore', 'answered', 'updatedAt']) &&
-        data.keys().hasOnly(['assignmentId', 'title', 'results', 'score', 'maxScore', 'answered', 'status', 'submittedAt', 'updatedAt']) &&
+        data.keys().hasOnly(['assignmentId', 'title', 'results', 'score', 'maxScore', 'answered', 'status', 'submittedAt', 'updatedAt', 'teacherFeedback', 'teacherScore', 'gradedBy', 'gradedAt']) &&
         data.assignmentId is string && data.assignmentId == assignmentId && data.assignmentId.size() <= 100 &&
         (!('title' in data) || (data.title is string && data.title.size() <= 120)) &&
         data.results is map && data.results.keys().size() <= 150 &&
@@ -190,6 +194,10 @@ service cloud.firestore {
         data.answered is int && data.answered >= 0 && data.answered <= 150 &&
         (!('status' in data) || data.status in ['in_progress', 'completed']) &&
         (!('submittedAt' in data) || data.submittedAt is timestamp) &&
+        (!('teacherFeedback' in data) || (data.teacherFeedback is string && data.teacherFeedback.size() <= 2000)) &&
+        (!('teacherScore' in data) || (data.teacherScore is number && data.teacherScore >= 0)) &&
+        (!('gradedBy' in data) || (data.gradedBy is string && data.gradedBy.size() <= 100)) &&
+        (!('gradedAt' in data) || data.gradedAt is timestamp) &&
         data.updatedAt is timestamp;
     }
 
@@ -260,9 +268,12 @@ service cloud.firestore {
         // Read: The student, or teachers/admins reviewing submissions
         allow read: if isAuthenticated() && (isOwner(userId) || isTeacher() || isAdmin());
 
-        // Write: Only the student can submit or save their assignment attempts
+        // Write: Only the student can create their attempt; students, teachers, and admins can update
         allow create: if isOwner(userId) && isValidAssignmentAttempt(request.resource.data, assignmentId);
-        allow update: if isOwner(userId) && isValidAssignmentAttempt(request.resource.data, assignmentId);
+        allow update: if isAuthenticated() &&
+          isValidAssignmentAttempt(request.resource.data, assignmentId) &&
+          request.resource.data.assignmentId == resource.data.assignmentId &&
+          (isOwner(userId) || isTeacher() || isAdmin());
         allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
       }
     }
