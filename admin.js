@@ -8,11 +8,14 @@ function isAdminRole(){ return userRole()==='admin'; }
 function updateNavAdminRole(){
   const nav=document.getElementById('nav-admin');
   if(nav){
-    nav.style.display = (firebaseUser && isStaffRole()) ? '' : 'none';
+    nav.style.display = '';
     nav.textContent = isAdminRole() ? 'Admin Dashboard' : 'Teacher Portal';
   }
   const a=document.getElementById('nav-auth');
-  if(a){ a.disabled=!firebaseReady; a.textContent = firebaseUser ? 'Account' : 'Sign in / Register'; }
+  if(a){
+    a.disabled = false;
+    a.textContent = firebaseUser ? (currentUserProfile?.displayName ? currentUserProfile.displayName.split(' ')[0] : 'Account') : 'Sign in / Register';
+  }
   if(firebaseUser){ loadStudentAssignments(); }
   else {
     const badge = document.getElementById('nav-assign-count');
@@ -305,6 +308,7 @@ function adminAssignmentsHtml(){
                 <td>${a.dueDate ? esc(a.dueDate) : '<span style="color:var(--muted)">No due date</span>'}</td>
                 <td>
                   <div style="display:flex;gap:6px;flex-wrap:wrap">
+                    <button class="btn btn-ghost btn-sm" onclick="openAssignmentQuestionsPreviewModal('${esc(a.id)}')">View Questions</button>
                     <button class="btn btn-navy btn-sm" onclick="openAssignmentSubmissionsModal('${esc(a.id)}')">Submissions &amp; Gradebook</button>
                     <button class="btn btn-danger btn-sm" onclick="deleteAssignment('${esc(a.id)}')">Delete</button>
                   </div>
@@ -321,18 +325,20 @@ function adminAssignmentsHtml(){
 window._assignSelectedQIds = [];
 window._assignSearchTerm = '';
 window._assignModuleFilter = 'All';
+window._assignPreviewOpenIds = new Set();
 let _assignSearchTimer = null;
 
 function openCreateAssignmentModal(){
   window._assignSelectedQIds = [];
   window._assignSearchTerm = '';
   window._assignModuleFilter = 'All';
+  window._assignPreviewOpenIds = new Set();
 
   openModal(`
-    <div style="max-width:820px">
+    <div style="max-width:840px;width:100%">
       <div style="border-bottom:2px solid var(--line);padding-bottom:10px;margin-bottom:14px">
         <h2 style="font-family:Fraunces,serif;margin:0 0 4px;font-size:24px">Create New Assignment</h2>
-        <span class="mini-note">Assign questions to an entire class or selected students. Attempts will be recorded separately.</span>
+        <span class="mini-note">Assign questions to an entire class or selected students. Preview full questions and official marking schemes before distributing.</span>
       </div>
 
       <div class="form-grid-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
@@ -365,7 +371,7 @@ function openCreateAssignmentModal(){
 
       <div style="border-top:1px solid var(--line);padding-top:14px;margin-top:14px">
         <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
-          <label style="font-weight:800;font-size:13.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--teal)">Select Questions</label>
+          <label style="font-weight:800;font-size:13.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--teal)">Select Questions &amp; Preview</label>
           <span id="assign-selected-summary" class="mini-note">Selected: <b>0</b> question(s) • <b>0</b> total marks</span>
         </div>
 
@@ -377,7 +383,7 @@ function openCreateAssignmentModal(){
           </select>
         </div>
 
-        <div id="assign-question-list-inner" style="max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;padding:6px;background:var(--surface)"></div>
+        <div id="assign-question-list-inner" style="max-height:min(440px,50vh);overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;padding:6px;background:var(--surface)"></div>
       </div>
 
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px">
@@ -423,22 +429,151 @@ function updateAssignmentQuestionList(){
     container.innerHTML = '<div style="padding:18px;text-align:center;color:var(--muted);font-size:14px">No questions match your filter. Try another keyword or module.</div>';
     return;
   }
+  window._assignPreviewOpenIds = window._assignPreviewOpenIds || new Set();
+
   container.innerHTML = pool.slice(0, 80).map(q => {
     const isSel = window._assignSelectedQIds.includes(q.id);
+    const isPrev = window._assignPreviewOpenIds.has(q.id);
     const textSnippet = (q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text || ('Question '+q.number);
     return `
-      <label id="assign-q-row-${esc(q.id)}" style="display:flex;align-items:flex-start;gap:10px;padding:8px;border-bottom:1px solid var(--line);cursor:pointer;background:${isSel?'var(--teal-light)':'transparent'};border-radius:8px;transition:background .15s">
-        <input type="checkbox" ${isSel?'checked':''} onchange="toggleAssignQ('${esc(q.id)}')" style="margin-top:4px;accent-color:var(--teal)">
-        <div style="flex:1;font-size:13px;min-width:0">
-          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
-            <span><b>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}</b> <span class="pill none" style="font-size:11px">${q.marks}m</span></span>
-            <span class="mini-note" style="white-space:nowrap">${esc(q.topics[0]||'')}</span>
+      <div id="assign-q-row-${esc(q.id)}" style="border-bottom:1px solid var(--line);padding:9px 8px;background:${isSel?'var(--teal-light)':'transparent'};border-radius:8px;margin-bottom:4px;transition:background .15s">
+        <div style="display:flex;align-items:flex-start;gap:10px">
+          <input type="checkbox" id="assign-chk-${esc(q.id)}" ${isSel?'checked':''} onchange="toggleAssignQ('${esc(q.id)}')" style="margin-top:4px;accent-color:var(--teal);cursor:pointer;width:17px;height:17px;flex-shrink:0">
+          <div style="flex:1;min-width:0;cursor:pointer" onclick="toggleAssignQ('${esc(q.id)}')">
+            <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center">
+              <span>
+                <b>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}</b>
+                <span class="pill none" style="font-size:11px;margin-left:4px">${q.marks}m</span>
+                <span class="pill" style="font-size:10.5px;text-transform:uppercase;margin-left:4px">${q.type==='structured'?'Structured':'MCQ'}</span>
+              </span>
+              <span class="mini-note" style="white-space:nowrap">${esc(q.topics[0]||'')}</span>
+            </div>
+            <div style="color:var(--muted);font-size:12.5px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(textSnippet)}</div>
           </div>
-          <div style="color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(textSnippet)}</div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+            <button type="button" class="btn btn-ghost btn-sm" id="btn-prev-${esc(q.id)}" style="padding:4px 9px;font-size:12px;font-weight:600" onclick="toggleAssignPreview('${esc(q.id)}')">
+              ${isPrev ? '✕ Hide' : '👁️ Preview'}
+            </button>
+          </div>
         </div>
-      </label>
+        <div id="assign-q-prev-box-${esc(q.id)}" style="display:${isPrev?'block':'none'};margin-top:10px;border-top:1px dashed var(--line);padding-top:10px">
+          ${isPrev ? renderAssignQuestionPreview(q) : ''}
+        </div>
+      </div>
     `;
   }).join('') + (pool.length > 80 ? `<div style="padding:8px;text-align:center;color:var(--muted);font-size:12px">Showing first 80 of ${pool.length} matching questions. Type to filter more specifically.</div>` : '');
+
+  if(window._assignPreviewOpenIds.size > 0 && typeof initMermaid === 'function'){
+    initMermaid();
+  }
+}
+
+function renderAssignQuestionPreview(q){
+  const isSel = window._assignSelectedQIds.includes(q.id);
+  const isS = q.type === 'structured';
+
+  let bodyHtml = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+      <span style="font-weight:800;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--teal)">Preview &amp; Official Marking Guide</span>
+      <button type="button" class="btn ${isSel?'btn-navy':'btn-primary'} btn-sm" id="btn-assign-toggle-${esc(q.id)}" onclick="toggleAssignQ('${esc(q.id)}')">
+        ${isSel ? '✓ Selected (Click to remove)' : '＋ Add to Assignment'}
+      </button>
+    </div>
+    <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-bottom:12px;font-size:13.5px;line-height:1.6">
+      <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:4px">Stem:</div>
+      <div class="blocks">${renderBlocks(q.stem)}</div>
+    </div>
+  `;
+
+  if(!isS && q.options){
+    const correctAns = (q.markingScheme && q.markingScheme.answer) || '';
+    bodyHtml += `
+      <div style="margin-bottom:12px">
+        <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:6px">Options:</div>
+        <div style="display:grid;gap:6px">
+          ${q.options.map(o => {
+            const isRight = (o.key === correctAns);
+            return `
+              <div style="display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-radius:8px;border:1.5px solid ${isRight?'var(--teal)':'var(--line)'};background:${isRight?'rgba(14,124,107,0.08)':'var(--surface)'}">
+                <span style="font-weight:700;font-size:12.5px;width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;background:${isRight?'var(--teal)':'var(--surface2)'};color:${isRight?'#fff':'var(--ink)'};flex-shrink:0">${esc(o.key)}</span>
+                <div style="flex:1;font-size:13px">${renderBlocks(o.content)}</div>
+                ${isRight ? `<span class="pill" style="background:var(--teal);color:#fff;font-size:11px;font-weight:700">✓ Official Key</span>` : ''}
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  } else if(isS && q.parts){
+    bodyHtml += `
+      <div style="margin-bottom:12px">
+        <div style="font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);margin-bottom:6px">Structured Parts &amp; Marking Scheme:</div>
+        <div style="display:grid;gap:10px">
+          ${q.parts.map(p => {
+            const ms = p.markingScheme || {};
+            return `
+              <div style="border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:10px 12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+                  <b>Part (${esc(p.label)})</b>
+                  <span class="pill none" style="font-size:11px">${p.marks} mark${p.marks!==1?'s':''}</span>
+                </div>
+                <div class="blocks" style="font-size:13px;margin:4px 0 8px">${renderBlocks(p.stem)}</div>
+                <div style="background:rgba(14,124,107,0.06);border:1px solid rgba(14,124,107,0.25);border-radius:6px;padding:8px 10px;font-size:12.5px">
+                  <div style="font-weight:700;color:var(--teal);margin-bottom:2px">Official Marking Scheme:</div>
+                  ${ms.modelAnswer ? `<div style="font-family:monospace;white-space:pre-wrap;margin:4px 0 6px;padding:6px;background:#fff;border-radius:4px;border:1px solid rgba(14,124,107,0.2)"><b>Model Answer:</b> ${esc(ms.modelAnswer)}</div>` : ''}
+                  ${(ms.points||[]).length ? `<ul style="margin:4px 0 4px 18px;padding:0">${ms.points.map(pt => `<li>${esc(pt.point)} <b>[${pt.marks}m]</b></li>`).join('')}</ul>` : ''}
+                  ${(ms.unacceptable||[]).length ? `<div style="color:var(--red);margin-top:4px">✕ Not accepted: ${esc(ms.unacceptable.join('; '))}</div>` : ''}
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    `;
+  }
+
+  if(q.performance){
+    const perf = q.performance;
+    bodyHtml += `
+      <div style="background:rgba(217,119,6,0.08);border:1px solid rgba(217,119,6,0.25);border-radius:8px;padding:10px 12px;font-size:12.5px;margin-bottom:10px">
+        <div style="font-weight:700;color:#92400e;margin-bottom:4px">Historical HKDSE Performance:</div>
+        ${perf.correctPct != null ? `<div style="margin:2px 0"><b>Candidates correct:</b> ${perf.correctPct}%</div>` : ''}
+        ${perf.optionStatsPct ? `<div style="margin:2px 0"><b>Option selection breakdown:</b> ${Object.entries(perf.optionStatsPct).map(([k,v])=>`${k}: ${v}%`).join(' • ')}</div>` : ''}
+        ${perf.commentary ? `<div style="margin-top:4px;color:var(--ink)"><b>Commentary:</b> ${esc(perf.commentary)}</div>` : ''}
+      </div>
+    `;
+  }
+
+  bodyHtml += `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:8px">
+      <button type="button" class="btn btn-ghost btn-sm" onclick="openQuestionExportModal('${esc(q.id)}')">⎙ Export / Print this Question</button>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="toggleAssignPreview('${esc(q.id)}')">✕ Close Preview</button>
+    </div>
+  `;
+
+  return bodyHtml;
+}
+
+function toggleAssignPreview(qid){
+  window._assignPreviewOpenIds = window._assignPreviewOpenIds || new Set();
+  const box = document.getElementById('assign-q-prev-box-' + qid);
+  const btn = document.getElementById('btn-prev-' + qid);
+  if(!box) return;
+
+  if(window._assignPreviewOpenIds.has(qid)){
+    window._assignPreviewOpenIds.delete(qid);
+    box.style.display = 'none';
+    box.innerHTML = '';
+    if(btn) btn.innerHTML = '👁️ Preview';
+  } else {
+    window._assignPreviewOpenIds.add(qid);
+    const q = ALL.find(x => x.id === qid);
+    if(!q) return;
+    box.style.display = 'block';
+    box.innerHTML = renderAssignQuestionPreview(q);
+    if(btn) btn.innerHTML = '✕ Hide';
+    if(typeof initMermaid === 'function') initMermaid();
+  }
 }
 
 function toggleAssignQ(qid){
@@ -446,12 +581,17 @@ function toggleAssignQ(qid){
   if(idx >= 0) window._assignSelectedQIds.splice(idx, 1);
   else window._assignSelectedQIds.push(qid);
 
+  const isSel = window._assignSelectedQIds.includes(qid);
   const row = document.getElementById('assign-q-row-' + qid);
   if(row){
-    const isSel = window._assignSelectedQIds.includes(qid);
     row.style.background = isSel ? 'var(--teal-light)' : 'transparent';
-    const chk = row.querySelector('input[type="checkbox"]');
+    const chk = document.getElementById('assign-chk-' + qid);
     if(chk) chk.checked = isSel;
+  }
+  const qBtn = document.getElementById('btn-assign-toggle-' + qid);
+  if(qBtn){
+    qBtn.className = isSel ? 'btn btn-navy btn-sm' : 'btn btn-primary btn-sm';
+    qBtn.textContent = isSel ? '✓ Selected (Click to remove)' : '＋ Add to Assignment';
   }
   updateAssignmentSummaryLabel();
 }
@@ -462,6 +602,42 @@ function updateAssignmentSummaryLabel(){
   const selectedQuestions = window._assignSelectedQIds.map(id => ALL.find(x => x.id === id)).filter(Boolean);
   const totalMarks = selectedQuestions.reduce((s, q) => s + (q.marks || 0), 0);
   label.innerHTML = `Selected: <b>${selectedQuestions.length}</b> question(s) • <b>${totalMarks}</b> total marks`;
+}
+
+function openAssignmentQuestionsPreviewModal(assignId){
+  const a = (adminState.assignments || []).find(x => x.id === assignId);
+  if(!a) return;
+  const questions = (a.questionIds || []).map(id => ALL.find(x => x.id === id)).filter(Boolean);
+  const totalMarks = questions.reduce((s, q) => s + (q.marks || 0), 0);
+
+  openModal(`
+    <div style="max-width:860px;width:100%">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;border-bottom:2px solid var(--line);padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap">
+        <div>
+          <span class="eyebrow">Assignment Preview</span>
+          <h2 style="font-family:Fraunces,serif;margin:4px 0 2px;font-size:24px">${esc(a.title)}</h2>
+          <div class="mini-note">${questions.length} questions • ${totalMarks} total marks • Due: ${a.dueDate ? esc(a.dueDate) : 'No due date'}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="closeModal()">✕ Close</button>
+      </div>
+      ${a.description ? `<p style="background:var(--surface2);padding:10px 14px;border-radius:8px;font-size:13.5px;margin-bottom:14px">${esc(a.description)}</p>` : ''}
+      <div style="max-height:65vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:6px">
+        ${questions.map((q, idx) => `
+          <div style="border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px;background:var(--surface)">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px">
+              <b>Question ${idx + 1} (${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)})</b>
+              <span class="pill none">${q.marks} mark${q.marks!==1?'s':''}</span>
+            </div>
+            ${renderAssignQuestionPreview(q)}
+          </div>
+        `).join('') || '<div style="color:var(--muted)">No questions found in this assignment.</div>'}
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:14px">
+        <button class="btn btn-primary" onclick="closeModal()">Done</button>
+      </div>
+    </div>
+  `);
+  if(typeof initMermaid === 'function') initMermaid();
 }
 
 async function saveNewAssignment(){

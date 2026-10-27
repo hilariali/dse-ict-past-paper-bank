@@ -28,8 +28,9 @@ a{color:var(--teal)} button{font:inherit;cursor:pointer}
 .top-inner{max-width:1080px;margin:0 auto;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--teal)}
 .top h1{font-family:"Fraunces",serif;font-size:22px;line-height:1.1;margin:2px 0 0}
-.nav{display:flex;gap:8px}
-.nav button{border:1px solid var(--line);background:var(--surface);padding:9px 14px;border-radius:999px;font-weight:700;font-size:14px}
+.nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.nav button{border:1px solid var(--line);background:var(--surface);padding:8px 14px;border-radius:999px;font-weight:700;font-size:13.5px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.nav button:hover{border-color:var(--ink)}
 .nav button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
 .wrap{max-width:1080px;margin:0 auto;padding:18px 18px 48px}
 .hero{background:var(--navy);color:#fff;border-radius:22px;padding:22px 22px 20px;display:grid;grid-template-columns:1.4fr .9fr;gap:20px}
@@ -223,9 +224,10 @@ label.setlab{font-weight:700;font-size:14.5px}
   .top-inner{padding:10px 14px;gap:8px}
   .top h1{font-size:18px}
   .eyebrow{font-size:10px}
-  .nav{width:100%;overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:3px}
-  .nav::-webkit-scrollbar{display:none}
-  .nav button{padding:7px 12px;font-size:13px;flex-shrink:0}
+  .nav{width:100%;display:flex;gap:8px;overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:4px 2px 6px}
+  .nav::-webkit-scrollbar{height:4px}
+  .nav::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
+  .nav button{padding:8px 13px;font-size:13px;flex-shrink:0}
   .wrap{padding:14px 12px 36px}
   .admin-nav{overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
   .admin-nav::-webkit-scrollbar{display:none}
@@ -610,16 +612,22 @@ function showView(v){
     const el=document.getElementById('view-'+x);
     if(el) el.hidden = (x!==v);
   });
-  document.getElementById('nav-home').classList.toggle('active',v==='home');
+  const navH=document.getElementById('nav-home');
+  if(navH) navH.classList.toggle('active', v==='home' || v==='drill');
   const navAss=document.getElementById('nav-assignments');
-  if(navAss) navAss.classList.toggle('active',v==='assignments');
-  document.getElementById('nav-results').classList.toggle('active',v==='results');
-  document.getElementById('nav-faq').classList.toggle('active',v==='faq');
-  document.getElementById('nav-practice').classList.toggle('active',v==='practice');
-  document.getElementById('nav-analysis').classList.toggle('active',v==='analysis');
+  if(navAss) navAss.classList.toggle('active', v==='assignments');
+  const navRes=document.getElementById('nav-results');
+  if(navRes) navRes.classList.toggle('active', v==='results');
+  const navFaq=document.getElementById('nav-faq');
+  if(navFaq) navFaq.classList.toggle('active', v==='faq');
+  const navPrac=document.getElementById('nav-practice');
+  if(navPrac) navPrac.classList.toggle('active', v==='practice');
+  const navAna=document.getElementById('nav-analysis');
+  if(navAna) navAna.classList.toggle('active', v==='analysis');
   const navAdmin=document.getElementById('nav-admin');
-  if(navAdmin) navAdmin.classList.toggle('active',v==='admin');
-  document.getElementById('nav-settings').classList.toggle('active',v==='settings');
+  if(navAdmin) navAdmin.classList.toggle('active', v==='admin');
+  const navSet=document.getElementById('nav-settings');
+  if(navSet) navSet.classList.toggle('active', v==='settings');
   if(v==='drill') updateSaveBtn();
   if(v==='assignments'){ if(typeof renderAssignments==='function') renderAssignments(); }
   if(v==='practice') renderPractice();
