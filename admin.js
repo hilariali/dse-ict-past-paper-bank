@@ -9,18 +9,20 @@ function updateNavAdminRole(){
   const nav=document.getElementById('nav-admin');
   if(nav){
     nav.style.display = '';
-    nav.textContent = isAdminRole() ? 'Admin Dashboard' : 'Teacher Portal';
+    nav.innerHTML = `<span>👨‍🏫 ${isAdminRole() ? 'Admin Dashboard' : 'Teacher Portal'}</span>`;
   }
   const a=document.getElementById('nav-auth');
   if(a){
     a.disabled = false;
-    a.textContent = firebaseUser ? (currentUserProfile?.displayName ? currentUserProfile.displayName.split(' ')[0] : 'Account') : 'Sign in / Register';
+    const name = firebaseUser ? (currentUserProfile?.displayName ? currentUserProfile.displayName.split(' ')[0] : 'Account') : 'Sign in / Register';
+    a.innerHTML = `<span>👤 ${esc(name)}</span>`;
   }
   if(firebaseUser){ loadStudentAssignments(); }
   else {
     const badge = document.getElementById('nav-assign-count');
     if(badge) badge.textContent = '';
   }
+  if(typeof updateMobileNavCurrentLabel==='function') updateMobileNavCurrentLabel();
 }
 
 /* ---------------- Modal helpers ---------------- */

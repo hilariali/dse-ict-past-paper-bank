@@ -226,15 +226,69 @@ label.setlab{font-weight:700;font-size:14.5px}
 .btn-danger:hover{background:var(--red);color:#fff}
 .tablewrap{-webkit-overflow-scrolling:touch}
 
+.nav-toggle-btn{display:none}
+@keyframes navSlideDown{
+  from{opacity:0;transform:translateY(-8px) scale(0.99)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
 /* Responsive adjustments for mobile & small screens */
 @media (max-width: 768px){
-  .top-inner{padding:10px 14px;gap:8px}
-  .top h1{font-size:18px}
+  .top-inner{padding:10px 14px;gap:8px;justify-content:space-between;align-items:center}
+  .top h1{font-size:17px;line-height:1.15}
   .eyebrow{font-size:10px}
-  .nav{width:calc(100% + 24px);margin:0 -12px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:6px 14px 8px}
-  .nav::-webkit-scrollbar{height:4px}
-  .nav::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
-  .nav button{padding:8px 14px;font-size:13px;flex-shrink:0;min-height:38px}
+  .nav-toggle-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:8px 14px;
+    border:1.5px solid var(--line);
+    border-radius:999px;
+    background:var(--surface);
+    color:var(--ink);
+    font-weight:800;
+    font-size:13px;
+    cursor:pointer;
+    transition:all .15s ease;
+    min-height:38px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.06);
+  }
+  .nav-toggle-btn:hover{border-color:var(--ink)}
+  .nav-toggle-btn.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+  .nav{
+    display:none;
+    width:100%;
+    flex-direction:column;
+    gap:6px;
+    padding:10px;
+    background:var(--surface);
+    border:1.5px solid var(--line);
+    border-radius:18px;
+    margin-top:8px;
+    box-shadow:0 14px 32px rgba(0,0,0,0.12);
+    animation:navSlideDown .18s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .nav.open{display:flex}
+  .nav button{
+    width:100%;
+    text-align:left;
+    padding:11px 14px;
+    font-size:14px;
+    border-radius:12px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    min-height:44px;
+    border:1px solid var(--line);
+    background:var(--surface);
+    flex-shrink:0;
+  }
+  .nav button:hover{background:var(--surface2)}
+  .nav button.active{
+    background:var(--navy);
+    color:#fff;
+    border-color:var(--navy);
+  }
   .wrap{padding:14px 12px 36px}
   .admin-nav{overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
   .admin-nav::-webkit-scrollbar{display:none}
@@ -293,7 +347,7 @@ label.setlab{font-weight:700;font-size:14.5px}
 </style>
 </head>
 <body>
-<header class="top"><div class="top-inner"><div><div class="eyebrow">HKDSE • ICT • Past Papers</div><h1>Drill real papers.<br>Mark like an examiner.</h1></div><nav class="nav"><button id="nav-home" class="active" onclick="showView('home')">Questions</button><button id="nav-assignments" onclick="showView('assignments')">Assignments <span id="nav-assign-count"></span></button><button id="nav-practice" onclick="showView('practice')">Practice Zone</button><button id="nav-analysis" onclick="showView('analysis')">Analysis</button><button id="nav-faq" onclick="showView('faq')">FAQ</button><button id="nav-results" onclick="showView('results')">Results <span id="nav-count"></span></button><button id="nav-admin" onclick="showView('admin')">Teacher Portal</button><button id="nav-settings" onclick="showView('settings')">&#9881; Settings</button><button id="nav-auth" onclick="toggleAuthFromNav()">Sign in</button></nav></div></header>
+<header class="top"><div class="top-inner"><div><div class="eyebrow">HKDSE • ICT • Past Papers</div><h1>Drill real papers.<br>Mark like an examiner.</h1></div><button id="nav-toggle-btn" class="nav-toggle-btn" aria-label="Toggle navigation menu" aria-expanded="false" onclick="toggleMobileNav()"><span class="nav-toggle-icon">☰</span><span class="nav-toggle-text">Menu</span></button><nav class="nav" id="nav"><button id="nav-home" class="active" onclick="showView('home')"><span>📚 Questions</span></button><button id="nav-assignments" onclick="showView('assignments')"><span>📝 Assignments</span> <span id="nav-assign-count"></span></button><button id="nav-practice" onclick="showView('practice')"><span>🎯 Practice Zone</span></button><button id="nav-analysis" onclick="showView('analysis')"><span>📊 Analysis</span></button><button id="nav-faq" onclick="showView('faq')"><span>❓ FAQ</span></button><button id="nav-results" onclick="showView('results')"><span>🏆 Results</span> <span id="nav-count"></span></button><button id="nav-admin" onclick="showView('admin')"><span>👨‍🏫 Teacher Portal</span></button><button id="nav-settings" onclick="showView('settings')"><span>⚙️ Settings</span></button><button id="nav-auth" onclick="toggleAuthFromNav()"><span>👤 Sign in</span></button></nav></div></header>
 
 <main class="wrap">
 <!-- HOME -->
@@ -648,11 +702,62 @@ function showView(v){
   if(v==='faq') renderFaq();
   if(v==='settings') renderSettings();
   window.scrollTo({top:0,behavior:'smooth'});
-  try{
-    const activeNav = document.querySelector('.nav button.active');
-    if(activeNav) activeNav.scrollIntoView({inline:'nearest',behavior:'smooth',block:'nearest'});
-  }catch(e){}
+  closeMobileNav();
 }
+
+function toggleMobileNav(){
+  const nav=document.getElementById('nav');
+  const btn=document.getElementById('nav-toggle-btn');
+  if(!nav) return;
+  const isOpen=nav.classList.toggle('open');
+  if(btn){
+    btn.setAttribute('aria-expanded', isOpen?'true':'false');
+    btn.classList.toggle('active', isOpen);
+    const icon=btn.querySelector('.nav-toggle-icon');
+    const text=btn.querySelector('.nav-toggle-text');
+    if(icon) icon.textContent = isOpen ? '✕' : '☰';
+    if(text) text.textContent = isOpen ? 'Close' : 'Menu';
+  }
+}
+
+function closeMobileNav(){
+  const nav=document.getElementById('nav');
+  const btn=document.getElementById('nav-toggle-btn');
+  if(nav && nav.classList.contains('open')){
+    nav.classList.remove('open');
+    if(btn){
+      btn.setAttribute('aria-expanded','false');
+      btn.classList.remove('active');
+      const icon=btn.querySelector('.nav-toggle-icon');
+      const text=btn.querySelector('.nav-toggle-text');
+      if(icon) icon.textContent = '☰';
+      if(text) text.textContent = 'Menu';
+    }
+  }
+  updateMobileNavCurrentLabel();
+}
+
+function updateMobileNavCurrentLabel(){
+  const btn=document.getElementById('nav-toggle-btn');
+  const nav=document.getElementById('nav');
+  if(!btn || (nav && nav.classList.contains('open'))) return;
+  const activeBtn=document.querySelector('.nav button.active');
+  const label=activeBtn ? (activeBtn.querySelector('span')?.textContent || activeBtn.textContent) : 'Menu';
+  const text=btn.querySelector('.nav-toggle-text');
+  if(text && label){
+    text.textContent = label.trim();
+  }
+}
+
+document.addEventListener('click', (e)=>{
+  const nav=document.getElementById('nav');
+  const btn=document.getElementById('nav-toggle-btn');
+  if(nav && nav.classList.contains('open')){
+    if(!nav.contains(e.target) && !btn.contains(e.target)){
+      closeMobileNav();
+    }
+  }
+});
 function startDrill(id){ currentId=id; selAnswer=null; selConf=null; submitted=false; chatMsgs=[]; const q=ALL.find(x=>x.id===id); if(q.type==='structured'){ startStructured(q); return; } const prev=store[id];
   document.getElementById('drill-root').innerHTML=`<div class="drill-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)}</span><div style="display:flex;gap:8px;align-items:center"><button class="btn btn-ghost btn-sm" onclick="openQuestionExportModal('${q.id}')">⎙ Export / Print</button><span style="font-size:13px;color:var(--muted)">${esc(q.topics.join(' • '))} • ${q.marks} mark</span></div></div><div class="blocks" style="margin-top:16px">${renderBlocks(q.stem)}</div><div class="section-title" style="margin-top:8px">Choose one answer — marking scheme hidden</div><div class="options" id="opts">${q.options.map(o=>`<button class="opt" data-k="${o.key}" onclick="pickAnswer('${o.key}')"><span class="opt-key">${o.key}</span><span class="blocks">${renderBlocks(o.content)}</span></button>`).join('')}</div><div class="section-title">How confident are you?</div><div class="conf" id="conf"><button onclick="pickConf('Low')">Low — guessing</button><button onclick="pickConf('Medium')">Medium</button><button onclick="pickConf('High')">High — sure</button></div><button id="submitBtn" class="btn btn-primary" style="width:100%;padding:14px" disabled onclick="submitAnswer()">Submit answer & reveal marking</button>${aiZoneHtml()}<div id="reveal"></div></div>`;
   showView('drill'); initMermaid();
@@ -1320,8 +1425,8 @@ function copyQuestionText(id){
 }
 
 async function boot(){ await loadFirebaseConfigFromEndpoint(); renderSettings(); initFirebaseFromSettings(); updateBankStatus(); probeAI(); const bu=settings.bankUrl||DEFAULT_BANK_URL, bGh=!settings.bankUrl; let bErr=''; try{ const d=await fetchJsonT(bu, 5000); if(validBank(d)) applyBank(d, bGh?'loaded from GitHub':'loaded from URL'); else bErr= bGh?'The GitHub question bank did not return a valid bank':'The saved question-bank URL did not return a valid bank'; }catch(e){ bErr= bGh?'Could not load the question bank from GitHub':'Could not load the question bank from the saved URL'; } if(bErr){ if(bankSource==='built-in copy'){ try{ const d=await fetchJsonT('question-bank.json', 5000); if(validBank(d)) applyBank(d,'loaded from question-bank.json beside the page'); }catch(e){} } bankNote= bankSource==='built-in copy'? bErr+' — using the built-in copy.' : bErr+' — using the copy of question-bank.json beside the page.'; } const fu=settings.faqUrl||DEFAULT_FAQ_URL, fGh=!settings.faqUrl; let fErr=''; try{ const d=await fetchJsonT(fu, 5000); if(validFaq(d)) applyFaq(d, fGh?'loaded from GitHub':'loaded from URL'); else fErr= fGh?'The GitHub FAQ did not return a valid faq.json':'The saved FAQ URL did not return a valid faq.json'; }catch(e){ fErr= fGh?'Could not load the FAQ from GitHub':'Could not load the FAQ from the saved URL'; } if(fErr){ if(faqSource==='built-in copy'){ try{ const d=await fetchJsonT('faq.json', 5000); if(validFaq(d)) applyFaq(d,'loaded from faq.json beside the page'); }catch(e){} } faqNote= faqSource==='built-in copy'? fErr+' — using the built-in copy.' : fErr+' — using the copy of faq.json beside the page.'; } renderBankSettingsStatus(); renderHome(); }
-renderHome(); boot();
+renderHome(); boot(); if(typeof updateMobileNavCurrentLabel==='function') updateMobileNavCurrentLabel();
 </script>
-<script src="admin.js?v=20261027_2020"></script>
+<script src="admin.js?v=20261027_2045"></script>
 </body>
 </html>
