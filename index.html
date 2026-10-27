@@ -216,6 +216,58 @@ label.setlab{font-weight:700;font-size:14.5px}
 .btn-sm{padding:6px 12px;font-size:13px;border-radius:8px}
 .btn-danger{background:var(--red-light);color:var(--red);border:1px solid var(--red)}
 .btn-danger:hover{background:var(--red);color:#fff}
+.tablewrap{-webkit-overflow-scrolling:touch}
+
+/* Responsive adjustments for mobile & small screens */
+@media (max-width: 768px){
+  .top-inner{padding:10px 14px;gap:8px}
+  .top h1{font-size:18px}
+  .eyebrow{font-size:10px}
+  .nav{width:100%;overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:3px}
+  .nav::-webkit-scrollbar{display:none}
+  .nav button{padding:7px 12px;font-size:13px;flex-shrink:0}
+  .wrap{padding:14px 12px 36px}
+  .admin-nav{overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
+  .admin-nav::-webkit-scrollbar{display:none}
+  .admin-tab{flex-shrink:0;padding:7px 14px;font-size:13px}
+  .class-grid{grid-template-columns:1fr}
+}
+
+@media (max-width: 600px){
+  .modal-overlay{padding:8px}
+  .modal-card{padding:18px 14px;border-radius:16px;max-height:94vh}
+  .modal-close{top:10px;right:12px;font-size:24px}
+  .form-grid-2col{grid-template-columns:1fr !important}
+  .export-btn-grid{grid-template-columns:1fr !important}
+  .drill-card{padding:14px;border-radius:16px}
+  .hero{padding:16px 14px;border-radius:16px}
+  .hero h2{font-size:22px}
+  .hero-stats{grid-template-columns:1fr 1fr;gap:8px}
+  .hstat{padding:10px}
+  .hstat b{font-size:20px}
+  .filterbar{padding:10px 12px}
+  .fbar-row{gap:8px}
+  .opt{padding:10px 12px;gap:8px}
+  .opt-key{width:28px;height:28px;flex:0 0 28px;font-size:13px}
+  .conf button{min-width:70px;padding:9px 6px;font-size:12.5px}
+  .qcard{padding:14px;gap:8px}
+  .qfoot{flex-direction:column;align-items:flex-start;gap:10px}
+  .qfoot > div{width:100%;display:flex;gap:6px}
+  .qfoot button{flex:1;text-align:center}
+  .report-sheet{padding:16px 12px;border-radius:14px}
+  .report-title{font-size:20px}
+  .report-header{flex-direction:column;gap:10px}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .kpi-card{padding:12px}
+  .kpi-card b{font-size:20px}
+  .admin-table{font-size:12.5px}
+  .admin-table th,.admin-table td{padding:8px 10px}
+  .quickpick{padding:10px 12px}
+  .quickpick-row{gap:8px}
+  .quickpick-row select,.quickpick-row input{width:100%;max-width:100%}
+  .fbar-year select{max-width:100%}
+}
+
 @media print{
   .top, .nav, .admin-nav, .btn, .filterbar, header, .no-print, #admin-tabs-bar, .modal-close{display:none !important}
   body{background:#fff !important;color:#000 !important}
@@ -1056,7 +1108,7 @@ function openQuestionExportModal(id){
       </label>` : ''}
     </div>
     <div class="section-title">Choose format to export / print</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;margin-bottom:18px">
+    <div class="export-btn-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-bottom:18px">
       <button class="btn btn-primary" style="padding:14px;text-align:left;display:flex;flex-direction:column;gap:4px" onclick="printQuestion('${esc(q.id)}')">
         <span style="font-size:16px">🖨️ Print / Save as PDF</span>
         <span style="font-size:12px;opacity:.9;font-weight:400">Direct print or PDF export with clean worksheet layout</span>

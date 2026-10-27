@@ -321,25 +321,12 @@ function adminAssignmentsHtml(){
 window._assignSelectedQIds = [];
 window._assignSearchTerm = '';
 window._assignModuleFilter = 'All';
+let _assignSearchTimer = null;
 
 function openCreateAssignmentModal(){
   window._assignSelectedQIds = [];
   window._assignSearchTerm = '';
   window._assignModuleFilter = 'All';
-  renderCreateAssignmentModal();
-}
-
-function renderCreateAssignmentModal(){
-  const term = (window._assignSearchTerm || '').toLowerCase().trim();
-  const modF = window._assignModuleFilter || 'All';
-  const pool = ALL.filter(q => {
-    if(modF !== 'All' && !questionInModule(q, modF)) return false;
-    if(term && !((blocksToText(q.stem)+' '+q.topics.join(' ')+' '+yearOf(q)+' '+paperOf(q)+' q.'+q.number).toLowerCase().includes(term))) return false;
-    return true;
-  });
-
-  const selectedQuestions = window._assignSelectedQIds.map(id => ALL.find(x => x.id === id)).filter(Boolean);
-  const totalMarks = selectedQuestions.reduce((s, q) => s + (q.marks || 0), 0);
 
   openModal(`
     <div style="max-width:820px">
@@ -348,7 +335,7 @@ function renderCreateAssignmentModal(){
         <span class="mini-note">Assign questions to an entire class or selected students. Attempts will be recorded separately.</span>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="form-grid-2col" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
         <div>
           <label style="font-weight:700;font-size:13.5px">Assignment Title *</label>
           <input id="new-assign-title" class="admin-input" placeholder="e.g. Paper 1A Practice Quiz 1" maxlength="120" style="margin-top:4px">
@@ -366,7 +353,7 @@ function renderCreateAssignmentModal(){
 
       <div style="margin-bottom:14px">
         <label style="font-weight:700;font-size:13.5px">Assign To Classes</label>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px" id="new-assign-classes">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px" id="new-assign-classes">
           ${adminState.classes.map(c => `
             <label style="display:inline-flex;align-items:center;gap:6px;background:var(--surface2);padding:6px 12px;border-radius:999px;font-weight:700;font-size:13.5px;cursor:pointer">
               <input type="checkbox" class="target-class-chk" value="${esc(c.id)}" checked style="accent-color:var(--teal)">
@@ -377,51 +364,104 @@ function renderCreateAssignmentModal(){
       </div>
 
       <div style="border-top:1px solid var(--line);padding-top:14px;margin-top:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px">
-          <div>
-            <label style="font-weight:800;font-size:14px;text-transform:uppercase;letter-spacing:0.05em;color:var(--teal)">Select Questions</label>
-            <span class="mini-note" style="margin-left:8px">Selected: <b>${selectedQuestions.length}</b> question(s) • <b>${totalMarks}</b> total marks</span>
-          </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+          <label style="font-weight:800;font-size:13.5px;text-transform:uppercase;letter-spacing:0.05em;color:var(--teal)">Select Questions</label>
+          <span id="assign-selected-summary" class="mini-note">Selected: <b>0</b> question(s) • <b>0</b> total marks</span>
         </div>
 
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-          <input class="admin-input" style="flex:1;min-width:180px" placeholder="Search questions by keyword or topic…" value="${esc(window._assignSearchTerm||'')}" oninput="window._assignSearchTerm=this.value;renderCreateAssignmentModal()">
-          <select class="admin-select" style="max-width:200px" onchange="window._assignModuleFilter=this.value;renderCreateAssignmentModal()">
+          <input id="assign-q-search" class="admin-input" style="flex:1;min-width:160px" placeholder="Search questions by keyword, year, or topic…" autocomplete="off" oninput="onAssignSearchInput(this.value)">
+          <select id="assign-q-module" class="admin-select" style="max-width:200px" onchange="onAssignModuleChange(this.value)">
             <option value="All">All modules</option>
-            ${MODULE_ORDER.map(m => `<option value="${esc(m)}" ${modF===m?'selected':''}>${esc(m)}</option>`).join('')}
+            ${MODULE_ORDER.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('')}
           </select>
         </div>
 
-        <div style="max-height:220px;overflow-y:auto;border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface)">
-          ${pool.slice(0, 100).map(q => {
-            const isSel = window._assignSelectedQIds.includes(q.id);
-            const textSnippet = (q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text || ('Question '+q.number);
-            return `
-              <label style="display:flex;align-items:flex-start;gap:10px;padding:8px;border-bottom:1px solid var(--line);cursor:pointer;background:${isSel?'var(--teal-light)':'transparent'}">
-                <input type="checkbox" ${isSel?'checked':''} onchange="toggleAssignQ('${esc(q.id)}')" style="margin-top:4px;accent-color:var(--teal)">
-                <div style="flex:1;font-size:13px">
-                  <div><b>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}</b> <span class="pill none" style="font-size:11px">${q.marks}m</span> <span class="mini-note">${esc(q.topics[0]||'')}</span></div>
-                  <div style="color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:680px">${esc(textSnippet)}</div>
-                </div>
-              </label>
-            `;
-          }).join('')}
-        </div>
+        <div id="assign-question-list-inner" style="max-height:240px;overflow-y:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:12px;padding:6px;background:var(--surface)"></div>
       </div>
 
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;gap:10px">
         <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
         <button class="btn btn-primary" onclick="saveNewAssignment()">Create &amp; Assign</button>
       </div>
     </div>
   `);
+
+  updateAssignmentQuestionList();
+  updateAssignmentSummaryLabel();
+}
+
+function getFilteredAssignmentPool(){
+  const term = (window._assignSearchTerm || '').toLowerCase().trim();
+  const modF = window._assignModuleFilter || 'All';
+  return ALL.filter(q => {
+    if(modF !== 'All' && !questionInModule(q, modF)) return false;
+    if(term){
+      if(!q._searchText) q._searchText = (blocksToText(q.stem)+' '+q.topics.join(' ')+' '+yearOf(q)+' '+paperOf(q)+' q.'+q.number).toLowerCase();
+      if(!q._searchText.includes(term)) return false;
+    }
+    return true;
+  });
+}
+
+function onAssignSearchInput(val){
+  window._assignSearchTerm = val;
+  clearTimeout(_assignSearchTimer);
+  _assignSearchTimer = setTimeout(updateAssignmentQuestionList, 60);
+}
+
+function onAssignModuleChange(val){
+  window._assignModuleFilter = val;
+  updateAssignmentQuestionList();
+}
+
+function updateAssignmentQuestionList(){
+  const container = document.getElementById('assign-question-list-inner');
+  if(!container) return;
+  const pool = getFilteredAssignmentPool();
+  if(!pool.length){
+    container.innerHTML = '<div style="padding:18px;text-align:center;color:var(--muted);font-size:14px">No questions match your filter. Try another keyword or module.</div>';
+    return;
+  }
+  container.innerHTML = pool.slice(0, 80).map(q => {
+    const isSel = window._assignSelectedQIds.includes(q.id);
+    const textSnippet = (q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text || ('Question '+q.number);
+    return `
+      <label id="assign-q-row-${esc(q.id)}" style="display:flex;align-items:flex-start;gap:10px;padding:8px;border-bottom:1px solid var(--line);cursor:pointer;background:${isSel?'var(--teal-light)':'transparent'};border-radius:8px;transition:background .15s">
+        <input type="checkbox" ${isSel?'checked':''} onchange="toggleAssignQ('${esc(q.id)}')" style="margin-top:4px;accent-color:var(--teal)">
+        <div style="flex:1;font-size:13px;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <span><b>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}</b> <span class="pill none" style="font-size:11px">${q.marks}m</span></span>
+            <span class="mini-note" style="white-space:nowrap">${esc(q.topics[0]||'')}</span>
+          </div>
+          <div style="color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(textSnippet)}</div>
+        </div>
+      </label>
+    `;
+  }).join('') + (pool.length > 80 ? `<div style="padding:8px;text-align:center;color:var(--muted);font-size:12px">Showing first 80 of ${pool.length} matching questions. Type to filter more specifically.</div>` : '');
 }
 
 function toggleAssignQ(qid){
   const idx = window._assignSelectedQIds.indexOf(qid);
   if(idx >= 0) window._assignSelectedQIds.splice(idx, 1);
   else window._assignSelectedQIds.push(qid);
-  renderCreateAssignmentModal();
+
+  const row = document.getElementById('assign-q-row-' + qid);
+  if(row){
+    const isSel = window._assignSelectedQIds.includes(qid);
+    row.style.background = isSel ? 'var(--teal-light)' : 'transparent';
+    const chk = row.querySelector('input[type="checkbox"]');
+    if(chk) chk.checked = isSel;
+  }
+  updateAssignmentSummaryLabel();
+}
+
+function updateAssignmentSummaryLabel(){
+  const label = document.getElementById('assign-selected-summary');
+  if(!label) return;
+  const selectedQuestions = window._assignSelectedQIds.map(id => ALL.find(x => x.id === id)).filter(Boolean);
+  const totalMarks = selectedQuestions.reduce((s, q) => s + (q.marks || 0), 0);
+  label.innerHTML = `Selected: <b>${selectedQuestions.length}</b> question(s) • <b>${totalMarks}</b> total marks`;
 }
 
 async function saveNewAssignment(){
