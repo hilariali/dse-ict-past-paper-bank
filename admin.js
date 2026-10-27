@@ -383,8 +383,8 @@ function openCreateAssignmentModal(){
         </div>
 
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
-          <input id="assign-q-search" class="admin-input" style="flex:1;min-width:160px" placeholder="Search questions by keyword, year, or topic…" autocomplete="off" oninput="onAssignSearchInput(this.value)">
-          <select id="assign-q-module" class="admin-select" style="max-width:200px" onchange="onAssignModuleChange(this.value)">
+          <input id="assign-q-search" class="admin-input" style="flex:1 1 200px" placeholder="Search questions by keyword, year, or topic…" autocomplete="off" oninput="onAssignSearchInput(this.value)">
+          <select id="assign-q-module" class="admin-select" style="flex:1 1 160px;max-width:100%" onchange="onAssignModuleChange(this.value)">
             <option value="All">All modules</option>
             ${MODULE_ORDER.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('')}
           </select>
@@ -1182,8 +1182,8 @@ function renderAssignmentRunner(){
     const hasAns = answers[item.id] != null && answers[item.id] !== '';
     const isCur = idx === curIndex;
     return `
-      <button class="fbtn ${isCur?'active':''}" style="${isCur?'background:var(--navy);color:#fff':(hasAns?'background:var(--teal-light);border-color:var(--teal)':'')}" onclick="jumpAssignmentQ(${idx})">
-        ${idx + 1}${hasAns ? ' •' : ''}
+      <button class="fbtn ${isCur?'active':''}" style="flex-shrink:0;min-width:38px;height:38px;padding:0 12px;display:inline-flex;align-items:center;justify-content:center;gap:4px;border-radius:10px;font-size:13.5px;font-weight:700;transition:all .15s;${isCur?'background:var(--navy);color:#fff;border-color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,0.18)':(hasAns?'background:var(--teal-light);border-color:var(--teal);color:var(--teal)':'background:var(--surface2)')}" onclick="jumpAssignmentQ(${idx})">
+        <span>${idx + 1}</span>${hasAns ? '<span style="font-weight:900">✓</span>' : ''}
       </button>
     `;
   }).join('');
@@ -1198,7 +1198,7 @@ function renderAssignmentRunner(){
       <button class="btn btn-ghost btn-sm" onclick="exitAssignmentRunner()">← Exit Assignment</button>
     </div>
 
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px">
+    <div style="display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:4px 2px 10px;margin-bottom:18px">
       ${pillsHtml}
     </div>
 
@@ -1256,7 +1256,7 @@ function renderAssignmentRunner(){
         }).join('')}
       `}
 
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;flex-wrap:wrap;gap:10px">
+      <div class="assign-runner-foot" style="display:flex;justify-content:space-between;align-items:center;margin-top:22px;flex-wrap:wrap;gap:10px">
         <button class="btn btn-ghost" ${curIndex===0?'disabled':''} onclick="prevAssignmentQ()">← Previous</button>
         <div style="display:flex;gap:10px">
           ${!isReview ? `<button class="btn btn-navy" onclick="submitActiveAssignment()">Finish &amp; Submit Assignment</button>` : ''}

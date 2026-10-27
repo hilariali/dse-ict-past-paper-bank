@@ -60,7 +60,9 @@ a{color:var(--teal)} button{font:inherit;cursor:pointer}
 .qtitle{font-weight:700;line-height:1.4}
 .topic{font-size:13px;color:var(--muted)}
 .qfoot{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:6px;border-top:1px dashed var(--line)}
-.btn{border:none;border-radius:999px;padding:11px 18px;font-weight:800}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+.btn{border:none;border-radius:999px;padding:10px 18px;font-weight:800;transition:all .15s ease}
+.btn:active:not(:disabled){transform:scale(0.97)}
 .btn-primary{background:var(--teal);color:#fff} .btn-navy{background:var(--navy);color:#fff} .btn-ghost{background:var(--surface);border:1px solid var(--line);color:var(--ink)} .btn-danger{background:var(--red);color:#fff}
 .btn:disabled{opacity:.45;cursor:not-allowed}
 /* Drill */
@@ -75,13 +77,16 @@ table{width:100%;border-collapse:collapse;font-size:14px} th,td{padding:10px 12p
 .diagram{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface2);margin:12px 0}
 .alttext{font-size:13px;color:var(--muted);margin-top:8px}
 .options{display:grid;gap:10px;margin:18px 0}
-.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px}
+.opt{display:flex;gap:12px;align-items:flex-start;text-align:left;width:100%;background:var(--surface);border:2px solid var(--line);border-radius:14px;padding:14px;cursor:pointer;transition:transform .12s ease,border-color .15s ease,background .15s ease,box-shadow .15s ease}
+.opt:hover{border-color:var(--teal);background:var(--surface2);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+.opt:active{transform:scale(0.99)}
 .opt.selected{border-color:var(--teal);background:var(--teal-light)}
 .opt.correct{border-color:var(--green);background:var(--green-light)} .opt.wrong{border-color:var(--red);background:var(--red-light)}
 .opt-key{width:32px;height:32px;flex:0 0 32px;border-radius:50%;background:var(--surface2);display:grid;place-items:center;font-weight:800}
 .conf{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0}
-.conf button{flex:1;min-width:100px;padding:11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:700}
-.conf button.active{background:var(--navy);color:#fff}
+.conf button{flex:1;min-width:100px;padding:11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:700;cursor:pointer;transition:all .15s ease}
+.conf button:hover{border-color:var(--ink)}
+.conf button.active{background:var(--navy);color:#fff;border-color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,0.15)}
 .reveal{margin-top:20px;border-top:2px solid var(--line);padding-top:18px}
 .result-banner{padding:14px 16px;border-radius:12px;font-weight:800}
 .result-banner.ok{background:var(--green-light);color:var(--green)} .result-banner.no{background:var(--red-light);color:var(--red)}
@@ -207,12 +212,14 @@ label.setlab{font-weight:700;font-size:14.5px}
 .report-meta{font-size:13px;color:var(--muted)}
 .report-section{margin-top:24px}
 .report-section-title{font-size:14px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
-.modal-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;max-width:880px;width:100%;max-height:90vh;overflow-y:auto;padding:28px;box-shadow:0 24px 48px rgba(0,0,0,.28);position:relative}
-.modal-close{position:absolute;top:16px;right:18px;font-size:26px;background:none;border:none;color:var(--muted);cursor:pointer;font-weight:800;line-height:1}
-.modal-close:hover{color:var(--ink)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(4px);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;animation:modalFade .15s ease-out}
+.modal-card{background:var(--surface);border:1px solid var(--line);border-radius:22px;max-width:880px;width:100%;max-height:92vh;max-height:92dvh;overflow-y:auto;overscroll-behavior:contain;padding:28px;box-shadow:0 24px 48px rgba(0,0,0,.28);position:relative;animation:modalPop .2s cubic-bezier(0.16, 1, 0.3, 1)}
+@keyframes modalFade{from{opacity:0}to{opacity:1}}
+@keyframes modalPop{from{opacity:0;transform:translateY(12px) scale(0.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+.modal-close{position:absolute;top:16px;right:18px;font-size:24px;background:none;border:none;color:var(--muted);cursor:pointer;font-weight:800;line-height:1;width:34px;height:34px;display:grid;place-items:center;border-radius:50%;transition:background .15s,color .15s}
+.modal-close:hover{color:var(--ink);background:var(--surface2)}
 .auth-tab-bar{display:flex;gap:8px;border-bottom:2px solid var(--line);padding-bottom:10px;margin-bottom:18px}
-.auth-tab-btn{background:none;border:none;padding:6px 14px;font-weight:700;font-size:14.5px;color:var(--muted);cursor:pointer;border-radius:8px}
+.auth-tab-btn{background:none;border:none;padding:6px 14px;font-weight:700;font-size:14.5px;color:var(--muted);cursor:pointer;border-radius:8px;transition:all .15s}
 .auth-tab-btn.active{color:var(--ink);background:var(--surface2)}
 .btn-sm{padding:6px 12px;font-size:13px;border-radius:8px}
 .btn-danger{background:var(--red-light);color:var(--red);border:1px solid var(--red)}
@@ -224,10 +231,10 @@ label.setlab{font-weight:700;font-size:14.5px}
   .top-inner{padding:10px 14px;gap:8px}
   .top h1{font-size:18px}
   .eyebrow{font-size:10px}
-  .nav{width:100%;display:flex;gap:8px;overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:4px 2px 6px}
+  .nav{width:calc(100% + 24px);margin:0 -12px;display:flex;gap:8px;overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding:6px 14px 8px}
   .nav::-webkit-scrollbar{height:4px}
   .nav::-webkit-scrollbar-thumb{background:var(--line);border-radius:4px}
-  .nav button{padding:8px 13px;font-size:13px;flex-shrink:0}
+  .nav button{padding:8px 14px;font-size:13px;flex-shrink:0;min-height:38px}
   .wrap{padding:14px 12px 36px}
   .admin-nav{overflow-x:auto;white-space:nowrap;flex-wrap:nowrap;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px}
   .admin-nav::-webkit-scrollbar{display:none}
@@ -237,25 +244,25 @@ label.setlab{font-weight:700;font-size:14.5px}
 
 @media (max-width: 600px){
   .modal-overlay{padding:8px}
-  .modal-card{padding:18px 14px;border-radius:16px;max-height:94vh}
-  .modal-close{top:10px;right:12px;font-size:24px}
+  .modal-card{padding:20px 16px;border-radius:18px;max-height:94vh;max-height:94dvh}
+  .modal-close{top:12px;right:12px;font-size:22px;background:var(--surface2)}
   .form-grid-2col{grid-template-columns:1fr !important}
   .export-btn-grid{grid-template-columns:1fr !important}
-  .drill-card{padding:14px;border-radius:16px}
-  .hero{padding:16px 14px;border-radius:16px}
+  .drill-card{padding:16px 14px;border-radius:18px}
+  .hero{padding:18px 16px;border-radius:18px}
   .hero h2{font-size:22px}
   .hero-stats{grid-template-columns:1fr 1fr;gap:8px}
   .hstat{padding:10px}
   .hstat b{font-size:20px}
   .filterbar{padding:10px 12px}
   .fbar-row{gap:8px}
-  .opt{padding:10px 12px;gap:8px}
-  .opt-key{width:28px;height:28px;flex:0 0 28px;font-size:13px}
-  .conf button{min-width:70px;padding:9px 6px;font-size:12.5px}
-  .qcard{padding:14px;gap:8px}
+  .opt{padding:12px 14px;gap:10px}
+  .opt-key{width:30px;height:30px;flex:0 0 30px;font-size:13.5px}
+  .conf button{min-width:70px;padding:10px 8px;font-size:13px}
+  .qcard{padding:16px 14px;gap:10px}
   .qfoot{flex-direction:column;align-items:flex-start;gap:10px}
-  .qfoot > div{width:100%;display:flex;gap:6px}
-  .qfoot button{flex:1;text-align:center}
+  .qfoot > div{width:100%;display:flex;gap:6px;flex-wrap:wrap}
+  .qfoot button{flex:1 1 120px;text-align:center;padding:9px 12px;font-size:13px}
   .report-sheet{padding:16px 12px;border-radius:14px}
   .report-title{font-size:20px}
   .report-header{flex-direction:column;gap:10px}
@@ -268,6 +275,9 @@ label.setlab{font-weight:700;font-size:14.5px}
   .quickpick-row{gap:8px}
   .quickpick-row select,.quickpick-row input{width:100%;max-width:100%}
   .fbar-year select{max-width:100%}
+  .assign-runner-foot{flex-direction:column-reverse;gap:10px}
+  .assign-runner-foot > div{width:100%;display:flex;gap:8px}
+  .assign-runner-foot button{flex:1;text-align:center;padding:12px 14px}
 }
 
 @media print{
@@ -638,6 +648,10 @@ function showView(v){
   if(v==='faq') renderFaq();
   if(v==='settings') renderSettings();
   window.scrollTo({top:0,behavior:'smooth'});
+  try{
+    const activeNav = document.querySelector('.nav button.active');
+    if(activeNav) activeNav.scrollIntoView({inline:'nearest',behavior:'smooth',block:'nearest'});
+  }catch(e){}
 }
 function startDrill(id){ currentId=id; selAnswer=null; selConf=null; submitted=false; chatMsgs=[]; const q=ALL.find(x=>x.id===id); if(q.type==='structured'){ startStructured(q); return; } const prev=store[id];
   document.getElementById('drill-root').innerHTML=`<div class="drill-card"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Question ${esc(q.number)}</span><div style="display:flex;gap:8px;align-items:center"><button class="btn btn-ghost btn-sm" onclick="openQuestionExportModal('${q.id}')">⎙ Export / Print</button><span style="font-size:13px;color:var(--muted)">${esc(q.topics.join(' • '))} • ${q.marks} mark</span></div></div><div class="blocks" style="margin-top:16px">${renderBlocks(q.stem)}</div><div class="section-title" style="margin-top:8px">Choose one answer — marking scheme hidden</div><div class="options" id="opts">${q.options.map(o=>`<button class="opt" data-k="${o.key}" onclick="pickAnswer('${o.key}')"><span class="opt-key">${o.key}</span><span class="blocks">${renderBlocks(o.content)}</span></button>`).join('')}</div><div class="section-title">How confident are you?</div><div class="conf" id="conf"><button onclick="pickConf('Low')">Low — guessing</button><button onclick="pickConf('Medium')">Medium</button><button onclick="pickConf('High')">High — sure</button></div><button id="submitBtn" class="btn btn-primary" style="width:100%;padding:14px" disabled onclick="submitAnswer()">Submit answer & reveal marking</button>${aiZoneHtml()}<div id="reveal"></div></div>`;
@@ -1308,6 +1322,6 @@ function copyQuestionText(id){
 async function boot(){ await loadFirebaseConfigFromEndpoint(); renderSettings(); initFirebaseFromSettings(); updateBankStatus(); probeAI(); const bu=settings.bankUrl||DEFAULT_BANK_URL, bGh=!settings.bankUrl; let bErr=''; try{ const d=await fetchJsonT(bu, 5000); if(validBank(d)) applyBank(d, bGh?'loaded from GitHub':'loaded from URL'); else bErr= bGh?'The GitHub question bank did not return a valid bank':'The saved question-bank URL did not return a valid bank'; }catch(e){ bErr= bGh?'Could not load the question bank from GitHub':'Could not load the question bank from the saved URL'; } if(bErr){ if(bankSource==='built-in copy'){ try{ const d=await fetchJsonT('question-bank.json', 5000); if(validBank(d)) applyBank(d,'loaded from question-bank.json beside the page'); }catch(e){} } bankNote= bankSource==='built-in copy'? bErr+' — using the built-in copy.' : bErr+' — using the copy of question-bank.json beside the page.'; } const fu=settings.faqUrl||DEFAULT_FAQ_URL, fGh=!settings.faqUrl; let fErr=''; try{ const d=await fetchJsonT(fu, 5000); if(validFaq(d)) applyFaq(d, fGh?'loaded from GitHub':'loaded from URL'); else fErr= fGh?'The GitHub FAQ did not return a valid faq.json':'The saved FAQ URL did not return a valid faq.json'; }catch(e){ fErr= fGh?'Could not load the FAQ from GitHub':'Could not load the FAQ from the saved URL'; } if(fErr){ if(faqSource==='built-in copy'){ try{ const d=await fetchJsonT('faq.json', 5000); if(validFaq(d)) applyFaq(d,'loaded from faq.json beside the page'); }catch(e){} } faqNote= faqSource==='built-in copy'? fErr+' — using the built-in copy.' : fErr+' — using the copy of faq.json beside the page.'; } renderBankSettingsStatus(); renderHome(); }
 renderHome(); boot();
 </script>
-<script src="admin.js?v=20261027_1930"></script>
+<script src="admin.js?v=20261027_2020"></script>
 </body>
 </html>
