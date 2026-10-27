@@ -1424,9 +1424,74 @@ function copyQuestionText(id){
   });
 }
 
-async function boot(){ await loadFirebaseConfigFromEndpoint(); renderSettings(); initFirebaseFromSettings(); updateBankStatus(); probeAI(); const bu=settings.bankUrl||DEFAULT_BANK_URL, bGh=!settings.bankUrl; let bErr=''; try{ const d=await fetchJsonT(bu, 5000); if(validBank(d)) applyBank(d, bGh?'loaded from GitHub':'loaded from URL'); else bErr= bGh?'The GitHub question bank did not return a valid bank':'The saved question-bank URL did not return a valid bank'; }catch(e){ bErr= bGh?'Could not load the question bank from GitHub':'Could not load the question bank from the saved URL'; } if(bErr){ if(bankSource==='built-in copy'){ try{ const d=await fetchJsonT('question-bank.json', 5000); if(validBank(d)) applyBank(d,'loaded from question-bank.json beside the page'); }catch(e){} } bankNote= bankSource==='built-in copy'? bErr+' — using the built-in copy.' : bErr+' — using the copy of question-bank.json beside the page.'; } const fu=settings.faqUrl||DEFAULT_FAQ_URL, fGh=!settings.faqUrl; let fErr=''; try{ const d=await fetchJsonT(fu, 5000); if(validFaq(d)) applyFaq(d, fGh?'loaded from GitHub':'loaded from URL'); else fErr= fGh?'The GitHub FAQ did not return a valid faq.json':'The saved FAQ URL did not return a valid faq.json'; }catch(e){ fErr= fGh?'Could not load the FAQ from GitHub':'Could not load the FAQ from the saved URL'; } if(fErr){ if(faqSource==='built-in copy'){ try{ const d=await fetchJsonT('faq.json', 5000); if(validFaq(d)) applyFaq(d,'loaded from faq.json beside the page'); }catch(e){} } faqNote= faqSource==='built-in copy'? fErr+' — using the built-in copy.' : fErr+' — using the copy of faq.json beside the page.'; } renderBankSettingsStatus(); renderHome(); }
+async function boot(){
+  renderSettings();
+  updateBankStatus();
+
+  // Fast concurrent loading: fetch Firebase config, Question Bank, FAQ, and AI probe in parallel
+  const loadCfgTask = (async () => {
+    try {
+      await loadFirebaseConfigFromEndpoint();
+      initFirebaseFromSettings();
+      updateBankStatus();
+    } catch(e) {}
+  })();
+
+  const probeAiTask = (async () => {
+    try { await probeAI(); } catch(e) {}
+  })();
+
+  const loadBankTask = (async () => {
+    const customUrl = (settings.bankUrl || '').trim();
+    // Prefer fast same-origin question-bank.json CDN file first, then custom URL, then GitHub fallback
+    const urlsToTry = customUrl
+      ? [customUrl, 'question-bank.json', DEFAULT_BANK_URL]
+      : ['question-bank.json', DEFAULT_BANK_URL];
+
+    for (const u of urlsToTry) {
+      try {
+        const d = await fetchJsonT(u, 4000);
+        if (validBank(d)) {
+          const srcLabel = u === 'question-bank.json'
+            ? 'loaded from edge CDN'
+            : (u === customUrl ? 'loaded from URL' : 'loaded from GitHub');
+          applyBank(d, srcLabel);
+          bankNote = '';
+          return;
+        }
+      } catch(e) {}
+    }
+    bankNote = 'Using built-in offline question bank.';
+  })();
+
+  const loadFaqTask = (async () => {
+    const customFaqUrl = (settings.faqUrl || '').trim();
+    const urlsToTry = customFaqUrl
+      ? [customFaqUrl, 'faq.json', DEFAULT_FAQ_URL]
+      : ['faq.json', DEFAULT_FAQ_URL];
+
+    for (const u of urlsToTry) {
+      try {
+        const d = await fetchJsonT(u, 4000);
+        if (validFaq(d)) {
+          const srcLabel = u === 'faq.json'
+            ? 'loaded from edge CDN'
+            : (u === customFaqUrl ? 'loaded from URL' : 'loaded from GitHub');
+          applyFaq(d, srcLabel);
+          faqNote = '';
+          return;
+        }
+      } catch(e) {}
+    }
+    faqNote = 'Using built-in FAQ copy.';
+  })();
+
+  await Promise.allSettled([loadCfgTask, probeAiTask, loadBankTask, loadFaqTask]);
+  renderBankSettingsStatus();
+  renderHome();
+}
 renderHome(); boot(); if(typeof updateMobileNavCurrentLabel==='function') updateMobileNavCurrentLabel();
 </script>
-<script src="admin.js?v=20261027_2130"></script>
+<script src="admin.js?v=20261027_2145"></script>
 </body>
 </html>

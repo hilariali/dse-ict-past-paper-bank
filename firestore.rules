@@ -14,7 +14,7 @@ service cloud.firestore {
     //   - uid: string (required, immutable, matches userId, max 128 chars)
     //   - email: string (required, valid email, max 120 chars)
     //   - displayName: string (required, 1-100 chars)
-    //   - role: string (required, 'student' | 'teacher' | 'admin')
+    //   - role: string (required, 'student' | 'teacher' | 'admin', immutable on update for owner and teacher; only admin can modify)
     //   - classId: string (optional, max 100 chars)
     //   - className: string (optional, max 100 chars)
     //   - stats: map (optional, max 50 keys, stores attempt counts & accuracy)
@@ -218,16 +218,16 @@ service cloud.firestore {
       allow read: if isAuthenticated() && (isOwner(userId) || isTeacher() || isAdmin());
 
       // Create: Authenticated users can create their own profile.
-      // Default roles allowed on self-registration are 'student' or 'teacher'. Only admins can create 'admin' roles.
+      // Standard authenticated users can only self-register with role 'student' (or isAdmin()).
       allow create: if isOwner(userId) &&
         isValidUser(request.resource.data, userId) &&
         isRecent(request.resource.data.createdAt) &&
-        (request.resource.data.role in ['student', 'teacher'] || isAdmin());
+        (request.resource.data.role == 'student' || isAdmin());
 
       // Update:
-      // - Regular user / Owner: can update profile fields and transition between 'student' and 'teacher' (cannot assign/modify admin role).
-      // - Teacher: can update student class assignments (classId, className) and student profiles (cannot modify or assign admin roles).
-      // - Admin: full update permissions.
+      // - Regular user / Owner: can update profile fields, but role is strictly immutable (role cannot be changed).
+      // - Teacher: can update student class assignments (classId, className) and student profiles, but role is strictly immutable.
+      // - Admin: full update permissions, including role modification.
       allow update: if isAuthenticated() &&
         isValidUser(request.resource.data, userId) &&
         request.resource.data.uid == resource.data.uid &&
@@ -236,12 +236,12 @@ service cloud.firestore {
           isAdmin() ||
           (isOwner(userId) &&
            resource.data.role != 'admin' &&
-           request.resource.data.role in ['student', 'teacher'] &&
+           request.resource.data.role == resource.data.role &&
            (request.resource.data.email == resource.data.email ||
             (request.auth.token.email != null && request.resource.data.email == request.auth.token.email))) ||
           (isTeacher() &&
            resource.data.role != 'admin' &&
-           request.resource.data.role in ['student', 'teacher'] &&
+           request.resource.data.role == resource.data.role &&
            request.resource.data.email == resource.data.email)
         );
 

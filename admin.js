@@ -104,6 +104,10 @@ async function studentLeaveClass(){
 async function loadAdminData(force){
   if(!firebaseDb||!firebaseUser||!isStaffRole()) return;
   if(adminState.loading) return;
+  if(!force && adminState.users.length && adminState.classes.length && adminState.assignments.length){
+    renderAdmin();
+    return;
+  }
   adminState.loading=true; renderAdmin();
   try{
     let cq=firebaseDb.collection('classes');
@@ -751,7 +755,7 @@ async function deleteAssignment(id){
   }
 }
 
-async function openAssignmentSubmissionsModal(assignId){
+async function openAssignmentSubmissionsModal(assignId, force){
   const a = (adminState.assignments||[]).find(x => x.id === assignId);
   if(!a) return;
   openModal('<p class="loading">Loading student submissions…</p>');
@@ -763,14 +767,18 @@ async function openAssignmentSubmissionsModal(assignId){
   });
   const targetStudents = adminState.users.filter(u => targetStudentSet.has(u.uid) && u.role === 'student');
 
-  const subs = await Promise.all(targetStudents.map(async u => {
-    try{
-      const snap = await firebaseDb.collection('users').doc(u.uid).collection('assignmentAttempts').doc(assignId).get();
-      return { u, attempt: snap.exists ? snap.data() : null };
-    }catch(e){
-      return { u, attempt: null };
-    }
-  }));
+  let subs = (!force && adminState.assignmentAttemptsMap[assignId]) ? adminState.assignmentAttemptsMap[assignId] : null;
+  if(!subs){
+    subs = await Promise.all(targetStudents.map(async u => {
+      try{
+        const snap = await firebaseDb.collection('users').doc(u.uid).collection('assignmentAttempts').doc(assignId).get();
+        return { u, attempt: snap.exists ? snap.data() : null };
+      }catch(e){
+        return { u, attempt: null };
+      }
+    }));
+    adminState.assignmentAttemptsMap[assignId] = subs;
+  }
 
   const maxPossibleMarks = (a.questionIds||[]).map(qid => (ALL.find(x=>x.id===qid)||{}).marks || 0).reduce((x,y)=>x+y, 0);
   const completedSubs = subs.filter(s => s.attempt && s.attempt.status === 'completed');
@@ -796,6 +804,7 @@ async function openAssignmentSubmissionsModal(assignId){
           <div class="mini-note">Due: ${a.dueDate ? esc(a.dueDate) : 'None'} • Questions: ${(a.questionIds||[]).length} • Max marks: ${maxPossibleMarks}</div>
         </div>
         <div style="display:flex;gap:8px">
+          <button class="btn btn-ghost no-print" onclick="openAssignmentSubmissionsModal('${esc(assignId)}', true)" title="Reload live submissions from database">↻ Refresh</button>
           <button class="btn btn-navy no-print" onclick="window.print()">Print / PDF</button>
           <button class="btn btn-ghost no-print" onclick="downloadGradebookCsv()">Export CSV</button>
         </div>
@@ -1119,6 +1128,7 @@ async function saveTeacherGrading(assignId, uid){
 
   try{
     await firebaseDb.collection('users').doc(uid).collection('assignmentAttempts').doc(assignId).set(updateData, { merge: true });
+    delete adminState.assignmentAttemptsMap[assignId];
     if(studentAssignmentsState.attempts[assignId]){
       studentAssignmentsState.attempts[assignId] = { ...studentAssignmentsState.attempts[assignId], ...updateData };
     }

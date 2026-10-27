@@ -1,5 +1,8 @@
 function json(res, status, body) {
   res.status(status).setHeader('Content-Type', 'application/json; charset=utf-8');
+  if (status === 200) {
+    res.setHeader('Cache-Control', 'public, s-maxage=86400, stale-while-revalidate=3600');
+  }
   res.send(JSON.stringify(body));
 }
 

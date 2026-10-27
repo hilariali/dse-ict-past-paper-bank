@@ -47,6 +47,7 @@ module.exports = async function handler(req, res) {
   const configured = !!baseUrl;
 
   if (req.method === 'GET') {
+    res.setHeader('Cache-Control', 'public, s-maxage=300, stale-while-revalidate=60');
     if (!configured) return json(res, 503, { ok: false, error: 'AI endpoint is not configured' });
     return json(res, 200, { ok: true, configured: true, model: model || null, hasApiKey: !!apiKey });
   }
