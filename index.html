@@ -138,16 +138,21 @@ label.setlab{font-weight:700;font-size:14.5px}
 .aimarkbox .hit{color:var(--green)} .aimarkbox .miss{color:var(--red)}
 
 /* Grouped, collapsible filters */
-.filterbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-top:18px}
+.filterbar{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-top:18px}
 .fbar-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .fbar-row+.fbar-row{margin-top:10px}
-.fbar-summary{font-weight:700;font-size:14.5px;flex:1;min-width:170px}
-.fbtn{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:8px 14px;font-weight:800;font-size:14px;white-space:nowrap}
-#filter-search{flex:1;min-width:150px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:15px}
+.fbar-summary{font-weight:700;font-size:14px;flex:1;min-width:170px;color:var(--muted)}
+.fbar-select-label{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+.fbar-select-label select{padding:8px 11px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px;font-weight:700}
+.fbar-select-label select:focus{outline:none;border-color:var(--teal)}
+.fbtn{border:1px solid var(--line);background:var(--surface2);color:var(--ink);border-radius:999px;padding:8px 15px;font-weight:800;font-size:14px;white-space:nowrap;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:all .15s ease}
+.fbtn:hover{border-color:var(--teal);background:var(--teal-light)}
+.fbtn.active{background:var(--teal-light);border-color:var(--teal);color:var(--teal)}
+#filter-search{flex:1;min-width:170px;padding:9px 12px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:14.5px}
 #filter-search:focus{outline:none;border-color:var(--teal)}
 .fbar-year{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:var(--muted)}
 .fbar-year select{padding:9px 10px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink);font:inherit;font-size:14.5px;font-weight:700}
-.filterpanel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:6px 14px 12px;margin-top:10px}
+.filterpanel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 18px 16px;margin-top:10px}
 .fgroup{padding:12px 0;border-bottom:1px solid var(--line)}
 .fgroup:last-child{border-bottom:none;padding-bottom:2px}
 .fgroup-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
@@ -385,12 +390,22 @@ label.setlab{font-weight:700;font-size:14.5px}
 
   <div class="filterbar">
     <div class="fbar-row">
-      <div class="fbar-summary" id="filter-summary">All years · All papers · Topic: All</div>
-      <button class="fbtn" id="filter-toggle" onclick="toggleFilterPanel()" aria-expanded="false">Filters ▾</button>
+      <input id="filter-search" type="search" placeholder="Search question text, code, or topics…" aria-label="Search questions" oninput="setSearch(this.value)">
+      <label class="fbar-select-label">Year <select id="sum-year" aria-label="Filter by year" onchange="setYear(this.value)"></select></label>
+      <label class="fbar-select-label">Paper <select id="sum-paper" aria-label="Filter by paper" onchange="setPaper(this.value)"></select></label>
+      <label class="fbar-select-label">Status <select id="sum-status" aria-label="Filter by status" onchange="setStatus(this.value)">
+        <option value="All">All statuses</option>
+        <option value="new">Not attempted</option>
+        <option value="queue">In re-drill queue</option>
+        <option value="Know">Know</option>
+        <option value="Shaky">Shaky</option>
+        <option value="Gap">Gap</option>
+      </select></label>
+      <button class="fbtn" id="filter-toggle" onclick="toggleFilterPanel()" aria-expanded="false" aria-controls="filter-panel"><span>⚙️ Advanced Filters</span> <span>▾</span></button>
     </div>
-    <div class="fbar-row">
-      <input id="filter-search" type="search" placeholder="Search question text or topics…" aria-label="Search questions" oninput="setSearch(this.value)">
-      <label class="fbar-year">Year <select id="sum-year" aria-label="Filter by year" onchange="setYear(this.value)"></select></label>
+    <div class="fbar-row" style="justify-content:space-between;align-items:center;margin-top:8px">
+      <div class="fbar-summary" id="filter-summary">All years · All papers · Topic: All</div>
+      <div id="filter-quick-actions" style="display:flex;gap:8px;align-items:center"></div>
     </div>
   </div>
   <div id="filter-panel" class="filterpanel" hidden></div>
@@ -538,7 +553,8 @@ let store={}; try{ store=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){
 let filterYear='All years', filterPaper='All papers', filterTopics=[], filterStatus='All', filterSearch='', currentId=null, selAnswer=null, selConf=null, submitted=false, queueMode=false, queueList=[], quickPickModule='All modules', quickPickPaperGroup='All papers', quickPickIds=[], selfCheckLocked=false;
 let firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseReady=false, authObserverSet=false, firebaseUser=null, cloudSyncBusy=false, cloudSyncTimer=null, cloudStatusMsg='not configured';
 let currentUserProfile=null, pendingRegistrationRole=null, adminDemoMode=false, adminTab='overview', adminState={classes:[], users:[], assignments:[], userProgressMap:{}, assignmentAttemptsMap:{}, loading:false}, studentAssignmentsState={list:[], attempts:{}, loading:false, loaded:false, error:''}, activeAssignmentRunner=null, reportState={type:'class', selectedClassId:null, selectedStudentUid:null, teacherNotes:''}, studentDrillModalUid=null, adminFilterClass='all', adminStudentSearch='';
-let panelOpen=false; try{ const _fp=localStorage.getItem('dse-ict-filterpanel-v1'); panelOpen = _fp===null ? (window.innerWidth>=820) : _fp==='1'; }catch(e){ panelOpen = window.innerWidth>=820; }
+let panelOpen=false; try{ const _fp=localStorage.getItem('dse-ict-filterpanel-v1'); panelOpen = _fp==='1'; }catch(e){ panelOpen = false; }
+let filterTopicSearch='';
 let openModules={}, TOPIC_LIST=[], yearSig='';
 if(window.mermaid) mermaid.initialize({startOnLoad:false, theme:'default', securityLevel:'loose'});
 
@@ -585,11 +601,39 @@ function activeFilterCount(){ return (filterYear!=='All years'?1:0)+(filterPaper
 function summaryText(n){ const yearTxt=filterYear==='All years'?'All years':filterYear; const paperTxt=filterPaper==='All papers'?'All papers':paperChipLabel(filterPaper, filterYear==='All years'?undefined:filterYear); const topicTxt=!filterTopics.length?'Topic: All':(filterTopics.length===1?'Topic: '+shortTopic(filterTopics[0]):'Topics: '+filterTopics.length+' selected'); const quickTxt=quickPickIds.length?` \u00b7 Quick pick: ${quickPickIds.length} random (${quickPickPaperGroup} / ${quickPickModule})`:''; return `${yearTxt} \u00b7 ${paperTxt} \u00b7 ${topicTxt}${filterStatus!=='All'?' \u00b7 Status: '+statusLabel(filterStatus):''}${filterSearch.trim()?' \u00b7 Search: \u201c'+esc(filterSearch.trim())+'\u201d':''}${quickTxt} \u00b7 ${n} question${n!==1?'s':''}`; }
 function renderFilters(list){
   const sum=document.getElementById('filter-summary'); if(sum) sum.textContent=summaryText(list.length);
-  const tb=document.getElementById('filter-toggle'); if(tb){ const n=activeFilterCount(); tb.textContent=`Filters${n?` (${n})`:''} ${panelOpen?'\u25b4':'\u25be'}`; tb.setAttribute('aria-expanded', panelOpen?'true':'false'); }
+  const qActions=document.getElementById('filter-quick-actions');
+  if(qActions){
+    qActions.innerHTML = activeFilterCount() ? `<button class="mini-clear" onclick="resetFilters()" style="cursor:pointer">↺ Reset filters</button>` : '';
+  }
+  const tb=document.getElementById('filter-toggle');
+  if(tb){
+    const advCount = filterTopics.length;
+    const totalCount = activeFilterCount();
+    const countBadge = advCount ? ` (${advCount} topic${advCount>1?'s':''})` : (totalCount ? ` (${totalCount})` : '');
+    tb.innerHTML = `<span>⚙️ Advanced Filters${countBadge}</span> <span>${panelOpen?'▲':'▼'}</span>`;
+    tb.setAttribute('aria-expanded', panelOpen ? 'true' : 'false');
+    tb.classList.toggle('active', panelOpen || advCount > 0);
+  }
   const ys=bankYears(), sig=ys.join(',');
   const sel=document.getElementById('sum-year');
   if(sel && sig!==yearSig){ yearSig=sig; const ny=ys.filter(isNewCurr), oy=ys.filter(y=>!isNewCurr(y)); sel.innerHTML=`<option value="All years">All years</option>`+(ny.length?`<optgroup label="New curriculum">${ny.map(y=>`<option value="${y}">${y}</option>`).join('')}</optgroup>`:'')+(oy.length?`<optgroup label="Old curriculum">${oy.map(y=>`<option value="${y}">${y}</option>`).join('')}</optgroup>`:''); }
   if(sel) sel.value=filterYear;
+
+  const selPaper=document.getElementById('sum-paper');
+  if(selPaper){
+    const inYear=filterYear!=='All years'? ALL.filter(q=>yearOf(q)===filterYear) : ALL;
+    const codes=[...new Set(inYear.map(paperOf))].sort((a,b)=>PAPERS.findIndex(p=>p.code===a)-PAPERS.findIndex(p=>p.code===b));
+    const pOpts = `<option value="All papers">All papers</option>` + codes.map(c=>`<option value="${c}">${esc(paperChipLabel(c, filterYear==='All years'?undefined:filterYear))}</option>`).join('');
+    if(selPaper.dataset.sig !== (filterYear+codes.join(','))){
+      selPaper.dataset.sig = filterYear+codes.join(',');
+      selPaper.innerHTML = pOpts;
+    }
+    selPaper.value = filterPaper;
+  }
+
+  const selStatus=document.getElementById('sum-status');
+  if(selStatus) selStatus.value = filterStatus;
+
   const groups=topicGroups(); TOPIC_LIST=[]; groups.forEach(g=>g.topics.forEach(t=>{ if(!TOPIC_LIST.includes(t)) TOPIC_LIST.push(t); }));
   const qpaper=document.getElementById('quick-paper-group');
   if(qpaper) qpaper.value=quickPickPaperGroup;
@@ -601,27 +645,72 @@ function renderFilters(list){
   if(panel){ panel.hidden=!panelOpen; if(panelOpen) panel.innerHTML=panelHtml(groups); }
   renderPills();
 }
+function setTopicSearch(v){
+  filterTopicSearch = v || '';
+  const panel = document.getElementById('filter-panel');
+  if(panel && panelOpen) panel.innerHTML = panelHtml(topicGroups());
+}
+function expandAllModules(open){
+  const groups = topicGroups();
+  groups.forEach(g => { openModules[g.key] = !!open; });
+  renderHome();
+}
 function panelHtml(groups){
   const ys=bankYears(), ny=ys.filter(isNewCurr), oy=ys.filter(y=>!isNewCurr(y));
-  const yearGroup=(label,list)=> list.length? `<div class="fsub">${label}</div><div class="chips">${list.map(y=>`<button class="chip ${filterYear===y?'active':''}" onclick="setYear('${y}')">${y} \u00b7 ${ALL.filter(q=>yearOf(q)===y).length}</button>`).join('')}</div>`:'';
+  const yearGroup=(label,list)=> list.length? `<div class="fsub">${label}</div><div class="chips">${list.map(y=>`<button class="chip ${filterYear===y?'active':''}" onclick="setYear('${y}')">${y} · ${ALL.filter(q=>yearOf(q)===y).length}</button>`).join('')}</div>`:'';
   let paperHtml='';
   if(filterYear!=='All years'){
     const inYear=ALL.filter(q=>yearOf(q)===filterYear);
     const codes=[...new Set(inYear.map(paperOf))].sort((a,b)=>PAPERS.findIndex(p=>p.code===a)-PAPERS.findIndex(p=>p.code===b));
-    paperHtml=`<div class="chips"><button class="chip ${filterPaper==='All papers'?'active':''}" onclick="setPaper('All papers')">All papers \u00b7 ${inYear.length}</button>${codes.map(c=>`<button class="chip ${filterPaper===c?'active':''}" onclick="setPaper('${c}')">${esc(paperChipLabel(c,filterYear))} (${inYear.filter(q=>paperOf(q)===c).length})</button>`).join('')}${filterYear==='2025'?`<button class="chip" disabled style="opacity:.55">Paper 1B \u00b7 Draft \u2014 from the Teachers' Briefing, not yet drillable</button>`:''}</div>`;
+    paperHtml=`<div class="chips"><button class="chip ${filterPaper==='All papers'?'active':''}" onclick="setPaper('All papers')">All papers · ${inYear.length}</button>${codes.map(c=>`<button class="chip ${filterPaper===c?'active':''}" onclick="setPaper('${c}')">${esc(paperChipLabel(c,filterYear))} (${inYear.filter(q=>paperOf(q)===c).length})</button>`).join('')}${filterYear==='2025'?`<button class="chip" disabled style="opacity:.55">Paper 1B · Draft — from the Teachers' Briefing, not yet drillable</button>`:''}</div>`;
   } else {
     const codes=[...new Set(ALL.map(paperOf))].sort((a,b)=>PAPERS.findIndex(p=>p.code===a)-PAPERS.findIndex(p=>p.code===b));
-    paperHtml=`<div class="chips"><button class="chip ${filterPaper==='All papers'?'active':''}" onclick="setPaper('All papers')">All papers \u00b7 ${ALL.length}</button>${codes.map(c=>`<button class="chip ${filterPaper===c?'active':''}" onclick="setPaper('${c}')">${esc(paperChipLabel(c))} (${ALL.filter(q=>paperOf(q)===c).length})</button>`).join('')}</div>`;
+    paperHtml=`<div class="chips"><button class="chip ${filterPaper==='All papers'?'active':''}" onclick="setPaper('All papers')">All papers · ${ALL.length}</button>${codes.map(c=>`<button class="chip ${filterPaper===c?'active':''}" onclick="setPaper('${c}')">${esc(paperChipLabel(c))} (${ALL.filter(q=>paperOf(q)===c).length})</button>`).join('')}</div>`;
   }
-  const topicHtml=groups.map(g=>{ const selT=g.topics.filter(t=>filterTopics.includes(t)); const open=openModules[g.key]!==undefined?openModules[g.key]:selT.length>0; const allInMod=selT.length===g.topics.length && g.topics.length>0; return `<div class="modgroup"><button class="modhead" onclick="toggleModule('${g.key}')"><span>${g.key}${MODULE_NAMES[g.key]?' \u2014 '+esc(MODULE_NAMES[g.key]):''}</span><span class="modmeta">${selT.length?selT.length+' selected \u00b7 ':''}${g.topics.length} topics ${open?'\u25b4':'\u25be'}</span></button>${open?`<div class="topic-chips"><div class="chips" style="margin-bottom:8px"><button class="chip ${allInMod?'active':''}" onclick="toggleModuleTopics('${g.key}')">${allInMod?'Clear module':'Select whole module'}</button></div><div class="chips">${g.topics.map(t=>`<button class="chip tchip ${filterTopics.includes(t)?'active':''}" onclick="toggleTopicIdx(${TOPIC_LIST.indexOf(t)})">${esc(topicLabelFor(t,g.key))}</button>`).join('')}</div></div>`:''}</div>`; }).join('');
+
+  const term = (filterTopicSearch || '').trim().toLowerCase();
+  const topicHtml=groups.map(g=>{
+    let topics = g.topics;
+    if(term){
+      topics = topics.filter(t => t.toLowerCase().includes(term) || topicLabelFor(t, g.key).toLowerCase().includes(term));
+      if(!topics.length) return '';
+    }
+    const selT=topics.filter(t=>filterTopics.includes(t));
+    const open=term ? true : (openModules[g.key]!==undefined ? openModules[g.key] : selT.length>0);
+    const allInMod=selT.length===topics.length && topics.length>0;
+    return `<div class="modgroup"><button class="modhead" onclick="toggleModule('${g.key}')"><span>${g.key}${MODULE_NAMES[g.key]?' — '+esc(MODULE_NAMES[g.key]):''}</span><span class="modmeta">${selT.length?selT.length+' selected · ':''}${topics.length} topic${topics.length!==1?'s':''} ${open?'▲':'▼'}</span></button>${open?`<div class="topic-chips"><div class="chips" style="margin-bottom:8px"><button class="chip ${allInMod?'active':''}" onclick="toggleModuleTopics('${g.key}')">${allInMod?'Clear module':'Select whole module'}</button></div><div class="chips">${topics.map(t=>`<button class="chip tchip ${filterTopics.includes(t)?'active':''}" onclick="toggleTopicIdx(${TOPIC_LIST.indexOf(t)})">${esc(topicLabelFor(t,g.key))}</button>`).join('')}</div></div>`:''}</div>`;
+  }).filter(Boolean).join('') || `<div class="mini-note" style="padding:12px">No topics match \u201c${esc(term)}\u201d. <a href="#" onclick="setTopicSearch('');return false">Clear topic search</a></div>`;
+
   const cnt={All:ALL.length,new:0,Know:0,Shaky:0,Gap:0,queue:0};
   ALL.forEach(q=>{ const a=store[q.id]; if(!a){ cnt.new++; return; } if(a.rating&&(a.rating in cnt)) cnt[a.rating]++; if(['Shaky','Gap'].includes(a.rating)) cnt.queue++; });
   const seg=(v)=>`<button class="${filterStatus===v?'active':''}" onclick="setStatus('${v}')">${statusLabel(v)} <span class="seg-n">${cnt[v]}</span></button>`;
-  return `<div class="fgroup"><div class="fgroup-head"><span class="fgroup-title">Year</span></div><div class="chips"><button class="chip ${filterYear==='All years'?'active':''}" onclick="setYear('All years')">All years \u00b7 ${ALL.length}</button></div>${yearGroup('New curriculum',ny)}${yearGroup('Old curriculum',oy)}</div>`
-    + `<div class="fgroup"><div class="fgroup-head"><span class="fgroup-title">${filterYear==='All years'?'Paper type \u2014 all years':'Papers \u2014 '+filterYear}</span></div>${paperHtml}</div>`
-    + `<div class="fgroup"><div class="fgroup-head"><span class="fgroup-title">Topics by module</span>${filterTopics.length?`<button class="mini-clear" onclick="clearTopics()">\u00d7 clear topics</button>`:''}</div>${topicHtml}</div>`
-    + `<div class="fgroup"><div class="fgroup-head"><span class="fgroup-title">Status</span></div><div class="seg">${seg('All')}${seg('new')}${seg('Know')}${seg('Shaky')}${seg('Gap')}${seg('queue')}</div></div>`
-    + `<div class="fgroup"><button class="btn btn-ghost" onclick="resetFilters()">Reset all filters</button></div>`;
+
+  const headerHtml = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;padding:6px 0 12px;border-bottom:1px solid var(--line)">
+      <div>
+        <div style="font-weight:800;font-size:15px;color:var(--navy);display:flex;align-items:center;gap:8px">
+          <span>⚙️ Advanced Filters &amp; Topic Matrix</span>
+          ${filterTopics.length ? `<span class="pill know" style="font-size:12px;padding:2px 8px">${filterTopics.length} topic${filterTopics.length>1?'s':''} active</span>` : ''}
+        </div>
+        <div class="mini-note" style="margin-top:2px">Select granular ICT syllabus topics across modules to build custom drills</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        <button class="btn btn-ghost btn-sm" onclick="expandAllModules(true)">Expand all</button>
+        <button class="btn btn-ghost btn-sm" onclick="expandAllModules(false)">Collapse all</button>
+        ${activeFilterCount() ? `<button class="btn btn-ghost btn-sm" onclick="resetFilters()">Reset all</button>` : ''}
+        <button class="btn btn-navy btn-sm" onclick="toggleFilterPanel()">Done ▴</button>
+      </div>
+    </div>
+    <div style="padding:10px 0 4px">
+      <input type="search" placeholder="🔍 Search topics within modules (e.g. SQL, IP, two's complement, Python)..." value="${esc(filterTopicSearch)}" oninput="setTopicSearch(this.value)" style="width:100%;padding:9px 12px;border:2px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px">
+    </div>
+  `;
+
+  return headerHtml
+    + `<div class="fgroup"><div class="fgroup-head"><span class="fgroup-title">Topics by Module (${TOPIC_LIST.length} topics)</span>${filterTopics.length?`<button class="mini-clear" onclick="clearTopics()">× clear selected topics</button>`:''}</div>${topicHtml}</div>`
+    + `<div class="fgroup"><div class="fgroup-head"><span class="fgroup-title">Paper edition</span></div>${paperHtml}</div>`
+    + `<div class="fgroup"><div class="fgroup-head"><span class="fgroup-title">Exam Year</span></div><div class="chips"><button class="chip ${filterYear==='All years'?'active':''}" onclick="setYear('All years')">All years · ${ALL.length}</button></div>${yearGroup('New curriculum',ny)}${yearGroup('Old curriculum',oy)}</div>`
+    + `<div class="fgroup"><div class="fgroup-head"><span class="fgroup-title">Drill Status</span></div><div class="seg">${seg('All')}${seg('new')}${seg('Know')}${seg('Shaky')}${seg('Gap')}${seg('queue')}</div></div>`;
 }
 function renderPills(){
   const pills=[];
@@ -659,7 +748,7 @@ function clearTopics(){ filterTopics=[]; renderHome(); }
 function setStatus(s){ filterStatus=s; renderHome(); }
 function setSearch(v){ filterSearch=v; renderHome(); }
 function clearSearch(){ filterSearch=''; const i=document.getElementById('filter-search'); if(i) i.value=''; renderHome(); }
-function resetFilters(){ filterYear='All years'; filterPaper='All papers'; filterTopics=[]; filterStatus='All'; filterSearch=''; quickPickIds=[]; quickPickModule='All modules'; quickPickPaperGroup='All papers'; const i=document.getElementById('filter-search'); if(i) i.value=''; renderHome(); }
+function resetFilters(){ filterYear='All years'; filterPaper='All papers'; filterTopics=[]; filterStatus='All'; filterSearch=''; quickPickIds=[]; quickPickModule='All modules'; quickPickPaperGroup='All papers'; filterTopicSearch=''; const i=document.getElementById('filter-search'); if(i) i.value=''; renderHome(); }
 function setQuickPickPaperGroup(v){ quickPickPaperGroup=v||'All papers'; if(quickPickIds.length) quickPickIds=[]; renderHome(); }
 function setQuickPickModule(v){ quickPickModule=v||'All modules'; if(quickPickIds.length) quickPickIds=[]; renderHome(); }
 function pickRandom(list, n){ const copy=[...list]; for(let i=copy.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [copy[i],copy[j]]=[copy[j],copy[i]]; } return copy.slice(0,n); }
