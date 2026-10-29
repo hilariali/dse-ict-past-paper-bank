@@ -1268,10 +1268,14 @@ async function loadStudentAssignments(force){
   if(studentAssignmentsState.loading) return;
   studentAssignmentsState.loading = true;
   try{
-    const [asSnap, attSnap] = await Promise.all([
+    const fetchPromise = Promise.all([
       firebaseDb.collection('assignments').get(),
       firebaseDb.collection('users').doc(firebaseUser.uid).collection('assignmentAttempts').get()
     ]);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Assignments fetch timed out after 10s. Please check your network connection.')), 10000)
+    );
+    const [asSnap, attSnap] = await Promise.race([fetchPromise, timeoutPromise]);
     const cid = (currentUserProfile && currentUserProfile.classId) || '';
     const allA = asSnap.docs.map(d => ({ ...d.data(), id: d.id }));
     const isTeacher = isStaffRole();
@@ -1347,7 +1351,12 @@ function renderAssignments(){
 
   root.innerHTML = `
     ${teacherHeader}
-    ${studentAssignmentsState.error ? `<div class="note" style="color:var(--red)">${esc(studentAssignmentsState.error)}</div>` : ''}
+    ${studentAssignmentsState.error ? `
+      <div class="note" style="color:var(--red);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <span>${esc(studentAssignmentsState.error)}</span>
+        <button class="btn btn-ghost btn-sm" onclick="loadStudentAssignments(true)">↻ Retry</button>
+      </div>
+    ` : ''}
     ${studentAssignmentsState.loading ? '<p class="loading">Loading assignments…</p>' : `
       <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
         ${list.map(a => {
