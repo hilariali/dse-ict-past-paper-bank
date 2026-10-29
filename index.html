@@ -895,10 +895,234 @@ function rate(r){ const q=ALL.find(x=>x.id===currentId); store[q.id].rating=r; s
 function nextLabel(){ if(queueMode){ const idx=queueList.indexOf(currentId); return idx>=0 && idx<queueList.length-1 ? 'Next in queue →' : 'Finish queue'; } const idx=ALL.indexOf(ALL.find(q=>q.id===currentId)); return idx<ALL.length-1 ? 'Next question →' : 'Finish — see results'; }
 function nextQuestion(){ if(queueMode){ const idx=queueList.indexOf(currentId); if(idx<queueList.length-1){ startDrill(queueList[idx+1]); return; } queueMode=false; showView('results'); return; } const idx=ALL.indexOf(ALL.find(q=>q.id===currentId)); if(idx<ALL.length-1) startDrill(ALL[idx+1].id); else showView('results'); }
 function startQueue(){ const q=ALL.filter(x=>['Shaky','Gap'].includes(store[x.id]?.rating)); if(!q.length){ showView('home'); return; } queueMode=true; queueList=q.map(x=>x.id); startDrill(queueList[0]); }
-function renderResults(){ const s=stats(); const root=document.getElementById('results-root'); if(!s.att){ root.innerHTML=`<div class="empty">No attempts yet. Start with Q.1 on the Questions tab — your score, topic breakdown and re-drill queue will appear here.</div>`; return; }
-  const byTopic={}; ALL.forEach(q=>{ q.topics.forEach(t=>{ byTopic[t]=byTopic[t]||{total:0,att:0,corr:0}; byTopic[t].total++; if(store[q.id]){ byTopic[t].att++; if(store[q.id].correct) byTopic[t].corr++; } }); });
-  const queue=ALL.filter(q=>['Shaky','Gap'].includes(store[q.id]?.rating));
-  root.innerHTML=`<div class="stats" style="margin:0 0 6px"><div class="stat"><b>${s.corr} / ${s.att}</b><span>Score (attempted)</span></div><div class="stat"><b>${s.acc}%</b><span>Accuracy</span></div><div class="stat"><b>${ALL.length - s.att}</b><span>Not yet attempted</span></div><div class="stat"><b>${queue.length}</b><span>Re-drill queue</span></div></div><div class="section-title">Per-topic breakdown</div>${Object.entries(byTopic).map(([t,v])=>`<div><div class="topic-row"><span>${esc(t)}</span><strong>${v.att? v.corr+' / '+v.att+' correct':'Not attempted'}</strong></div><div class="progress"><i style="width:${v.att? Math.round(v.corr/v.att*100):0}%"></i></div></div>`).join('')}<div class="section-title">Re-drill queue ${queue.length?`(${queue.length})`:''}</div>${queue.length? queue.map(q=>`<div class="topic-row"><span>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — ${esc(q.topics[0])} <span class="pill ${store[q.id].rating.toLowerCase()}">${store[q.id].rating}</span></span><button class="btn btn-primary" style="padding:8px 14px" onclick="queueMode=false;startDrill('${q.id}')">Drill</button></div>`).join('') : `<p style="color:var(--muted)">Queue is clear — nothing rated Shaky or Gap. Nice work.</p>`}<div class="section-title">All attempts</div>${ALL.map(q=>{ const a=store[q.id]; if(!a) return `<div class="topic-row"><span>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — ${esc(q.topics[0])}</span><span style="color:var(--muted)">Not attempted</span></div>`; if(q.type==='structured') return `<div class="topic-row"><span>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — ${esc(q.topics[0])}</span><strong>Self-score ${a.score} / ${q.marks} marks ${a.rating?'• '+a.rating:''}</strong></div>`; return `<div class="topic-row"><span>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — ${esc(q.topics[0])}</span><strong>${a.correct?'✓ Correct':'✕ '+a.answer+' → '+q.markingScheme.answer} ${a.rating?'• '+a.rating:''}</strong></div>`}).join('')}`;
+let resultsTopicFilter = 'all';
+let resultsSearch = '';
+
+function setResultsTopicFilter(f){
+  resultsTopicFilter = f;
+  renderResults();
+}
+
+function setResultsSearch(v){
+  resultsSearch = v || '';
+  renderResults();
+}
+
+function ensureTopicList(){
+  if(TOPIC_LIST && TOPIC_LIST.length) return TOPIC_LIST;
+  const groups = topicGroups();
+  TOPIC_LIST = [];
+  groups.forEach(g => g.topics.forEach(t => { if(!TOPIC_LIST.includes(t)) TOPIC_LIST.push(t); }));
+  return TOPIC_LIST;
+}
+
+function drillTopic(t, onlyUnattempted){
+  const inTopic = ALL.filter(q => q.topics.includes(t));
+  let targets = onlyUnattempted ? inTopic.filter(q => !store[q.id]) : inTopic;
+  if(!targets.length) targets = inTopic;
+  if(!targets.length) return;
+  queueMode = true;
+  queueList = targets.map(q => q.id);
+  startDrill(queueList[0]);
+}
+
+function drillTopicByIdx(idx, onlyUnattempted){
+  ensureTopicList();
+  const t = TOPIC_LIST[idx];
+  if(!t) return;
+  drillTopic(t, onlyUnattempted);
+}
+
+function filterByTopicAndShow(t){
+  resetFilters();
+  filterTopics = [t];
+  showView('home');
+}
+
+function filterByTopicIdxAndShow(idx){
+  ensureTopicList();
+  const t = TOPIC_LIST[idx];
+  if(!t) return;
+  filterByTopicAndShow(t);
+}
+
+function renderResults(){
+  ensureTopicList();
+  const s = stats();
+  const root = document.getElementById('results-root');
+  if(!root) return;
+
+  const byTopic = {};
+  ALL.forEach(q => {
+    q.topics.forEach(t => {
+      byTopic[t] = byTopic[t] || { total: 0, att: 0, corr: 0 };
+      byTopic[t].total++;
+      if(store[q.id]){
+        byTopic[t].att++;
+        if(store[q.id].correct) byTopic[t].corr++;
+      }
+    });
+  });
+
+  const topicEntries = Object.entries(byTopic).map(([t, v]) => {
+    const unatt = v.total - v.att;
+    const isMastered = v.att === v.total && v.corr === v.total && v.total > 0;
+    const isUnattempted = v.att === 0;
+    const isShaky = !isMastered && !isUnattempted;
+    return {
+      topic: t,
+      idx: TOPIC_LIST.indexOf(t),
+      total: v.total,
+      att: v.att,
+      corr: v.corr,
+      unatt,
+      acc: v.att ? Math.round(v.corr / v.att * 100) : null,
+      isMastered,
+      isUnattempted,
+      isShaky
+    };
+  });
+
+  const totalTopics = topicEntries.length;
+  const unattemptedTopics = topicEntries.filter(x => x.unatt > 0).length;
+  const shakyTopics = topicEntries.filter(x => x.isShaky).length;
+  const masteredTopics = topicEntries.filter(x => x.isMastered).length;
+
+  const sTerm = (resultsSearch || '').trim().toLowerCase();
+  const filteredTopicEntries = topicEntries.filter(item => {
+    if(resultsTopicFilter === 'unattempted' && item.unatt === 0) return false;
+    if(resultsTopicFilter === 'shaky' && !item.isShaky) return false;
+    if(resultsTopicFilter === 'mastered' && !item.isMastered) return false;
+    if(sTerm && !item.topic.toLowerCase().includes(sTerm)) return false;
+    return true;
+  });
+
+  const queue = ALL.filter(q => ['Shaky','Gap'].includes(store[q.id]?.rating));
+
+  const statsBar = `
+    <div class="stats" style="margin:0 0 12px">
+      <div class="stat"><b>${s.corr} / ${s.att}</b><span>Score (attempted)</span></div>
+      <div class="stat"><b>${s.acc === null ? '—' : s.acc + '%'}</b><span>Accuracy</span></div>
+      <div class="stat"><b>${ALL.length - s.att}</b><span>Not yet attempted</span></div>
+      <div class="stat"><b>${queue.length}</b><span>Re-drill queue</span></div>
+    </div>
+  `;
+
+  const topicSection = `
+    <div style="margin-top:22px">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px">
+        <div class="section-title" style="margin:0">Per-topic breakdown &amp; Drill Shortcuts</div>
+        <span class="mini-note">Click any topic's shortcut to start a focused drill session</span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="seg">
+          <button class="${resultsTopicFilter==='all'?'active':''}" onclick="setResultsTopicFilter('all')">All (${totalTopics})</button>
+          <button class="${resultsTopicFilter==='unattempted'?'active':''}" onclick="setResultsTopicFilter('unattempted')">Unattempted (${unattemptedTopics})</button>
+          <button class="${resultsTopicFilter==='shaky'?'active':''}" onclick="setResultsTopicFilter('shaky')">Needs practice (${shakyTopics})</button>
+          <button class="${resultsTopicFilter==='mastered'?'active':''}" onclick="setResultsTopicFilter('mastered')">Mastered (${masteredTopics})</button>
+        </div>
+        <input type="search" placeholder="Filter topics below…" value="${esc(resultsSearch)}" oninput="setResultsSearch(this.value)" style="padding:7px 12px;border:1px solid var(--line);border-radius:10px;font:inherit;font-size:13.5px;max-width:240px;background:var(--surface);color:var(--ink)">
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px">
+        ${filteredTopicEntries.map(item => {
+          const pill = item.isUnattempted
+            ? `<span class="pill none">0 attempted</span>`
+            : (item.isMastered
+                ? `<span class="pill know">${item.corr} / ${item.att} correct (100%)</span>`
+                : `<span class="pill shaky">${item.corr} / ${item.att} correct (${item.acc}%)</span>`);
+
+          const unattBadge = item.unatt > 0
+            ? `<span class="pill none" style="font-size:11.5px">${item.unatt} unattempted</span>`
+            : `<span class="pill know" style="font-size:11.5px">All ${item.total} attempted</span>`;
+
+          const progressPct = item.total ? Math.round((item.corr / item.total) * 100) : 0;
+
+          return `
+            <div class="qcard" style="padding:14px 18px;margin-top:0">
+              <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+                <div style="flex:1;min-width:260px">
+                  <div style="font-weight:700;font-size:15px;color:var(--navy)">${esc(item.topic)}</div>
+                  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:4px">
+                    ${pill}
+                    ${unattBadge}
+                    <span style="font-size:12.5px;color:var(--muted)">${item.total} questions in bank</span>
+                  </div>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                  ${item.unatt > 0 ? `
+                    <button class="btn btn-primary" style="padding:6px 12px;font-size:12.5px" onclick="drillTopicByIdx(${item.idx}, true)" title="Drill the ${item.unatt} unattempted questions in this topic">
+                      🎯 Drill unattempted (${item.unatt}) →
+                    </button>
+                  ` : ''}
+                  <button class="btn ${item.unatt > 0 ? 'btn-ghost' : 'btn-navy'}" style="padding:6px 12px;font-size:12.5px" onclick="drillTopicByIdx(${item.idx}, false)" title="Drill all ${item.total} questions in this topic">
+                    ${item.unatt > 0 ? 'Drill all' : '🎯 Re-drill'} (${item.total}) →
+                  </button>
+                  <button class="btn btn-ghost" style="padding:6px 10px;font-size:12.5px" onclick="filterByTopicIdxAndShow(${item.idx})" title="View and drill in Question Bank">
+                    Filter in bank ↗
+                  </button>
+                </div>
+              </div>
+              <div class="progress" style="margin-top:10px;height:6px">
+                <i style="width:${progressPct}%;background:var(--teal)"></i>
+              </div>
+            </div>
+          `;
+        }).join('') || `<div class="empty">No topics match this filter.</div>`}
+      </div>
+    </div>
+  `;
+
+  const queueSection = `
+    <div style="margin-top:24px">
+      <div class="section-title">Re-drill queue ${queue.length ? `(${queue.length})` : ''}</div>
+      ${queue.length ? queue.map(q => `
+        <div class="topic-row" style="align-items:center">
+          <span>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — ${esc(q.topics[0])} <span class="pill ${store[q.id].rating.toLowerCase()}">${store[q.id].rating}</span></span>
+          <button class="btn btn-primary" style="padding:6px 12px;font-size:13px" onclick="queueMode=false;startDrill('${q.id}')">Drill →</button>
+        </div>
+      `).join('') : `<p style="color:var(--muted)">Queue is clear — nothing rated Shaky or Gap. Nice work.</p>`}
+    </div>
+  `;
+
+  const attemptsSection = `
+    <div style="margin-top:24px">
+      <div class="section-title">All questions (${ALL.length})</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${ALL.map(q => {
+          const a = store[q.id];
+          const isS = q.type === 'structured';
+          if(!a){
+            return `
+              <div class="topic-row" style="align-items:center">
+                <div>
+                  <span>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — ${esc(q.topics[0])}</span>
+                  <span class="pill none" style="margin-left:6px;font-size:11.5px">Not attempted</span>
+                </div>
+                <button class="btn btn-primary" style="padding:5px 11px;font-size:12.5px" onclick="queueMode=false;startDrill('${q.id}')">Drill →</button>
+              </div>
+            `;
+          }
+          const markBadge = isS
+            ? `Self-score ${a.score} / ${q.marks} marks ${a.rating ? '• ' + a.rating : ''}`
+            : `${a.correct ? '✓ Correct' : '✕ ' + a.answer + ' → ' + q.markingScheme.answer} ${a.rating ? '• ' + a.rating : ''}`;
+
+          return `
+            <div class="topic-row" style="align-items:center">
+              <div>
+                <span>${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} — ${esc(q.topics[0])}</span>
+                <strong style="margin-left:6px;font-size:13px">${markBadge}</strong>
+              </div>
+              <button class="btn btn-ghost" style="padding:5px 11px;font-size:12.5px" onclick="queueMode=false;startDrill('${q.id}')">Re-drill →</button>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
+
+  root.innerHTML = statsBar + topicSection + queueSection + attemptsSection;
 }
 function toggleReset(){ const b=document.getElementById('reset-box'); b.hidden=!b.hidden; }
 function resetAll(){ store={}; save(); document.getElementById('reset-box').hidden=true; renderHome(); renderResults(); }
