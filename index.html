@@ -537,7 +537,7 @@ const KEY='dse-ict-drill-v1';
 let store={}; try{ store=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ store={}; }
 let filterYear='All years', filterPaper='All papers', filterTopics=[], filterStatus='All', filterSearch='', currentId=null, selAnswer=null, selConf=null, submitted=false, queueMode=false, queueList=[], quickPickModule='All modules', quickPickPaperGroup='All papers', quickPickIds=[], selfCheckLocked=false;
 let firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseReady=false, authObserverSet=false, firebaseUser=null, cloudSyncBusy=false, cloudSyncTimer=null, cloudStatusMsg='not configured';
-let currentUserProfile=null, pendingRegistrationRole=null, adminDemoMode=false, adminTab='overview', adminState={classes:[], users:[], assignments:[], userProgressMap:{}, assignmentAttemptsMap:{}, loading:false}, studentAssignmentsState={list:[], attempts:{}, loading:false, error:''}, activeAssignmentRunner=null, reportState={type:'class', selectedClassId:null, selectedStudentUid:null, teacherNotes:''}, studentDrillModalUid=null, adminFilterClass='all', adminStudentSearch='';
+let currentUserProfile=null, pendingRegistrationRole=null, adminDemoMode=false, adminTab='overview', adminState={classes:[], users:[], assignments:[], userProgressMap:{}, assignmentAttemptsMap:{}, loading:false}, studentAssignmentsState={list:[], attempts:{}, loading:false, loaded:false, error:''}, activeAssignmentRunner=null, reportState={type:'class', selectedClassId:null, selectedStudentUid:null, teacherNotes:''}, studentDrillModalUid=null, adminFilterClass='all', adminStudentSearch='';
 let panelOpen=false; try{ const _fp=localStorage.getItem('dse-ict-filterpanel-v1'); panelOpen = _fp===null ? (window.innerWidth>=820) : _fp==='1'; }catch(e){ panelOpen = window.innerWidth>=820; }
 let openModules={}, TOPIC_LIST=[], yearSig='';
 if(window.mermaid) mermaid.initialize({startOnLoad:false, theme:'default', securityLevel:'loose'});
@@ -890,12 +890,16 @@ function setupAuthObserver(){
       await loadUserProfile();
       await loadCloudProgress();
     } else {
-      if(!adminDemoMode) currentUserProfile=null;
+      if(!adminDemoMode){
+        currentUserProfile=null;
+        studentAssignmentsState={list:[], attempts:{}, loading:false, loaded:false, error:''};
+      }
     }
     renderAuthStatus();
     updateNavAdminRole();
     if(!document.getElementById('view-admin').hidden) renderAdmin();
     if(!document.getElementById('view-practice').hidden) renderPractice();
+    if(!document.getElementById('view-assignments').hidden && typeof renderAssignments==='function') renderAssignments();
   });
   firebaseAuth.getRedirectResult().catch(e=>{
     cloudStatusMsg=describeAuthError(e);
@@ -1492,6 +1496,6 @@ async function boot(){
 }
 renderHome(); boot(); if(typeof updateMobileNavCurrentLabel==='function') updateMobileNavCurrentLabel();
 </script>
-<script src="admin.js?v=20261027_2145"></script>
+<script src="admin.js?v=20261029_1315"></script>
 </body>
 </html>

@@ -739,7 +739,7 @@ async function saveNewAssignment(){
   try{
     await ref.set(data);
     closeModal();
-    await loadAdminData(true);
+    await Promise.all([loadAdminData(true), loadStudentAssignments(true)]);
   }catch(e){
     alert('Could not create assignment: ' + (e.message || e));
   }
@@ -749,7 +749,7 @@ async function deleteAssignment(id){
   if(!confirm('Are you sure you want to delete this assignment?')) return;
   try{
     await firebaseDb.collection('assignments').doc(id).delete();
-    await loadAdminData(true);
+    await Promise.all([loadAdminData(true), loadStudentAssignments(true)]);
   }catch(e){
     alert('Could not delete assignment: ' + (e.message || e));
   }
@@ -1255,7 +1255,16 @@ function downloadClassCsv(){
 
 /* ---------------- Student: Assignments View & Runner ---------------- */
 async function loadStudentAssignments(force){
-  if(!firebaseUser || !firebaseDb) return;
+  if(!firebaseUser || !firebaseDb){
+    if(adminDemoMode){
+      studentAssignmentsState.list = adminState.assignments || [];
+      studentAssignmentsState.loaded = true;
+      studentAssignmentsState.loading = false;
+      if(document.getElementById('view-assignments') && !document.getElementById('view-assignments').hidden) renderAssignments();
+    }
+    return;
+  }
+  if(!force && studentAssignmentsState.loaded && !studentAssignmentsState.error) return;
   if(studentAssignmentsState.loading) return;
   studentAssignmentsState.loading = true;
   try{
@@ -1265,7 +1274,11 @@ async function loadStudentAssignments(force){
     ]);
     const cid = (currentUserProfile && currentUserProfile.classId) || '';
     const allA = asSnap.docs.map(d => ({ ...d.data(), id: d.id }));
+    const isTeacher = isStaffRole();
     studentAssignmentsState.list = allA.filter(a => {
+      if(isTeacher){
+        return isAdminRole() || a.teacherId === firebaseUser.uid || (cid && (a.classIds||[]).includes(cid)) || (a.studentUids||[]).includes(firebaseUser.uid);
+      }
       const inClass = cid && (a.classIds || []).includes(cid);
       const inStudents = (a.studentUids || []).includes(firebaseUser.uid);
       return inClass || inStudents;
@@ -1275,6 +1288,7 @@ async function loadStudentAssignments(force){
       studentAssignmentsState.attempts[d.id] = d.data();
     });
     studentAssignmentsState.error = '';
+    studentAssignmentsState.loaded = true;
 
     // Update nav badge count
     const pending = studentAssignmentsState.list.filter(a => !(studentAssignmentsState.attempts[a.id] && studentAssignmentsState.attempts[a.id].status === 'completed')).length;
@@ -1282,6 +1296,7 @@ async function loadStudentAssignments(force){
     if(badge) badge.textContent = pending ? `• ${pending} due` : '';
   }catch(e){
     studentAssignmentsState.error = e.message || e;
+    studentAssignmentsState.loaded = true;
   }
   studentAssignmentsState.loading = false;
   if(document.getElementById('view-assignments') && !document.getElementById('view-assignments').hidden) renderAssignments();
@@ -1291,7 +1306,7 @@ function renderAssignments(){
   const root = document.getElementById('assignments-root');
   if(!root) return;
 
-  if(!firebaseUser){
+  if(!firebaseUser && !adminDemoMode){
     root.innerHTML = `<div class="empty">Please <a href="#" onclick="openAuthModal('student');return false">sign in with Google</a> to view and attempt your assigned homework and assessments.</div>`;
     return;
   }
@@ -1299,8 +1314,14 @@ function renderAssignments(){
     renderAssignmentRunner();
     return;
   }
-  if(!studentAssignmentsState.list.length && !studentAssignmentsState.loading && !studentAssignmentsState.error){
+  if(adminDemoMode && !firebaseUser){
+    studentAssignmentsState.list = adminState.assignments || [];
+    studentAssignmentsState.loaded = true;
+  } else if(!studentAssignmentsState.loaded && !studentAssignmentsState.loading && !studentAssignmentsState.error){
+    studentAssignmentsState.loading = true;
+    root.innerHTML = '<p class="loading">Loading assignments…</p>';
     loadStudentAssignments();
+    return;
   }
 
   const list = studentAssignmentsState.list || [];
@@ -1319,6 +1340,10 @@ function renderAssignments(){
       </div>
     </div>
   ` : '';
+
+  const emptyMsg = isTeacher
+    ? '<div class="empty">No assignments created yet. Click <strong>+ Create New Assignment</strong> above to distribute tasks to your classes.</div>'
+    : '<div class="empty">No assignments assigned to you yet. If you have a class code from your teacher, join your class in the Practice Zone or Settings.</div>';
 
   root.innerHTML = `
     ${teacherHeader}
@@ -1362,7 +1387,7 @@ function renderAssignments(){
               </div>
             </div>
           `;
-        }).join('') || '<div class="empty">No assignments assigned to you yet. If you have a class code from your teacher, join your class in the Practice Zone or Settings.</div>'}
+        }).join('') || emptyMsg}
       </div>
     `}
   `;
