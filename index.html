@@ -552,7 +552,7 @@ const KEY='dse-ict-drill-v1';
 let store={}; try{ store=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ store={}; }
 let filterYear='All years', filterPaper='All papers', filterTopics=[], filterStatus='All', filterSearch='', currentId=null, selAnswer=null, selConf=null, submitted=false, queueMode=false, queueList=[], quickPickModule='All modules', quickPickPaperGroup='All papers', quickPickIds=[], selfCheckLocked=false;
 let firebaseApp=null, firebaseAuth=null, firebaseDb=null, firebaseReady=false, authObserverSet=false, firebaseUser=null, cloudSyncBusy=false, cloudSyncTimer=null, cloudStatusMsg='not configured';
-let currentUserProfile=null, pendingRegistrationRole=null, adminDemoMode=false, adminTab='overview', adminState={classes:[], users:[], assignments:[], userProgressMap:{}, assignmentAttemptsMap:{}, loading:false}, studentAssignmentsState={list:[], attempts:{}, loading:false, loaded:false, error:''}, activeAssignmentRunner=null, reportState={type:'class', selectedClassId:null, selectedStudentUid:null, teacherNotes:''}, studentDrillModalUid=null, adminFilterClass='all', adminStudentSearch='';
+let currentUserProfile=null, pendingRegistrationRole=null, adminDemoMode=false, adminTab='overview', adminState={classes:[], users:[], assignments:[], userProgressMap:{}, assignmentAttemptsMap:{}, loading:false, loaded:false}, studentAssignmentsState={list:[], attempts:{}, loading:false, loaded:false, error:''}, activeAssignmentRunner=null, reportState={type:'class', selectedClassId:null, selectedStudentUid:null, teacherNotes:''}, studentDrillModalUid=null, adminFilterClass='all', adminStudentSearch='';
 let panelOpen=false; try{ const _fp=localStorage.getItem('dse-ict-filterpanel-v1'); panelOpen = _fp==='1'; }catch(e){ panelOpen = false; }
 let filterTopicSearch='';
 let openModules={}, TOPIC_LIST=[], yearSig='';
@@ -1216,6 +1216,7 @@ function setupAuthObserver(){
       if(!adminDemoMode){
         currentUserProfile=null;
         studentAssignmentsState={list:[], attempts:{}, loading:false, loaded:false, error:''};
+        adminState={classes:[], users:[], assignments:[], userProgressMap:{}, assignmentAttemptsMap:{}, loading:false, loaded:false, error:''};
       }
     }
     renderAuthStatus();
@@ -1850,6 +1851,6 @@ async function boot(){
 }
 renderHome(); boot(); if(typeof updateMobileNavCurrentLabel==='function') updateMobileNavCurrentLabel();
 </script>
-<script src="admin.js?v=20261030_1620"></script>
+<script src="admin.js?v=20261030_1630"></script>
 </body>
 </html>

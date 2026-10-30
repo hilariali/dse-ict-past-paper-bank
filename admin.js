@@ -104,7 +104,7 @@ async function studentLeaveClass(){
 async function loadAdminData(force){
   if(!firebaseDb||!firebaseUser||!isStaffRole()) return;
   if(adminState.loading) return;
-  if(!force && adminState.users.length && adminState.classes.length && adminState.assignments.length){
+  if(!force && adminState.loaded){
     renderAdmin();
     return;
   }
@@ -116,13 +116,23 @@ async function loadAdminData(force){
       cq=cq.where('teacherId','==',firebaseUser.uid);
       aq=aq.where('teacherId','==',firebaseUser.uid);
     }
-    const [cs,us,as]=await Promise.all([cq.get(), firebaseDb.collection('users').get(), aq.get()]);
+    const fetchPromise = Promise.all([cq.get(), firebaseDb.collection('users').get(), aq.get()]);
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Teacher data fetch timed out after 10s. Please check your connection.')), 10000)
+    );
+    const [cs,us,as]=await Promise.race([fetchPromise, timeoutPromise]);
     adminState.classes=cs.docs.map(d=>({...d.data(), id:d.id}));
     adminState.users=us.docs.map(d=>({...d.data(), uid:d.id}));
     adminState.assignments=as.docs.map(d=>({...d.data(), id:d.id}));
     adminState.error='';
-  }catch(e){ adminState.error='Could not load data: '+(e.message||e); }
-  adminState.loading=false; renderAdmin();
+    adminState.loaded=true;
+  }catch(e){
+    adminState.error='Could not load data: '+(e.message||e);
+    adminState.loaded=true;
+  }finally{
+    adminState.loading=false;
+    renderAdmin();
+  }
 }
 async function loadStudentProgress(uid){
   if(adminState.userProgressMap[uid]) return adminState.userProgressMap[uid];
@@ -197,7 +207,7 @@ function renderAdmin(){
   const root=document.getElementById('admin-root'); if(!root) return;
   if(!firebaseUser){ root.innerHTML=`<div class="empty">Please <a href="#" onclick="openAuthModal('teacher');return false">sign in as a teacher</a> to open the dashboard.</div>`; return; }
   if(!isStaffRole()){ root.innerHTML=`<div class="empty">This area is for teachers and admins. <a href="#" onclick="openAuthModal('teacher');return false">Register as a teacher</a> with your school access key.</div>`; return; }
-  if(!adminState.classes.length && !adminState.users.length && !adminState.loading && !adminState.error){ loadAdminData(); }
+  if(!adminState.loaded && !adminState.loading && !adminState.error){ loadAdminData(); }
   const tabs=[['overview','Overview'],['classes','Classes'],['students','Students'],['assignments','Assignments'],['reports','Reports']];
   if(isAdminRole()) tabs.push(['staff','Teachers']);
   root.innerHTML=`<div class="drill-card"><div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px"><h2 style="font-family:Fraunces,serif;margin:0">${isAdminRole()?'Admin Dashboard':'Teacher Portal'}</h2><span><span class="admin-badge ${esc(userRole())}">${esc(userRole().toUpperCase())}</span> <button class="btn btn-ghost btn-sm" onclick="adminState.userProgressMap={};loadAdminData(true)">Refresh</button></span></div>
@@ -1390,6 +1400,13 @@ async function loadStudentAssignments(force){
   if(!force && studentAssignmentsState.loaded && !studentAssignmentsState.error) return;
   if(studentAssignmentsState.loading) return;
   studentAssignmentsState.loading = true;
+  studentAssignmentsState.error = '';
+
+  const root = document.getElementById('assignments-root');
+  if(root && !studentAssignmentsState.loaded){
+    root.innerHTML = '<p class="loading">Loading assignments…</p>';
+  }
+
   try{
     const fetchPromise = Promise.all([
       firebaseDb.collection('assignments').get(),
@@ -1424,8 +1441,9 @@ async function loadStudentAssignments(force){
   }catch(e){
     studentAssignmentsState.error = e.message || e;
     studentAssignmentsState.loaded = true;
+  }finally{
+    studentAssignmentsState.loading = false;
   }
-  studentAssignmentsState.loading = false;
   if(document.getElementById('view-assignments') && !document.getElementById('view-assignments').hidden) renderAssignments();
 }
 
@@ -1459,11 +1477,16 @@ function renderAssignments(){
   if(adminDemoMode && !firebaseUser){
     studentAssignmentsState.list = adminState.assignments || [];
     studentAssignmentsState.loaded = true;
-  } else if(!studentAssignmentsState.loaded && !studentAssignmentsState.loading && !studentAssignmentsState.error){
-    studentAssignmentsState.loading = true;
-    root.innerHTML = '<p class="loading">Loading assignments…</p>';
-    loadStudentAssignments();
-    return;
+  } else if(!studentAssignmentsState.loaded){
+    if(!studentAssignmentsState.loading && !studentAssignmentsState.error){
+      root.innerHTML = '<p class="loading">Loading assignments…</p>';
+      loadStudentAssignments();
+      return;
+    }
+    if(studentAssignmentsState.loading){
+      root.innerHTML = '<p class="loading">Loading assignments…</p>';
+      return;
+    }
   }
 
   const list = studentAssignmentsState.list || [];
