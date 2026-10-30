@@ -307,9 +307,52 @@ async function setUserRole(uid, role){
   catch(e){ alert('Could not change role: '+(e.message||e)); }
 }
 
+/* Helper: Is assignment due date past? */
+function isAssignmentOverdue(dueDate){
+  if(!dueDate) return false;
+  const parts = String(dueDate).trim().split('-');
+  if(parts.length === 3){
+    const y = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    const endOfDay = new Date(y, m, d, 23, 59, 59, 999);
+    return !isNaN(endOfDay.getTime()) && endOfDay.getTime() < Date.now();
+  }
+  const d = new Date(dueDate);
+  return !isNaN(d.getTime()) && d.getTime() < Date.now();
+}
+
+let teacherAssignFilter = 'all'; // 'all' | 'active' | 'overdue' | 'no_due'
+let teacherHideOverdue = false;
+
+window.setTeacherAssignFilter = function(filter){
+  teacherAssignFilter = filter;
+  if(filter === 'overdue') teacherHideOverdue = false;
+  renderAdmin();
+};
+
+window.toggleTeacherHideOverdue = function(checked){
+  teacherHideOverdue = !!checked;
+  if(teacherHideOverdue && teacherAssignFilter === 'overdue') teacherAssignFilter = 'all';
+  renderAdmin();
+};
+
 /* ---------------- Assignments tab (Teacher / Admin) ---------------- */
 function adminAssignmentsHtml(){
   const asList = adminState.assignments || [];
+  const overdueCount = asList.filter(a => isAssignmentOverdue(a.dueDate)).length;
+  const activeCount = asList.filter(a => !isAssignmentOverdue(a.dueDate)).length;
+  const noDueCount = asList.filter(a => !a.dueDate).length;
+
+  const displayedList = asList.filter(a => {
+    const isOverdue = isAssignmentOverdue(a.dueDate);
+    if(teacherHideOverdue && isOverdue) return false;
+    if(teacherAssignFilter === 'active') return !isOverdue;
+    if(teacherAssignFilter === 'overdue') return isOverdue;
+    if(teacherAssignFilter === 'no_due') return !a.dueDate;
+    return true;
+  });
+
   return `
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
       <p class="mini-note" style="margin:0">Create assignments for classes or specific students. Student attempts and grades are recorded separately from casual practice.</p>
@@ -319,7 +362,23 @@ function adminAssignmentsHtml(){
       <div class="kpi-card"><b>${asList.length}</b><span>Total Assignments</span></div>
       <div class="kpi-card"><b>${asList.reduce((s,a)=>(s+(a.questionIds||[]).length),0)}</b><span>Questions Assigned</span></div>
       <div class="kpi-card"><b>${adminState.classes.length}</b><span>Classes</span></div>
+      <div class="kpi-card"><b>${overdueCount}</b><span style="${overdueCount>0?'color:var(--red);font-weight:700':''}">Overdue</span></div>
     </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:14px 0 12px;padding:10px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:13px;color:var(--muted);margin-right:2px">Filter:</span>
+        <button class="fbtn ${teacherAssignFilter==='all'?'active':''}" onclick="setTeacherAssignFilter('all')">All (${asList.length})</button>
+        <button class="fbtn ${teacherAssignFilter==='active'?'active':''}" onclick="setTeacherAssignFilter('active')">Active / Due Soon (${activeCount})</button>
+        <button class="fbtn ${teacherAssignFilter==='overdue'?'active':''}" onclick="setTeacherAssignFilter('overdue')">Overdue (${overdueCount})</button>
+        <button class="fbtn ${teacherAssignFilter==='no_due'?'active':''}" onclick="setTeacherAssignFilter('no_due')">No Due Date (${noDueCount})</button>
+      </div>
+      <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink)">
+        <input type="checkbox" ${teacherHideOverdue ? 'checked' : ''} onchange="toggleTeacherHideOverdue(this.checked)">
+        Hide overdue
+      </label>
+    </div>
+
     <div class="tablewrap">
       <table class="admin-table">
         <thead>
@@ -333,18 +392,24 @@ function adminAssignmentsHtml(){
           </tr>
         </thead>
         <tbody>
-          ${asList.map(a => {
+          ${displayedList.map(a => {
             const cNames = (a.classIds||[]).map(cid => (classById(cid)||{}).name || cid).filter(Boolean);
             const targetText = cNames.length ? cNames.join(', ') : ((a.studentUids||[]).length + ' students');
             const qCount = (a.questionIds||[]).length;
             const marksTotal = (a.questionIds||[]).map(qid => (ALL.find(x=>x.id===qid)||{}).marks || 0).reduce((x,y)=>x+y, 0);
+            const isOverdue = isAssignmentOverdue(a.dueDate);
+            const dueDisplay = a.dueDate
+              ? (isOverdue
+                  ? `<span class="pill gap" style="font-weight:700;font-size:12px">⚠️ Overdue (${esc(a.dueDate)})</span>`
+                  : `<span class="pill shaky" style="font-size:12px">Due ${esc(a.dueDate)}</span>`)
+              : '<span style="color:var(--muted)">No due date</span>';
             return `
               <tr>
                 <td><b>${esc(a.title)}</b>${a.description ? `<br><span class="mini-note">${esc(a.description)}</span>` : ''}</td>
                 <td><span class="pill none">${esc(targetText||'All')}</span></td>
                 <td>${qCount}</td>
                 <td>${marksTotal}</td>
-                <td>${a.dueDate ? esc(a.dueDate) : '<span style="color:var(--muted)">No due date</span>'}</td>
+                <td>${dueDisplay}</td>
                 <td>
                   <div style="display:flex;gap:6px;flex-wrap:wrap">
                     <button class="btn btn-ghost btn-sm" onclick="openAssignmentQuestionsPreviewModal('${esc(a.id)}')">View Questions</button>
@@ -354,7 +419,7 @@ function adminAssignmentsHtml(){
                 </td>
               </tr>
             `;
-          }).join('') || '<tr><td colspan="6" style="color:var(--muted)">No assignments created yet. Click "+ Create Assignment" to get started.</td></tr>'}
+          }).join('') || `<tr><td colspan="6" style="color:var(--muted);text-align:center;padding:24px">${asList.length ? 'No assignments match the selected filter. <a href="#" onclick="setTeacherAssignFilter(\'all\');teacherHideOverdue=false;renderAdmin();return false">Show all</a>' : 'No assignments created yet. Click "+ Create Assignment" to get started.'}</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -1364,6 +1429,21 @@ async function loadStudentAssignments(force){
   if(document.getElementById('view-assignments') && !document.getElementById('view-assignments').hidden) renderAssignments();
 }
 
+let studentAssignFilter = 'all'; // 'all' | 'active' | 'pending' | 'overdue' | 'completed'
+let studentHideOverdue = false;
+
+window.setStudentAssignFilter = function(filter){
+  studentAssignFilter = filter;
+  if(filter === 'overdue') studentHideOverdue = false;
+  renderAssignments();
+};
+
+window.toggleStudentHideOverdue = function(checked){
+  studentHideOverdue = !!checked;
+  if(studentHideOverdue && studentAssignFilter === 'overdue') studentAssignFilter = 'all';
+  renderAssignments();
+};
+
 function renderAssignments(){
   const root = document.getElementById('assignments-root');
   if(!root) return;
@@ -1389,6 +1469,38 @@ function renderAssignments(){
   const list = studentAssignmentsState.list || [];
   const attempts = studentAssignmentsState.attempts || {};
   const isTeacher = isStaffRole();
+
+  let completedCount = 0;
+  let pendingCount = 0;
+  let overdueCount = 0;
+  let activeCount = 0;
+
+  list.forEach(a => {
+    const att = attempts[a.id];
+    const isDone = att && att.status === 'completed';
+    const isOverdue = !isDone && isAssignmentOverdue(a.dueDate);
+    if(isDone) completedCount++;
+    else {
+      pendingCount++;
+      if(isOverdue) overdueCount++;
+      else activeCount++;
+    }
+  });
+
+  const displayedList = list.filter(a => {
+    const att = attempts[a.id];
+    const isDone = att && att.status === 'completed';
+    const isOverdue = !isDone && isAssignmentOverdue(a.dueDate);
+
+    if(studentHideOverdue && isOverdue) return false;
+
+    if(studentAssignFilter === 'active') return !isDone && !isOverdue;
+    if(studentAssignFilter === 'pending') return !isDone;
+    if(studentAssignFilter === 'overdue') return isOverdue;
+    if(studentAssignFilter === 'completed') return isDone;
+    return true;
+  });
+
   const teacherHeader = isTeacher ? `
     <div style="background:var(--teal-light);border:2px solid var(--teal);border-radius:14px;padding:16px 18px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
       <div>
@@ -1403,9 +1515,11 @@ function renderAssignments(){
     </div>
   ` : '';
 
-  const emptyMsg = isTeacher
-    ? '<div class="empty">No assignments created yet. Click <strong>+ Create New Assignment</strong> above to distribute tasks to your classes.</div>'
-    : '<div class="empty">No assignments assigned to you yet. If you have a class code from your teacher, join your class in the Practice Zone or Settings.</div>';
+  const emptyMsg = list.length > 0
+    ? '<div class="empty">No assignments match the selected filter. <a href="#" onclick="setStudentAssignFilter(\'all\');studentHideOverdue=false;renderAssignments();return false">Show all assignments</a></div>'
+    : (isTeacher
+        ? '<div class="empty">No assignments created yet. Click <strong>+ Create New Assignment</strong> above to distribute tasks to your classes.</div>'
+        : '<div class="empty">No assignments assigned to you yet. If you have a class code from your teacher, join your class in the Practice Zone or Settings.</div>');
 
   root.innerHTML = `
     ${teacherHeader}
@@ -1416,14 +1530,36 @@ function renderAssignments(){
       </div>
     ` : ''}
     ${studentAssignmentsState.loading ? '<p class="loading">Loading assignments…</p>' : `
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin:14px 0 12px;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:12px">
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <span style="font-weight:700;font-size:13px;color:var(--muted);margin-right:2px">Filter:</span>
+          <button class="fbtn ${studentAssignFilter==='all'?'active':''}" onclick="setStudentAssignFilter('all')">All (${list.length})</button>
+          <button class="fbtn ${studentAssignFilter==='active'?'active':''}" onclick="setStudentAssignFilter('active')">Active / Due Soon (${activeCount})</button>
+          <button class="fbtn ${studentAssignFilter==='pending'?'active':''}" onclick="setStudentAssignFilter('pending')">Pending (${pendingCount})</button>
+          <button class="fbtn ${studentAssignFilter==='overdue'?'active':''}" onclick="setStudentAssignFilter('overdue')">Overdue (${overdueCount})</button>
+          <button class="fbtn ${studentAssignFilter==='completed'?'active':''}" onclick="setStudentAssignFilter('completed')">Completed (${completedCount})</button>
+        </div>
+        <label style="display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:700;color:var(--ink)">
+          <input type="checkbox" ${studentHideOverdue ? 'checked' : ''} onchange="toggleStudentHideOverdue(this.checked)">
+          Hide overdue
+        </label>
+      </div>
+
       <div style="display:flex;flex-direction:column;gap:14px;margin-top:10px">
-        ${list.map(a => {
+        ${displayedList.map(a => {
           const att = attempts[a.id];
           const isDone = att && att.status === 'completed';
+          const isOverdue = !isDone && isAssignmentOverdue(a.dueDate);
           const hasTeacherGraded = isDone && att.teacherScore != null;
           const displayScore = hasTeacherGraded ? att.teacherScore : (att ? att.score : 0);
           const qCount = (a.questionIds || []).length;
           const maxMarks = (a.questionIds || []).map(qid => (ALL.find(x => x.id === qid) || {}).marks || 0).reduce((x, y) => x + y, 0);
+
+          const dueDisplay = a.dueDate
+            ? (isOverdue
+                ? `<span class="pill gap" style="font-weight:700">⚠️ Overdue (Due ${esc(a.dueDate)})</span>`
+                : `<span class="pill shaky">Due ${esc(a.dueDate)}</span>`)
+            : '<span class="pill none">No due date</span>';
 
           return `
             <div class="qcard" style="padding:20px">
@@ -1438,17 +1574,17 @@ function renderAssignments(){
                     ${hasTeacherGraded ? '<span class="pill" style="background:#e6f4ea;color:#137333;font-size:11.5px">Teacher Graded</span>' : '<span class="pill" style="background:var(--teal-light);color:var(--teal);font-size:11.5px">AI Marked</span>'}
                     ${att.teacherFeedback ? '<span class="pill" style="background:#fff3cd;color:#856404;font-size:11.5px">📝 Feedback</span>' : ''}
                   </div>
-                ` : `<span class="pill ${a.dueDate?'shaky':'none'}">${a.dueDate?'Due '+esc(a.dueDate):'No due date'}</span>`}
+                ` : dueDisplay}
               </div>
               ${a.description ? `<p style="margin:4px 0;font-size:14.5px;color:var(--muted)">${esc(a.description)}</p>` : ''}
               <div class="topic">Teacher: <b>${esc(a.teacherName||'Teacher')}</b> • ${qCount} questions • ${maxMarks} marks total</div>
               <div class="qfoot">
-                <span style="font-size:13px;color:var(--muted)">${isDone ? (hasTeacherGraded ? 'Teacher reviewed & feedback provided' : 'AI evaluation completed on ' + fmtDate(att.submittedAt)) : 'Unsubmitted assignment'}</span>
+                <span style="font-size:13px;color:var(--muted)">${isDone ? (hasTeacherGraded ? 'Teacher reviewed & feedback provided' : 'AI evaluation completed on ' + fmtDate(att.submittedAt)) : (isOverdue ? '<span style="color:var(--red);font-weight:700">Deadline has passed</span>' : 'Unsubmitted assignment')}</span>
                 <div style="display:flex;gap:8px">
                   ${isDone ? `
                     <button class="btn btn-ghost" onclick="startAssignmentRunner('${esc(a.id)}', true)">Review Submission &amp; Feedback →</button>
                   ` : `
-                    <button class="btn btn-primary" onclick="startAssignmentRunner('${esc(a.id)}', false)">${att?'Resume Assignment':'Start Assignment'} →</button>
+                    <button class="btn ${isOverdue ? 'btn-ghost' : 'btn-primary'}" onclick="startAssignmentRunner('${esc(a.id)}', false)">${att?'Resume Assignment':'Start Assignment'} →</button>
                   `}
                 </div>
               </div>
