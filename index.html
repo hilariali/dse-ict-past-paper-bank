@@ -737,7 +737,7 @@ function renderHome(){
   const list=filteredList();
   renderFilters(list);
   document.getElementById('list-label').textContent = quickPickIds.length ? `Random pick — showing ${list.length} question(s) from ${quickPickPaperGroup} / ${quickPickModule}` : (activeFilterCount()===0 ? bankHeadline() : `Showing ${list.length} of ${ALL.length} questions`);
-  document.getElementById('qlist').innerHTML=list.length? list.map(q=>{ const a=store[q.id]; const isS=q.type==='structured'; const pill=a? (a.rating? `<span class="pill ${a.rating.toLowerCase()}">${a.rating}</span>` : (isS? `<span class="pill shaky">Self-scored ${a.score} / ${q.marks}</span>` : `<span class="pill ${a.correct?'know':'gap'}">${a.correct?'Correct':'Incorrect'}</span>`)) : `<span class="pill none">Not attempted</span>`; const detail=a? (isS? `<div style="font-size:13.5px;color:var(--muted)">Self-score: <strong>${a.score} / ${q.marks} marks</strong>${a.confidence?` • Confidence: ${esc(a.confidence)}`:''} — ticked against the official marking points</div>` : `<div style="font-size:13.5px;color:var(--muted)">Your answer: <strong>${esc(a.answer)}</strong> ${a.confidence?`• Confidence: ${esc(a.confidence)}`:''} • Correct answer: <strong>${esc(q.markingScheme.answer)}</strong> — ${q.performance.correctPct!=null? q.performance.correctPct : (q.performance.optionStatsPct? q.performance.optionStatsPct[q.markingScheme.answer] : '')}% of ${yearOf(q)} candidates got it right</div>`) : ''; return `<article class="qcard"><div class="qcard-top"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Q.${esc(q.number)}</span>${pill}</div><div class="qtitle">${esc((q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text||'Question '+q.number)}</div><div class="topic">${esc(q.topics.join(' • '))} • ${q.marks} mark${q.marks!==1?'s':''} • ${isS?'Structured question':'Multiple choice'}</div>${detail}<div class="qfoot"><span style="font-size:13px;color:var(--muted)">${isS?'Type answers • self-mark with the official scheme':(q.stem.some(b=>b.type==='code')?'Includes pseudocode • ':'')+'Performance data included'}</span><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-ghost" style="padding:8px 12px;font-size:13px" onclick="openQuestionExportModal('${q.id}')" title="Export or print this question">⎙ Export / Print</button><button class="btn btn-ghost" style="padding:8px 12px;font-size:13px" onclick="quickAssignQuestion('${q.id}')" title="Assign this question to your class as homework or quiz">＋ Assign</button><button class="btn ${a?'btn-ghost':'btn-primary'}" onclick="startDrill('${q.id}')">${a?'Retry':'Start drill'} →</button></div></div></article>`}).join('') : `<div class="empty">No questions match these filters.<br><button class="btn btn-ghost" style="margin-top:10px;padding:8px 14px" onclick="resetFilters()">Reset all filters</button></div>`;
+  document.getElementById('qlist').innerHTML=list.length? list.map(q=>{ const a=store[q.id]; const isS=q.type==='structured'; const effScore=a?(a.teacherScore!=null?a.teacherScore:(a.score!=null&&a.score>0?a.score:(a.aiScore!=null?a.aiScore:(a.score||0)))):0; const pill=a? (a.rating? `<span class="pill ${a.rating.toLowerCase()}">${a.rating}</span>` : (isS? `<span class="pill shaky">${a.teacherScore!=null?'Teacher-graded ':(a.aiScore!=null?'AI-marked ':'Self-scored ')}${effScore} / ${q.marks}</span>` : `<span class="pill ${a.correct?'know':'gap'}">${a.correct?'Correct':'Incorrect'}</span>`)) : `<span class="pill none">Not attempted</span>`; const detail=a? (isS? `<div style="font-size:13.5px;color:var(--muted)">Score: <strong>${effScore} / ${q.marks} marks</strong> ${a.teacherScore!=null?'<span class="pill" style="font-size:11px;background:#e6f4ea;color:#137333">Teacher Graded</span>':(a.aiScore!=null?'<span class="pill know" style="font-size:11px">AI Marked</span>':'<span class="pill none" style="font-size:11px">Self-scored</span>')}${a.confidence?` • Confidence: ${esc(a.confidence)}`:''}</div>` : `<div style="font-size:13.5px;color:var(--muted)">Your answer: <strong>${esc(a.answer)}</strong> ${a.confidence?`• Confidence: ${esc(a.confidence)}`:''} • Correct answer: <strong>${esc(q.markingScheme.answer)}</strong> — ${q.performance.correctPct!=null? q.performance.correctPct : (q.performance.optionStatsPct? q.performance.optionStatsPct[q.markingScheme.answer] : '')}% of ${yearOf(q)} candidates got it right</div>`) : ''; return `<article class="qcard"><div class="qcard-top"><span class="qnum">${yearOf(q)} ${paperOf(q)} • Q.${esc(q.number)}</span>${pill}</div><div class="qtitle">${esc((q.stem.find(b=>b.type==='text')||q.stem[0]||{}).text||'Question '+q.number)}</div><div class="topic">${esc(q.topics.join(' • '))} • ${q.marks} mark${q.marks!==1?'s':''} • ${isS?'Structured question':'Multiple choice'}</div>${detail}<div class="qfoot"><span style="font-size:13px;color:var(--muted)">${isS?'Type answers • AI marked with official scheme':(q.stem.some(b=>b.type==='code')?'Includes pseudocode • ':'')+'Performance data included'}</span><div style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-ghost" style="padding:8px 12px;font-size:13px" onclick="openQuestionExportModal('${q.id}')" title="Export or print this question">⎙ Export / Print</button><button class="btn btn-ghost" style="padding:8px 12px;font-size:13px" onclick="quickAssignQuestion('${q.id}')" title="Assign this question to your class as homework or quiz">＋ Assign</button><button class="btn ${a?'btn-ghost':'btn-primary'}" onclick="startDrill('${q.id}')">${a?'Retry':'Start drill'} →</button></div></div></article>`}).join('') : `<div class="empty">No questions match these filters.<br><button class="btn btn-ghost" style="margin-top:10px;padding:8px 14px" onclick="resetFilters()">Reset all filters</button></div>`;
 }
 function setYear(y){ filterYear=y; filterPaper='All papers'; renderHome(); }
 function setPaper(p){ filterPaper=p; renderHome(); }
@@ -890,7 +890,16 @@ function toggleTick(pi,pti){ if(selfCheckLocked || aiMarkBusy) return; const q=S
   const b=document.getElementById('struct-banner'); if(b) b.textContent=`Self-score: ${total} / ${q.marks} marks${total===q.marks?' — full marks, examiner-grade':''}`;
   renderHome();
 }
-function questionMarkSummary(q, entry){ if(!q||!entry) return ''; if(q.type==='structured'){ const self=typeof entry.score==='number'? entry.score : 0; if(typeof entry.aiScore==='number') return `Total mark for this question: <strong>${entry.aiScore} / ${q.marks}</strong> (AI) • Self-check: <strong>${self} / ${q.marks}</strong>`; return `Total mark for this question: <strong>${self} / ${q.marks}</strong>`; } const got=entry.correct? q.marks : 0; return `Total mark for this question: <strong>${got} / ${q.marks}</strong>`; }
+function questionMarkSummary(q, entry){
+  if(!q||!entry) return '';
+  if(q.type==='structured'){
+    const sc = entry.teacherScore != null ? entry.teacherScore : (entry.score != null && entry.score > 0 ? entry.score : (entry.aiScore != null ? entry.aiScore : (entry.score || 0)));
+    const tag = entry.teacherScore != null ? ' (Teacher graded)' : (entry.aiScore != null ? ' (AI marked)' : '');
+    return `Total mark for this question: <strong>${sc} / ${q.marks}</strong>${tag}${entry.score != null && entry.score !== sc ? ` • Self-check: <strong>${entry.score} / ${q.marks}</strong>` : ''}`;
+  }
+  const got=entry.correct? q.marks : 0;
+  return `Total mark for this question: <strong>${got} / ${q.marks}</strong>`;
+}
 function rate(r){ const q=ALL.find(x=>x.id===currentId); store[q.id].rating=r; save(); document.querySelectorAll('#rating button').forEach(b=>{ b.className=''; if(b.dataset.r===r) b.classList.add('sel-'+r.toLowerCase()); }); const inQueue=['Shaky','Gap'].includes(r); const markLine=questionMarkSummary(q, store[q.id]); document.getElementById('after-rate').innerHTML=`<div class="note">${inQueue?`<strong>Added to your re-drill queue</strong> — rated ${r}.`:`<strong>Marked as Know</strong> — it will not be queued for re-drill.`}${markLine?`<br>${markLine}`:''}</div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px"><button class="btn btn-navy" onclick="nextQuestion()">${nextLabel()}</button><button class="btn btn-ghost" onclick="showView('home')">Back to all questions</button><button class="btn btn-ghost" onclick="showView('results')">See results</button></div>`; renderHome(); }
 function nextLabel(){ if(queueMode){ const idx=queueList.indexOf(currentId); return idx>=0 && idx<queueList.length-1 ? 'Next in queue →' : 'Finish queue'; } const idx=ALL.indexOf(ALL.find(q=>q.id===currentId)); return idx<ALL.length-1 ? 'Next question →' : 'Finish — see results'; }
 function nextQuestion(){ if(queueMode){ const idx=queueList.indexOf(currentId); if(idx<queueList.length-1){ startDrill(queueList[idx+1]); return; } queueMode=false; showView('results'); return; } const idx=ALL.indexOf(ALL.find(q=>q.id===currentId)); if(idx<ALL.length-1) startDrill(ALL[idx+1].id); else showView('results'); }
@@ -1104,8 +1113,9 @@ function renderResults(){
               </div>
             `;
           }
+          const sc = a.teacherScore != null ? a.teacherScore : (a.score != null && a.score > 0 ? a.score : (a.aiScore != null ? a.aiScore : (a.score || 0)));
           const markBadge = isS
-            ? `Self-score ${a.score} / ${q.marks} marks ${a.rating ? '• ' + a.rating : ''}`
+            ? `Score ${sc} / ${q.marks} marks ${a.teacherScore != null ? '• Teacher graded' : (a.aiScore != null ? '• AI marked' : '')} ${a.rating ? '• ' + a.rating : ''}`
             : `${a.correct ? '✓ Correct' : '✕ ' + a.answer + ' → ' + q.markingScheme.answer} ${a.rating ? '• ' + a.rating : ''}`;
 
           return `
@@ -1436,6 +1446,19 @@ async function aiMark(){
       total+=res.score;
       marked++;
       if(slot) slot.innerHTML=`<div class="aimarkbox"><strong>AI score: ${res.score} / ${p.marks}</strong>${res.feedback?` — ${esc(res.feedback)}`:''}${res.hits?`<div style="margin-top:6px">${res.hits.map((h,i)=>`<div class="${h?'hit':'miss'}">${h?'✓':'✗'} ${esc((p.markingScheme.points||[])[i].point)}</div>`).join('')}</div>`:''}</div>`;
+      if(res.hits && Array.isArray(res.hits)){
+        const entry=store[q.id]||{};
+        entry.ticks=entry.ticks||{};
+        res.hits.forEach((h, i)=>{
+          const k = pi + '-' + i;
+          if(h) entry.ticks[k] = true;
+          else delete entry.ticks[k];
+          const btn = document.querySelector(`.tickrow[data-part="${pi}"][data-pt="${i}"]`);
+          if(btn) btn.classList.toggle('on', !!h);
+        });
+        const psEl = document.getElementById('pscore-' + pi);
+        if(psEl) psEl.textContent = `(${res.score} / ${p.marks})`;
+      }
     }catch(e){
       if(slot) slot.innerHTML=`<div class="note" style="margin-top:10px">AI unavailable for this part — mark yourself against the official scheme.</div>`;
     }finally{
@@ -1443,12 +1466,17 @@ async function aiMark(){
     }
   }
   const entry=store[q.id]||{};
-  if(marked>0){ entry.aiScore=total; updateLastHistory(q.id,{aiScore:total}); } else delete entry.aiScore;
+  if(marked>0){
+    entry.aiScore=total;
+    entry.score=total;
+    entry.correct = total * 2 >= q.marks;
+    updateLastHistory(q.id,{aiScore:total, score:total, correct:entry.correct});
+  } else delete entry.aiScore;
   store[q.id]=entry;
   save();
   if(panel) panel.innerHTML= marked===0
     ? `<div class="note"><strong>AI unavailable</strong> — you can now use manual self-check below.</div>`
-    : `<div class="note" style="border-color:var(--teal)"><strong>AI marking complete for ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}.</strong><br>Total AI score: <strong>${total} / ${q.marks} marks</strong>.</div>`;
+    : `<div class="note" style="border-color:var(--teal)"><strong>AI marking complete for ${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)}.</strong><br>Total score: <strong>${total} / ${q.marks} marks</strong> (recorded as your score).</div>`;
   if(live){
     live.hidden=false;
     live.innerHTML = marked===0
@@ -1457,10 +1485,11 @@ async function aiMark(){
   }
   if(banner) banner.textContent = marked===0
     ? `Self-score so far: ${entry.score||0} / ${q.marks} marks — AI unavailable, continue manual self-check.`
-    : `AI total: ${total} / ${q.marks} marks • You can now verify with manual self-check.`;
+    : `Total score: ${total} / ${q.marks} marks (AI marked)${total===q.marks?' — full marks, examiner-grade':''} • Points automatically verified`;
   tickRows.forEach(b=>{ b.disabled=false; b.style.opacity=''; });
   selfCheckLocked=false;
   aiMarkBusy=false;
+  renderHome();
 }
 async function aiMarkPart(q,p,ans){ const ms=p.markingScheme||{}; const pts=ms.points||[]; const sys=`You are an HKDSE ICT examiner. Mark the student's answer strictly against the official marking scheme points provided. Reply with ONLY a JSON object, no other text: {"hit":[true,false,...],"score":<number>,"feedback":"<1-2 short lines>"}. The "hit" array must have exactly ${pts.length} entries, one per marking point, in order. "score" is the total marks earned for this part, out of ${p.marks}.`; const user=`QUESTION PART ${p.label} (${p.marks} marks):\n${blocksToText(p.stem)}\n\nSTUDENT'S ANSWER:\n${ans}\n\nOFFICIAL MARKING POINTS:\n${pts.map((pt,i)=>`${i+1}. [${pt.marks} mark${pt.marks!==1?'s':''}] ${pt.point}`).join('\n')}${ms.modelAnswer?`\n\nMODEL ANSWER:\n${ms.modelAnswer}`:''}${ms.unacceptable&&ms.unacceptable.length?`\n\nNOT ACCEPTED (award no marks for these):\n${ms.unacceptable.join('\n')}`:''}`; const raw=await aiComplete([{role:'system',content:sys},{role:'user',content:user}]); const txt=raw.replace(/```json|```/g,''); const a=txt.indexOf('{'), b=txt.lastIndexOf('}'); if(a<0||b<=a) throw new Error('parse'); const j=JSON.parse(txt.slice(a,b+1)); let hits=null, score=null; if(Array.isArray(j.hit)&&j.hit.length===pts.length){ hits=j.hit.map(Boolean); score=Math.min(p.marks, pts.reduce((s,pt,i)=>s+(hits[i]?pt.marks:0),0)); } else if(typeof j.score==='number'&&isFinite(j.score)){ score=Math.max(0, Math.min(p.marks, Math.round(j.score*2)/2)); } else throw new Error('shape'); return {score, hits, feedback: typeof j.feedback==='string'? j.feedback.slice(0,300):''}; }
 /* ---- Runtime question-bank loading ---- */
@@ -1495,9 +1524,21 @@ function updateSaveBtn(){ const b=document.getElementById('save-btn'); if(b) b.t
 function toggleSaved(){ if(!currentId) return; setSaved(currentId, !savedIds.includes(currentId)); }
 function setSaved(id, on){ const i=savedIds.indexOf(id); if(on&&i<0) savedIds.push(id); if(!on&&i>=0) savedIds.splice(i,1); persistSaved(); updateSaveBtn(); if(!document.getElementById('view-practice').hidden) renderPractice(); }
 function qLabel(q){ return `${yearOf(q)} ${paperOf(q)} Q.${esc(q.number)} \u2014 ${esc(q.topics[0])}`; }
-function scoreFrac(q,a){ if(!a) return null; if(q.type==='structured') return q.marks? Math.min(1,(a.score||0)/q.marks):0; return a.correct?1:0; }
+function scoreFrac(q,a){
+  if(!a) return null;
+  if(q.type==='structured'){
+    const sc = a.teacherScore != null ? a.teacherScore : (a.score != null && a.score > 0 ? a.score : (a.aiScore != null ? a.aiScore : (a.score || 0)));
+    return q.marks ? Math.min(1, Math.max(0, sc) / q.marks) : 0;
+  }
+  return a.correct ? 1 : 0;
+}
 function confCalibration(){ const c={High:{n:0,ok:0},Medium:{n:0,ok:0},Low:{n:0,ok:0}}; ALL.forEach(q=>{ const a=store[q.id]; if(!a||!c[a.confidence]) return; c[a.confidence].n++; c[a.confidence].ok+=scoreFrac(q,a); }); return c; }
-function practiceRow(q, extra){ const a=store[q.id]; const hist=(a&&a.history)||[]; const last=hist.length? hist[hist.length-1]:null; const conf=a&&a.confidence? ` \u2022 Certainty: ${esc(a.confidence)}`:''; const res=!a? 'Not attempted' : (q.type==='structured'? `Self-score ${a.score||0} / ${q.marks}` : (a.correct?'\u2713 Correct':'\u2715 Incorrect')); return `<div class="topic-row"><span>${qLabel(q)} ${a&&a.rating?`<span class="pill ${a.rating.toLowerCase()}">${a.rating}</span>`:''}<br><small style="color:var(--muted)">${res}${conf} \u2022 ${hist.length||(a?1:0)} attempt(s)${last?' \u2022 last '+new Date(last.date).toLocaleDateString():''}</small></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-primary" style="padding:8px 14px" onclick="queueMode=false;startDrill('${q.id}')">${a?'Redrill':'Practice'}</button>${extra||''}</span></div>`; }
+function practiceRow(q, extra){
+  const a=store[q.id]; const hist=(a&&a.history)||[]; const last=hist.length? hist[hist.length-1]:null; const conf=a&&a.confidence? ` • Certainty: ${esc(a.confidence)}`:'';
+  const sc = a ? (a.teacherScore != null ? a.teacherScore : (a.score != null && a.score > 0 ? a.score : (a.aiScore != null ? a.aiScore : (a.score || 0)))) : 0;
+  const res = !a ? 'Not attempted' : (q.type==='structured' ? `Score ${sc} / ${q.marks}${a.teacherScore != null ? ' (Teacher)' : (a.aiScore != null ? ' (AI)' : '')}` : (a.correct ? '✓ Correct' : '✕ Incorrect'));
+  return `<div class="topic-row"><span>${qLabel(q)} ${a&&a.rating?`<span class="pill ${a.rating.toLowerCase()}">${a.rating}</span>`:''}<br><small style="color:var(--muted)">${res}${conf} • ${hist.length||(a?1:0)} attempt(s)${last?' • last '+new Date(last.date).toLocaleDateString():''}</small></span><span style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn btn-primary" style="padding:8px 14px" onclick="queueMode=false;startDrill('${q.id}')">${a?'Redrill':'Practice'}</button>${extra||''}</span></div>`;
+}
 function renderPractice(){ const root=document.getElementById('practice-root'); if(!root) return; const s=stats(); const saved=savedIds.map(id=>ALL.find(q=>q.id===id)).filter(Boolean); const queue=ALL.filter(q=>['Shaky','Gap'].includes(store[q.id]?.rating)); const cal=confCalibration(); const attempts=ALL.filter(q=>store[q.id]).map(q=>({q,a:store[q.id]})).sort((x,y)=>String(y.a.date||'').localeCompare(String(x.a.date||'')));
   const pct=ALL.length? Math.round(s.att/ALL.length*100):0;
   const calHtml=['High','Medium','Low'].map(k=>`<div class="stat"><b>${cal[k].n? Math.round(cal[k].ok/cal[k].n*100)+'%':'\u2014'}</b><span>Accuracy when certainty ${k} (${cal[k].n})</span></div>`).join('');
@@ -1809,6 +1850,6 @@ async function boot(){
 }
 renderHome(); boot(); if(typeof updateMobileNavCurrentLabel==='function') updateMobileNavCurrentLabel();
 </script>
-<script src="admin.js?v=20261029_1320"></script>
+<script src="admin.js?v=20261030_1615"></script>
 </body>
 </html>

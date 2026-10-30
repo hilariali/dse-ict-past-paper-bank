@@ -127,8 +127,41 @@ async function loadAdminData(force){
 async function loadStudentProgress(uid){
   if(adminState.userProgressMap[uid]) return adminState.userProgressMap[uid];
   try{
-    const s=await firebaseDb.collection('users').doc(uid).collection('appData').doc('progress').get();
-    adminState.userProgressMap[uid]= s.exists ? (s.data().store||{}) : {};
+    const [progSnap, attSnap] = await Promise.all([
+      firebaseDb.collection('users').doc(uid).collection('appData').doc('progress').get(),
+      firebaseDb.collection('users').doc(uid).collection('assignmentAttempts').get().catch(()=>({docs:[]}))
+    ]);
+    const storeData = progSnap.exists ? (progSnap.data().store||{}) : {};
+    if(attSnap && attSnap.docs){
+      attSnap.docs.forEach(d => {
+        const att = d.data();
+        if(att && att.results){
+          Object.entries(att.results).forEach(([qid, res]) => {
+            const sc = res.teacherScore != null ? res.teacherScore : (res.score != null ? res.score : 0);
+            const isCorr = !!res.correct;
+            const q = ALL.find(x => x.id === qid);
+            const maxM = res.maxScore || (q ? q.marks : 0);
+            if(!storeData[qid]){
+              storeData[qid] = {
+                score: sc,
+                aiScore: sc,
+                maxScore: maxM,
+                correct: isCorr,
+                date: att.submittedAt ? (att.submittedAt.toDate ? att.submittedAt.toDate().toISOString() : att.submittedAt) : undefined,
+                fromAssignment: att.title || att.assignmentId
+              };
+            } else {
+              if((storeData[qid].score == null || storeData[qid].score === 0) && sc > 0){
+                storeData[qid].score = sc;
+                storeData[qid].aiScore = sc;
+                storeData[qid].correct = isCorr;
+              }
+            }
+          });
+        }
+      });
+    }
+    adminState.userProgressMap[uid]= storeData;
   }catch(e){ adminState.userProgressMap[uid]={}; }
   return adminState.userProgressMap[uid];
 }
@@ -782,18 +815,26 @@ async function openAssignmentSubmissionsModal(assignId, force){
 
   const maxPossibleMarks = (a.questionIds||[]).map(qid => (ALL.find(x=>x.id===qid)||{}).marks || 0).reduce((x,y)=>x+y, 0);
   const completedSubs = subs.filter(s => s.attempt && s.attempt.status === 'completed');
-  const avgScore = completedSubs.length ? Math.round(completedSubs.reduce((acc,s)=>acc+(s.attempt.score||0),0)/completedSubs.length) : null;
+  const avgScore = completedSubs.length ? Math.round(completedSubs.reduce((acc,s)=>{
+    const sc = s.attempt.teacherScore != null ? s.attempt.teacherScore : (s.attempt.score || 0);
+    return acc + sc;
+  }, 0)/completedSubs.length) : null;
 
-  window._currentGradebookRows = subs.map(s => [
-    s.u.displayName || '',
-    s.u.email || '',
-    s.u.className || '—',
-    s.attempt ? s.attempt.status : 'not_started',
-    s.attempt ? s.attempt.score : '',
-    maxPossibleMarks,
-    s.attempt && maxPossibleMarks ? Math.round(s.attempt.score / maxPossibleMarks * 100) : '',
-    s.attempt && s.attempt.submittedAt ? fmtDate(s.attempt.submittedAt) : ''
-  ]);
+  window._currentGradebookRows = subs.map(s => {
+    const isDone = s.attempt && s.attempt.status === 'completed';
+    const hasTeacherScore = isDone && s.attempt.teacherScore != null;
+    const finalScore = isDone ? (hasTeacherScore ? s.attempt.teacherScore : (s.attempt.score != null ? s.attempt.score : '')) : '';
+    return [
+      s.u.displayName || '',
+      s.u.email || '',
+      s.u.className || '—',
+      isDone ? (hasTeacherScore ? 'teacher_graded' : 'ai_marked') : 'not_started',
+      finalScore,
+      maxPossibleMarks,
+      isDone && maxPossibleMarks ? Math.round(Number(finalScore) / maxPossibleMarks * 100) : '',
+      s.attempt && s.attempt.submittedAt ? fmtDate(s.attempt.submittedAt) : ''
+    ];
+  });
   window._currentGradebookTitle = a.title;
 
   openModal(`
@@ -836,14 +877,17 @@ async function openAssignmentSubmissionsModal(assignId, force){
               const hasTeacherScore = isDone && attempt.teacherScore != null;
               const displayScore = hasTeacherScore ? attempt.teacherScore : (attempt ? attempt.score : 0);
               const pct = isDone && maxPossibleMarks ? Math.round(displayScore / maxPossibleMarks * 100) + '%' : '—';
+              const statusBadge = isDone
+                ? (hasTeacherScore ? '<span class="pill" style="background:#e6f4ea;color:#137333;font-weight:700">Teacher Graded</span>' : '<span class="pill know" style="font-weight:700">AI Marked</span>')
+                : '<span class="pill none">Not Started</span>';
               return `
                 <tr>
                   <td><b>${esc(u.displayName||'')}</b><br><span class="mini-note">${esc(u.email||'')}</span></td>
                   <td>${esc(u.className||'—')}</td>
-                  <td>${isDone ? (hasTeacherScore ? '<span class="pill know">Graded</span>' : '<span class="pill know">Submitted</span>') : '<span class="pill none">Not Started</span>'}</td>
+                  <td>${statusBadge}</td>
                   <td>
                     <b>${isDone ? displayScore + ' / ' + maxPossibleMarks : '—'}</b>
-                    ${hasTeacherScore ? `<br><span class="mini-note">AI: ${attempt.score}</span>` : ''}
+                    ${hasTeacherScore ? `<br><span class="mini-note">AI initial: ${attempt.score}</span>` : ''}
                   </td>
                   <td>${pct}</td>
                   <td>${isDone && attempt.submittedAt ? fmtDate(attempt.submittedAt) : '—'}</td>
@@ -1158,8 +1202,13 @@ function attemptAnswerText(q,x){
 }
 function attemptScoreText(q,x){
   const max=x.maxScore!=null?x.maxScore:q.marks;
-  if(q.type==='structured'){ let t=(x.score!=null?x.score:0)+' / '+max; if(x.aiScore!=null) t+=' (AI '+x.aiScore+')'; return t; }
-  const sc=x.score!=null?x.score:(x.correct?max:0);
+  const sc = x.teacherScore != null ? x.teacherScore : (x.score != null && x.score > 0 ? x.score : (x.aiScore != null ? x.aiScore : (x.score || 0)));
+  if(q.type==='structured'){
+    let t = sc + ' / ' + max;
+    if(x.teacherScore != null) t += ' (Teacher)';
+    else if(x.aiScore != null) t += ' (AI)';
+    return t;
+  }
   return sc+' / '+max+(x.correct?' ✓':' ✕');
 }
 function questionAttempts(st){
@@ -1211,17 +1260,26 @@ async function openStudentReport(uid){
   ${studentAssignments.length ? `
     <table class="admin-table">
       <thead>
-        <tr><th>Assignment Title</th><th>Score</th><th>Accuracy</th><th>Submitted Date</th></tr>
+        <tr><th>Assignment Title</th><th>Score</th><th>Status</th><th>Accuracy</th><th>Submitted Date</th></tr>
       </thead>
       <tbody>
-        ${studentAssignments.map(as => `
-          <tr>
-            <td><b>${esc(as.title || as.assignmentId)}</b></td>
-            <td><b>${as.score} / ${as.maxScore} marks</b></td>
-            <td>${as.maxScore ? Math.round(as.score/as.maxScore*100)+'%' : '—'}</td>
-            <td>${fmtDate(as.submittedAt)}</td>
-          </tr>
-        `).join('')}
+        ${studentAssignments.map(as => {
+          const finalScore = as.teacherScore != null ? as.teacherScore : (as.score != null ? as.score : 0);
+          const max = as.maxScore || 1;
+          const pct = Math.round((finalScore / max) * 100);
+          const gradeBadge = as.teacherScore != null
+            ? `<span class="pill" style="font-size:11px;background:#e6f4ea;color:#137333;font-weight:700">Teacher Graded</span>`
+            : `<span class="pill know" style="font-size:11px;font-weight:700">AI Marked</span>`;
+          return `
+            <tr>
+              <td><b>${esc(as.title || as.assignmentId)}</b>${as.teacherFeedback ? `<br><span class="mini-note">Teacher notes: ${esc(as.teacherFeedback)}</span>` : ''}</td>
+              <td><b>${finalScore} / ${max} marks</b></td>
+              <td>${gradeBadge}</td>
+              <td>${pct}%</td>
+              <td>${fmtDate(as.submittedAt)}</td>
+            </tr>
+          `;
+        }).join('')}
       </tbody>
     </table>
   ` : '<p class="mini-note">No assignment attempts on record.</p>'}
@@ -1897,6 +1955,7 @@ async function submitActiveAssignment(){
         answers: partAns,
         correct: qSc * 2 >= q.marks,
         score: qSc,
+        aiScore: qSc,
         maxScore: q.marks,
         parts: partResults
       };
@@ -1922,9 +1981,49 @@ async function submitActiveAssignment(){
     await firebaseDb.collection('users').doc(firebaseUser.uid).collection('assignmentAttempts').doc(assign.id).set(attemptData);
     studentAssignmentsState.attempts[assign.id] = attemptData;
     activeAssignmentRunner.isReview = true;
+
+    // Sync question attempts into the student's progress store so Question Bank, Practice Zone and Reports reflect the AI scores
+    try{
+      questions.forEach(q => {
+        const res = results[q.id];
+        if(!res) return;
+        const isS = q.type === 'structured';
+        const existing = store[q.id] || {};
+        const qScore = res.score != null ? res.score : 0;
+        const isCorr = !!res.correct;
+        store[q.id] = {
+          ...existing,
+          type: q.type,
+          answer: isS ? undefined : res.answer,
+          answers: isS ? res.answers : undefined,
+          score: qScore,
+          aiScore: isS ? qScore : undefined,
+          maxScore: q.marks,
+          correct: isCorr,
+          date: new Date().toISOString(),
+          assignmentId: assign.id,
+          assignmentTitle: assign.title
+        };
+        if(typeof pushHistory === 'function'){
+          pushHistory(q.id, {
+            date: new Date().toISOString(),
+            answer: isS ? undefined : res.answer,
+            answers: isS ? res.answers : undefined,
+            score: qScore,
+            aiScore: isS ? qScore : undefined,
+            maxScore: q.marks,
+            correct: isCorr,
+            assignmentTitle: assign.title
+          });
+        }
+      });
+      if(typeof save === 'function') save();
+      if(typeof renderHome === 'function') renderHome();
+    }catch(syncErr){}
+
     closeModal();
     renderAssignmentRunner();
-    alert(`🎉 Assignment submitted and AI marked successfully!\nYour score: ${totalScore} / ${maxScore} marks (${Math.round((totalScore/(maxScore||1))*100)}%).\n\nYou can now review each question, see model answers, and check AI feedback.`);
+    alert(`🎉 Assignment submitted and AI marked successfully!\nYour score: ${totalScore} / ${maxScore} marks (${Math.round((totalScore/(maxScore||1))*100)}%).\n\nYour AI score has been recorded for this assignment and your progress reports.`);
   }catch(e){
     closeModal();
     alert('Could not submit assignment: ' + (e.message || e));
